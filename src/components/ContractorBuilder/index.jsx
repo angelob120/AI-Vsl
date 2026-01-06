@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WebsitePreview from './WebsitePreview';
 import { Button } from '../shared';
 import { exportWebsitesCSV } from '../../utils/csv';
-import { 
-  getStorageItem, 
-  setStorageItem, 
-  deleteStorageItem, 
-  listStorageKeys,
-  generateUniqueId 
-} from '../../utils/storage';
+import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite } from '../../api/websites';
 import { 
   colorPresets, 
   defaultContractorFormData, 
@@ -17,6 +11,11 @@ import {
   copyToClipboard 
 } from '../../utils/helpers';
 import './styles.css';
+
+// Generate unique ID (moved here since we're not importing from storage)
+const generateUniqueId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+};
 
 export default function ContractorBuilder({ onNavigateToRepliq }) {
   const [formData, setFormData] = useState({
@@ -44,6 +43,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   const [viewMode, setViewMode] = useState('builder');
   const [previewData, setPreviewData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [newService, setNewService] = useState('');
 
   useEffect(() => {
@@ -58,53 +58,70 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     }
   }, []);
 
+  // Load all saved websites from PostgreSQL via API
   const loadSavedWebsites = async () => {
     try {
-      const keys = await listStorageKeys('website:');
-      const websites = [];
-      
-      for (const key of keys) {
-        const data = await getStorageItem(key);
-        if (data) {
-          websites.push(data);
-        }
-      }
-      
+      const websites = await getAllWebsites();
+      // Sort by createdAt descending
       websites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setSavedWebsites(websites);
     } catch (e) {
-      console.log('No saved websites yet');
+      console.log('Failed to load websites:', e);
     }
     setIsLoading(false);
   };
 
+  // Load a specific website by ID from PostgreSQL via API
   const loadWebsiteById = async (siteId) => {
-    const data = await getStorageItem(`website:${siteId}`);
-    if (data) {
-      setPreviewData(data);
-      setViewMode('preview');
+    try {
+      const data = await getWebsiteById(siteId);
+      if (data) {
+        setPreviewData(data);
+        setViewMode('preview');
+      }
+    } catch (e) {
+      console.log('Failed to load website:', e);
     }
     setIsLoading(false);
   };
 
+  // Save website to PostgreSQL and generate shareable link
   const saveAndGenerateLink = async () => {
+    setIsSaving(true);
+    
     const siteId = generateUniqueId();
+    const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+    
     const websiteData = {
       id: siteId,
       formData: { ...formData },
       images: { ...images },
-      createdAt: new Date().toISOString(),
-      link: `${window.location.origin}${window.location.pathname}#site-${siteId}`
+      link: link
     };
 
-    const success = await setStorageItem(`website:${siteId}`, websiteData);
-    
-    if (success) {
-      setGeneratedLink(websiteData.link);
-      setSavedWebsites(prev => [websiteData, ...prev]);
-    } else {
-      alert('Failed to save website. Please try again.');
+    try {
+      const result = await saveWebsite(websiteData);
+      
+      if (result && result.success) {
+        setGeneratedLink(link);
+        // Add the saved website to the list
+        const savedSite = {
+          id: siteId,
+          formData: { ...formData },
+          images: { ...images },
+          createdAt: new Date().toISOString(),
+          link: link
+        };
+        setSavedWebsites(prev => [savedSite, ...prev]);
+      } else {
+        alert('Failed to save website. Please try again.');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Failed to save website. Please check your connection and try again.');
     }
+    
+    setIsSaving(false);
   };
 
   const handleDownloadCSV = () => {
@@ -128,11 +145,19 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     setViewMode('builder');
   };
 
+  // Delete website from PostgreSQL via API
   const handleDeleteWebsite = async (siteId) => {
     if (window.confirm('Are you sure you want to delete this?')) {
-      const success = await deleteStorageItem(`website:${siteId}`);
-      if (success) {
-        setSavedWebsites(prev => prev.filter(site => site.id !== siteId));
+      try {
+        const success = await deleteWebsite(siteId);
+        if (success) {
+          setSavedWebsites(prev => prev.filter(site => site.id !== siteId));
+        } else {
+          alert('Failed to delete website.');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('Failed to delete website. Please try again.');
       }
     }
   };
@@ -237,8 +262,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
         </p>
         
         <div className="top-actions">
-          <Button variant="primary" onClick={saveAndGenerateLink}>
-            🔗 Generate Link
+          <Button variant="primary" onClick={saveAndGenerateLink} disabled={isSaving}>
+            {isSaving ? '⏳ Saving...' : '🔗 Generate Link'}
           </Button>
           <Button variant="secondary" onClick={clearForm}>
             🔄 New
