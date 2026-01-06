@@ -92,3 +92,39 @@ export const deleteWebsite = async (id) => {
     throw error;
   }
 };
+
+
+export const deleteAllWebsites = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/websites`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error deleting all websites:', error);
+    throw error;
+  }
+};
+
+
+
+// Delete ALL websites
+app.delete('/api/websites', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM contractor_websites RETURNING id');
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully deleted ${result.rowCount} websites` 
+    });
+  } catch (error) {
+    console.error('Delete all websites error:', error);
+    res.status(500).json({ error: 'Failed to delete all websites', details: error.message });
+  }
+});

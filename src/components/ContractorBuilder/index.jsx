@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WebsitePreview from './WebsitePreview';
 import { Button } from '../shared';
 import { exportWebsitesCSV } from '../../utils/csv';
-import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite } from '../../api/websites';
+import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
 import { 
   colorPresets, 
   defaultContractorFormData, 
@@ -265,6 +265,41 @@ const saveAndGenerateLink = async () => {
     const success = await copyToClipboard(link);
     if (success) {
       alert('Link copied to clipboard!');
+    }
+  };
+
+
+    // Delete ALL websites with confirmation
+  const handleClearAllWebsites = async () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites to delete.');
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!\n\nAre you sure you want to continue?`
+    );
+    
+    if (confirmed) {
+      // Double confirmation for safety
+      const doubleConfirmed = window.confirm(
+        '🚨 FINAL WARNING: You are about to delete ALL saved websites.\n\nClick OK to permanently delete everything.'
+      );
+      
+      if (doubleConfirmed) {
+        try {
+          const success = await deleteAllWebsites();
+          if (success) {
+            setSavedWebsites([]);
+            alert('All websites have been deleted.');
+          } else {
+            alert('Failed to delete websites.');
+          }
+        } catch (error) {
+          console.error('Clear all error:', error);
+          alert('Failed to delete websites. Please try again.');
+        }
+      }
     }
   };
 
@@ -618,9 +653,19 @@ const saveAndGenerateLink = async () => {
               📁 Saved Websites
               <span className="saved-count">{savedWebsites.length}</span>
             </div>
-            <button className="download-csv-btn" onClick={handleDownloadCSV}>
-              📥 Export CSV
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="download-csv-btn" 
+                onClick={handleClearAllWebsites}
+                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+                title="Delete all saved websites"
+              >
+                🗑️ Clear All
+              </button>
+              <button className="download-csv-btn" onClick={handleDownloadCSV}>
+                📥 Export CSV
+              </button>
+            </div>
           </div>
           
           {savedWebsites.length === 0 ? (
