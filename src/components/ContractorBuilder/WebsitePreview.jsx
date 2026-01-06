@@ -24,11 +24,11 @@ export default function WebsitePreview({ formData, images }) {
         </div>
         
         <div className="navbar-links">
-          <a href="#" className="navbar-link">Home</a>
-          <a href="#" className="navbar-link">Services</a>
-          <a href="#" className="navbar-link">About</a>
-          {imgs.gallery && imgs.gallery.length > 0 && <a href="#" className="navbar-link">Gallery</a>}
-          <a href="#" className="navbar-link">Contact</a>
+          <button className="navbar-link">Home</button>
+          <button className="navbar-link">Services</button>
+          <button className="navbar-link">About</button>
+          {imgs.gallery && imgs.gallery.length > 0 && <button className="navbar-link">Gallery</button>}
+          <button className="navbar-link">Contact</button>
         </div>
         
         <div className="navbar-cta">
