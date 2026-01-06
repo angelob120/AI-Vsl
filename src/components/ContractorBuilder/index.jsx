@@ -137,11 +137,23 @@ const saveAndGenerateLink = async () => {
     exportWebsitesCSV(savedWebsites);
   };
 
-  const clearForm = () => {
-    setFormData(defaultContractorFormData);
-    setImages(defaultContractorImages);
-    setGeneratedLink(null);
-  };
+  const clearForm = async () => {
+  // Check if there's actual content to save (not just default values)
+  const hasContent = formData.companyName && formData.companyName !== defaultContractorFormData.companyName;
+  
+  // If there's unsaved content and no link generated yet, save it first
+  if (hasContent && !generatedLink) {
+    const confirmSave = window.confirm('You have unsaved changes. Would you like to save before creating a new website?');
+    if (confirmSave) {
+      await saveAndGenerateLink();
+    }
+  }
+  
+  // Now clear the form
+  setFormData(defaultContractorFormData);
+  setImages(defaultContractorImages);
+  setGeneratedLink(null);
+};
 
   const duplicateWebsite = (website) => {
     setFormData({ ...website.formData });
