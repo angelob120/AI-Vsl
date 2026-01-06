@@ -138,18 +138,40 @@ const saveAndGenerateLink = async () => {
   };
 
   const clearForm = async () => {
-  // Check if there's actual content to save (not just default values)
-  const hasContent = formData.companyName && formData.companyName !== defaultContractorFormData.companyName;
+  // Auto-save current website if there's content
+  const hasContent = formData.companyName && formData.companyName.trim() !== '';
   
-  // If there's unsaved content and no link generated yet, save it first
-  if (hasContent && !generatedLink) {
-    const confirmSave = window.confirm('You have unsaved changes. Would you like to save before creating a new website?');
-    if (confirmSave) {
-      await saveAndGenerateLink();
+  if (hasContent) {
+    // Save current website first
+    const siteId = generateUniqueId();
+    const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+    
+    const websiteData = {
+      id: siteId,
+      formData: { ...formData },
+      images: { ...images },
+      link: link
+    };
+
+    try {
+      const result = await saveWebsite(websiteData);
+      
+      if (result && (result.success || result.website)) {
+        const savedSite = result.website || {
+          id: siteId,
+          formData: { ...formData },
+          images: { ...images },
+          createdAt: new Date().toISOString(),
+          link: link
+        };
+        setSavedWebsites(prev => [savedSite, ...prev]);
+      }
+    } catch (error) {
+      console.error('Auto-save error:', error);
     }
   }
   
-  // Now clear the form
+  // Clear form for new website
   setFormData(defaultContractorFormData);
   setImages(defaultContractorImages);
   setGeneratedLink(null);
