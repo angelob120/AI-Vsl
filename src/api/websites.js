@@ -94,9 +94,12 @@ export const deleteWebsite = async (id) => {
 };
 
 
+/**
+ * Delete ALL websites from the database
+ */
 export const deleteAllWebsites = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/websites`, {
+    const response = await fetch(`${API_BASE_URL}/api/websites/all`, {
       method: 'DELETE'
     });
 
