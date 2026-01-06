@@ -129,7 +129,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   };
 
   const handleDeleteWebsite = async (siteId) => {
-    if (confirm('Are you sure you want to delete this website?')) {
+    if (window.confirm('Are you sure you want to delete this?')) {
       const success = await deleteStorageItem(`website:${siteId}`);
       if (success) {
         setSavedWebsites(prev => prev.filter(site => site.id !== siteId));

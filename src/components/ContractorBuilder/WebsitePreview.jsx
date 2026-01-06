@@ -24,11 +24,11 @@ export default function WebsitePreview({ formData, images }) {
         </div>
         
         <div className="navbar-links">
-          <a className="navbar-link">Home</a>
-          <a className="navbar-link">Services</a>
-          <a className="navbar-link">About</a>
-          {imgs.gallery && imgs.gallery.length > 0 && <a className="navbar-link">Gallery</a>}
-          <a className="navbar-link">Contact</a>
+          <a href="#" className="navbar-link">Home</a>
+          <a href="#" className="navbar-link">Services</a>
+          <a href="#" className="navbar-link">About</a>
+          {imgs.gallery && imgs.gallery.length > 0 && <a href="#" className="navbar-link">Gallery</a>}
+          <a href="#" className="navbar-link">Contact</a>
         </div>
         
         <div className="navbar-cta">
@@ -213,7 +213,7 @@ export default function WebsitePreview({ formData, images }) {
             <ul className="footer-links">
               {(data.services || []).slice(0, 4).map((service, i) => (
                 <li key={i} className="footer-link">
-                  <a href="#">{service}</a>
+                  <a href={`#${service.toLowerCase().replace(/\s+/g, '-')}`}>{service}</a>
                 </li>
               ))}
             </ul>

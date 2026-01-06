@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { parseCSV, exportVideosCSV } from '../../utils/csv';
-import { generateVideoId, delay, readFileAsDataURL, readFileAsText } from '../../utils/helpers';
+import { generateVideoId, delay, readFileAsText } from '../../utils/helpers';
 import { ColorPicker } from '../shared';
 import './styles.css';
 
 export default function RepliqStudio({ onNavigateToBuilder }) {
   // Video uploads
   const [introVideo, setIntroVideo] = useState(null);
-  const [introVideoFile, setIntroVideoFile] = useState(null);
   const [secondVideo, setSecondVideo] = useState(null);
-  const [secondVideoFile, setSecondVideoFile] = useState(null);
   const [useSecondVideo, setUseSecondVideo] = useState(false);
   
   // CSV/Leads
@@ -102,7 +100,6 @@ export default function RepliqStudio({ onNavigateToBuilder }) {
   const handleIntroUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setIntroVideoFile(file);
       setIntroVideo(URL.createObjectURL(file));
     }
   };
@@ -110,7 +107,6 @@ export default function RepliqStudio({ onNavigateToBuilder }) {
   const handleSecondUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSecondVideoFile(file);
       setSecondVideo(URL.createObjectURL(file));
     }
   };
