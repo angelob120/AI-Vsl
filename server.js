@@ -142,7 +142,22 @@ app.get('/api/websites/:id', async (req, res) => {
   }
 });
 
-// Delete website
+// Delete ALL websites - MUST come BEFORE /:id route!
+app.delete('/api/websites/all', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM contractor_websites RETURNING id');
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully deleted ${result.rowCount} websites` 
+    });
+  } catch (error) {
+    console.error('Delete all websites error:', error);
+    res.status(500).json({ error: 'Failed to delete all websites', details: error.message });
+  }
+});
+
+// Delete single website by ID
 app.delete('/api/websites/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -176,21 +191,4 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at /api/websites`);
-});
-
-
-
-// Delete ALL websites
-app.delete('/api/websites/all', async (req, res) => {
-  try {
-    const result = await pool.query('DELETE FROM contractor_websites RETURNING id');
-    
-    res.json({ 
-      success: true, 
-      message: `Successfully deleted ${result.rowCount} websites` 
-    });
-  } catch (error) {
-    console.error('Delete all websites error:', error);
-    res.status(500).json({ error: 'Failed to delete all websites', details: error.message });
-  }
 });
