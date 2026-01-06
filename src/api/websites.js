@@ -2,14 +2,9 @@
  * API client for contractor builder backend
  */
 
-// For production, use the Railway backend URL directly
-// Change this to your actual backend URL
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://ai-vsl-production.up.railway.app'
-  : (import.meta.env?.VITE_API_URL || 'http://localhost:3001');
-
-// If you want to always use production, uncomment this line:
-// const API_BASE_URL = 'https://ai-vsl-production.up.railway.app';
+// Use same origin - API is served from the same server as the frontend
+// This works because server.js serves both the React app AND the API
+const API_BASE_URL = '';
 
 /**
  * Save a website to the database
