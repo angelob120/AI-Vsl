@@ -86,43 +86,48 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   };
 
   // Save website to PostgreSQL and generate shareable link
-  const saveAndGenerateLink = async () => {
-    setIsSaving(true);
-    
-    const siteId = generateUniqueId();
-    const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
-    
-    const websiteData = {
-      id: siteId,
-      formData: { ...formData },
-      images: { ...images },
-      link: link
-    };
-
-    try {
-      const result = await saveWebsite(websiteData);
-      
-      if (result && result.success) {
-        setGeneratedLink(link);
-        // Add the saved website to the list
-        const savedSite = {
-          id: siteId,
-          formData: { ...formData },
-          images: { ...images },
-          createdAt: new Date().toISOString(),
-          link: link
-        };
-        setSavedWebsites(prev => [savedSite, ...prev]);
-      } else {
-        alert('Failed to save website. Please try again.');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      alert('Failed to save website. Please check your connection and try again.');
-    }
-    
-    setIsSaving(false);
+  // Save website to PostgreSQL and generate shareable link
+const saveAndGenerateLink = async () => {
+  setIsSaving(true);
+  
+  const siteId = generateUniqueId();
+  const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+  
+  const websiteData = {
+    id: siteId,
+    formData: { ...formData },
+    images: { ...images },
+    link: link
   };
+
+  try {
+    const result = await saveWebsite(websiteData);
+    console.log('Save result:', result); // <-- Add this for debugging
+    
+    // More robust check
+    if (result && (result.success || result.website)) {
+      setGeneratedLink(link);
+      
+      const savedSite = result.website || {
+        id: siteId,
+        formData: { ...formData },
+        images: { ...images },
+        createdAt: new Date().toISOString(),
+        link: link
+      };
+      
+      setSavedWebsites(prev => [savedSite, ...prev]);
+    } else {
+      console.error('Unexpected API response:', result);
+      alert('Failed to save website. Please try again.');
+    }
+  } catch (error) {
+    console.error('Save error:', error);
+    alert('Failed to save website. Please check your connection and try again.');
+  }
+  
+  setIsSaving(false);
+};
 
   const handleDownloadCSV = () => {
     if (savedWebsites.length === 0) {
