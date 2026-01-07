@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useVideoUpload, useCSVData, useVideoCreation } from './hooks';
 import {
-  Header,
   VideoUpload,
   CSVUpload,
   PageSettings,
@@ -53,8 +52,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
 
   return (
     <div className="repliq-studio">
-      <Header onBack={onNavigateToBuilder} />
-
       <div className="studio-content">
         {/* Left Panel - Controls */}
         <div className="controls-panel">

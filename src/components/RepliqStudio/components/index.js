@@ -1,6 +1,5 @@
 // FILE: src/components/RepliqStudio/components/index.js
-// Components barrel export
-export { default as Header } from './Header';
+// Components barrel export - Header removed
 export { default as VideoUpload } from './VideoUpload';
 export { default as CSVUpload } from './CSVUpload';
 export { default as ColumnMapping } from './ColumnMapping';
