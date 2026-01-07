@@ -17,7 +17,8 @@ export default function PreviewPanel({
   const timerRef = useRef(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
-  const [phase, setPhase] = useState('intro');
+  // phase is used for transition animations
+  const [phase, setPhase] = useState('intro'); // eslint-disable-line no-unused-vars
 
   useEffect(() => {
     return () => {
