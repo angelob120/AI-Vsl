@@ -51,10 +51,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const [newService, setNewService] = useState('');
 
   useEffect(() => {
-    // Only load saved websites if NOT in standalone preview mode
-    if (!isStandaloneSitePreview) {
-      loadSavedWebsites();
-    }
+    loadSavedWebsites();
     
     const hash = window.location.hash;
     if (hash && hash.startsWith('#site-')) {
@@ -63,7 +60,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     } else {
       setIsLoading(false);
     }
-  }, [isStandaloneSitePreview]);
+  }, []);
 
   // Load all saved websites from PostgreSQL via API
   const loadSavedWebsites = async () => {
@@ -401,7 +398,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     return <TemplateComponent formData={data} images={imgs} />;
   };
 
-  // Loading screen
   if (isLoading) {
     return (
       <div className="loading-screen">
@@ -440,10 +436,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     );
   }
 
-  // ============================================
-  // REGULAR PREVIEW MODE (In-Builder Preview)
-  // Shows preview with "Back to Builder" button
-  // ============================================
+  // Regular preview mode (in-builder preview with Back button)
   if (viewMode === 'preview' && previewData) {
     return (
       <div style={{ background: '#e5e7eb', minHeight: '100vh' }}>
@@ -459,10 +452,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   const SelectedTemplateComponent = getCurrentTemplate();
 
-  // ============================================
-  // BUILDER MODE (Default)
-  // Shows the full builder UI with form panel and preview panel
-  // ============================================
   return (
     <div className="contractor-builder">
       {/* Form Panel */}
@@ -550,35 +539,10 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               value={formData.ownerName}
               onChange={handleChange}
               className="form-input"
-              placeholder="Your Name"
+              placeholder="John Smith"
             />
           </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Phone</label>
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="(555) 123-4567"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="email@company.com"
-              />
-            </div>
-          </div>
-
+          
           <div className="form-group">
             <label className="form-label">Tagline</label>
             <input
@@ -587,207 +551,240 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               value={formData.tagline}
               onChange={handleChange}
               className="form-input"
-              placeholder="Building Dreams, One Project at a Time"
+              placeholder="Your company tagline"
             />
           </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Years Experience</label>
-              <input
-                type="text"
-                name="yearsExperience"
-                value={formData.yearsExperience}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="25"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Address</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="123 Main Street"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Colors */}
-        <div className="form-section">
-          <h2 className="form-section-title">Brand Colors</h2>
           
-          <div className="color-presets">
-            {colorPresets.map((preset, index) => (
-              <button
-                key={index}
-                className="color-preset"
-                onClick={() => setFormData(prev => ({
-                  ...prev,
-                  primaryColor: preset.primary,
-                  accentColor: preset.accent
-                }))}
-                title={preset.name}
-              >
-                <div className="preset-colors">
-                  <div className="preset-color" style={{ background: preset.primary }}></div>
-                  <div className="preset-color" style={{ background: preset.accent }}></div>
-                </div>
-              </button>
-            ))}
+          <div className="form-group">
+            <label className="form-label">Phone Number</label>
+            <input
+              type="text"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="(555) 123-4567"
+            />
           </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Primary Color</label>
-              <div className="color-input-group">
-                <input
-                  type="color"
-                  name="primaryColor"
-                  value={formData.primaryColor}
-                  onChange={handleChange}
-                  className="color-input"
-                />
-                <input
-                  type="text"
-                  value={formData.primaryColor}
-                  onChange={handleChange}
-                  name="primaryColor"
-                  className="form-input color-text"
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Accent Color</label>
-              <div className="color-input-group">
-                <input
-                  type="color"
-                  name="accentColor"
-                  value={formData.accentColor}
-                  onChange={handleChange}
-                  className="color-input"
-                />
-                <input
-                  type="text"
-                  value={formData.accentColor}
-                  onChange={handleChange}
-                  name="accentColor"
-                  className="form-input color-text"
-                />
-              </div>
-            </div>
+          
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="info@company.com"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="123 Main St, City, ST 12345"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Years in Business</label>
+            <input
+              type="text"
+              name="yearsExperience"
+              value={formData.yearsExperience}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="10"
+            />
           </div>
         </div>
-
-        {/* Images */}
+        
+        {/* Images - WITH PASTE SUPPORT */}
         <div className="form-section">
           <h2 className="form-section-title">Images</h2>
           
-          <div className="image-upload-grid">
-            <div className="image-upload-item">
-              <label className="image-upload-label">Logo</label>
-              <div 
-                className={`image-upload-box ${images.logo ? 'has-image' : ''}`}
-                onPaste={(e) => handlePaste('logo', e)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleContextPaste('logo');
-                }}
-              >
-                {images.logo ? (
-                  <>
-                    <img src={images.logo} alt="Logo" className="uploaded-image" />
-                    <button className="remove-image-btn" onClick={() => removeImage('logo')}>×</button>
-                  </>
-                ) : (
-                  <label className="upload-placeholder">
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload('logo', e)} hidden />
-                    <span>📷 Click or Paste</span>
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <div className="image-upload-item">
-              <label className="image-upload-label">Hero Background</label>
-              <div 
-                className={`image-upload-box ${images.hero ? 'has-image' : ''}`}
-                onPaste={(e) => handlePaste('hero', e)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleContextPaste('hero');
-                }}
-              >
-                {images.hero ? (
-                  <>
-                    <img src={images.hero} alt="Hero" className="uploaded-image" />
-                    <button className="remove-image-btn" onClick={() => removeImage('hero')}>×</button>
-                  </>
-                ) : (
-                  <label className="upload-placeholder">
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload('hero', e)} hidden />
-                    <span>📷 Click or Paste</span>
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <div className="image-upload-item">
-              <label className="image-upload-label">About Image</label>
-              <div 
-                className={`image-upload-box ${images.about ? 'has-image' : ''}`}
-                onPaste={(e) => handlePaste('about', e)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleContextPaste('about');
-                }}
-              >
-                {images.about ? (
-                  <>
-                    <img src={images.about} alt="About" className="uploaded-image" />
-                    <button className="remove-image-btn" onClick={() => removeImage('about')}>×</button>
-                  </>
-                ) : (
-                  <label className="upload-placeholder">
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload('about', e)} hidden />
-                    <span>📷 Click or Paste</span>
-                  </label>
-                )}
-              </div>
+          {/* Company Logo */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">Company Logo</label>
+            <div 
+              className={`image-upload-area ${images.logo ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('logo', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('logo');
+              }}
+            >
+              {images.logo ? (
+                <>
+                  <img src={images.logo} alt="Logo" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('logo')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">📷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('logo', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
             </div>
           </div>
-
+          
+          {/* Hero Image */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">Hero Background</label>
+            <div 
+              className={`image-upload-area ${images.hero ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('hero', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('hero');
+              }}
+            >
+              {images.hero ? (
+                <>
+                  <img src={images.hero} alt="Hero" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('hero')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">🖼️</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('hero', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          
+          {/* About Image */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">About Section Image</label>
+            <div 
+              className={`image-upload-area ${images.about ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('about', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('about');
+              }}
+            >
+              {images.about ? (
+                <>
+                  <img src={images.about} alt="About" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('about')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">👷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('about', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          
           {/* Gallery */}
-          <div className="gallery-section">
-            <label className="image-upload-label">Gallery Images</label>
+          <div className="image-upload-section">
+            <label className="image-upload-label">Project Gallery</label>
             <div className="gallery-grid">
               {images.gallery.map((img, index) => (
                 <div key={index} className="gallery-item">
                   <img src={img} alt={`Gallery ${index + 1}`} />
-                  <button className="remove-image-btn" onClick={() => removeGalleryImage(index)}>×</button>
+                  <button className="image-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
                 </div>
               ))}
               <div 
-                className="image-upload-box gallery-add"
+                className="gallery-add"
+                tabIndex={0}
                 onPaste={(e) => handlePaste('gallery', e)}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   handleContextPaste('gallery');
                 }}
               >
-                <label className="upload-placeholder">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload('gallery', e)} hidden />
-                  <span>+ Add</span>
+                <label style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  +
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('gallery', e)}
+                    style={{ display: 'none' }}
+                  />
                 </label>
               </div>
             </div>
           </div>
         </div>
-
+        
+        {/* Colors */}
+        <div className="form-section">
+          <h2 className="form-section-title">Brand Colors</h2>
+          
+          <div className="color-presets">
+            {colorPresets.map((preset) => (
+              <button
+                key={preset.name}
+                className={`color-preset ${formData.primaryColor === preset.primary && formData.accentColor === preset.accent ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  primaryColor: preset.primary, 
+                  accentColor: preset.accent 
+                }))}
+              >
+                <div className="color-preset-dots">
+                  <div className="color-dot" style={{ background: preset.primary }} />
+                  <div className="color-dot" style={{ background: preset.accent }} />
+                </div>
+                <div className="color-preset-name">{preset.name}</div>
+              </button>
+            ))}
+          </div>
+          
+          <div className="color-picker-row">
+            <div className="color-picker-group">
+              <label className="form-label">Primary Color</label>
+              <input
+                type="color"
+                value={formData.primaryColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
+                className="form-input"
+                style={{ height: 40, padding: 4 }}
+              />
+            </div>
+            <div className="color-picker-group">
+              <label className="form-label">Accent Color</label>
+              <input
+                type="color"
+                value={formData.accentColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
+                className="form-input"
+                style={{ height: 40, padding: 4 }}
+              />
+            </div>
+          </div>
+        </div>
+        
         {/* Services */}
         <div className="form-section">
           <h2 className="form-section-title">Services</h2>
@@ -796,7 +793,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             {formData.services.map((service, index) => (
               <div key={index} className="service-tag">
                 {service}
-                <button className="remove-service-btn" onClick={() => removeService(index)}>×</button>
+                <button className="service-remove" onClick={() => removeService(index)}>×</button>
               </div>
             ))}
           </div>

@@ -58,7 +58,7 @@ export default function App() {
   if (isSitePreview) {
     return (
       <ContractorBuilder 
-        onGoToRepliQ={handleGoToRepliQ}
+        onNavigateToRepliq={handleGoToRepliQ}
         isStandaloneSitePreview={true}
       />
     );
@@ -106,13 +106,13 @@ export default function App() {
       <main className="app-main">
         {currentTool === 'builder' ? (
           <ContractorBuilder 
-            onGoToRepliQ={handleGoToRepliQ}
+            onNavigateToRepliq={handleGoToRepliQ}
             isStandaloneSitePreview={false}
           />
         ) : (
           <RepliqStudio 
             importedCSV={exportedCSV}
-            onGoToBuilder={handleGoToBuilder}
+            onNavigateToBuilder={handleGoToBuilder}
           />
         )}
       </main>
