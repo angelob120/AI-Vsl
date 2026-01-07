@@ -1,5 +1,5 @@
 /**
- * CSV Parsing and Export Utilities
+ * CSV Parsing and Export Utilities - Updated for RepliQ Studio
  */
 
 /**
@@ -32,7 +32,7 @@ export const parseCSV = (text) => {
  * Escape a value for CSV format
  */
 export const escapeCSV = (str) => {
-  if (typeof str !== 'string') str = String(str);
+  if (typeof str !== 'string') str = String(str || '');
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
@@ -77,9 +77,38 @@ export const exportWebsitesCSV = (websites) => {
 };
 
 /**
- * Export RepliQ video results as CSV
+ * UPDATED: Export RepliQ video results as CSV
+ * Now includes Landing Page Link and Video Only Link
  */
 export const exportVideosCSV = (videos) => {
+  const headers = [
+    'Id',
+    'Success',
+    'Website URL',
+    'First Name',
+    'Company Name',
+    'Landing Page Link',
+    'Video Only Link'
+  ];
+
+  const rows = videos.map(video => [
+    video.id,
+    video.success,
+    video.originUrl,
+    video.firstName,
+    video.lastName,
+    video.landingPageLink,
+    video.videoOnlyLink
+  ]);
+
+  const filename = `repliq_videos_${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(headers, rows, filename);
+};
+
+/**
+ * Legacy export format (for backward compatibility)
+ */
+export const exportVideosCSVLegacy = (videos) => {
   const headers = [
     'Id',
     'VideoSuccess',
@@ -101,13 +130,13 @@ export const exportVideosCSV = (videos) => {
     video.firstName,
     video.lastName,
     video.videoLink,
-    video.videoHtmlEmail,
-    video.shortVideoHtml,
-    video.videoPreview,
-    video.backgroundImageLink,
-    video.imgHtmlEmail
+    video.videoHtmlEmail || '',
+    video.shortVideoHtml || '',
+    video.videoPreview || '',
+    video.backgroundImageLink || '',
+    video.imgHtmlEmail || ''
   ]);
 
-  const filename = `repliq_videos_${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `repliq_videos_legacy_${new Date().toISOString().split('T')[0]}.csv`;
   downloadCSV(headers, rows, filename);
 };

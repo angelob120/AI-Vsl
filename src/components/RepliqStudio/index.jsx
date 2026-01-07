@@ -4,10 +4,31 @@ import { generateVideoId, delay, readFileAsText } from '../../utils/helpers';
 import { ColorPicker } from '../shared';
 import './styles.css';
 
+// Storage keys for generated videos and landing pages
+const STORAGE_KEY_PREFIX = 'repliq_video_';
+const LANDING_PAGE_PREFIX = 'repliq_landing_';
+
+// Convert file to base64
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+// Generate unique ID for videos/pages
+const generateUniqueId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+};
+
 export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
-  // Video uploads
+  // Video uploads - now storing both URL and base64 data
   const [introVideo, setIntroVideo] = useState(null);
+  const [introVideoData, setIntroVideoData] = useState(null); // base64 data
   const [secondVideo, setSecondVideo] = useState(null);
+  const [secondVideoData, setSecondVideoData] = useState(null); // base64 data
   const [useSecondVideo, setUseSecondVideo] = useState(false);
   
   // CSV/Leads
@@ -58,19 +79,13 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
   const secondVideoRef = useRef(null);
   const timerRef = useRef(null);
 
-  // ============================================
-  // NEW: Handle imported CSV data from ContractorBuilder
-  // ============================================
+  // Handle imported CSV data from ContractorBuilder
   useEffect(() => {
     if (importedCSV && Array.isArray(importedCSV) && importedCSV.length > 0) {
       setCsvData(importedCSV);
-      
-      // Set headers from first row
       const headers = importedCSV[0];
       setCsvHeaders(headers);
       setHeaderRowIndex(0);
-      
-      // Auto-map columns based on header names
       const headersLower = headers.map(h => (h || '').toLowerCase());
       setColumnMapping({
         websiteUrl: headers[headersLower.findIndex(h => h.includes('website') || h.includes('url') || h.includes('link'))] || '',
@@ -79,6 +94,33 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
       });
     }
   }, [importedCSV]);
+
+  // Video handlers - now also save base64 data
+  const handleIntroUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIntroVideo(URL.createObjectURL(file));
+      try {
+        const base64 = await fileToBase64(file);
+        setIntroVideoData(base64);
+      } catch (err) {
+        console.error('Failed to convert video to base64:', err);
+      }
+    }
+  };
+
+  const handleSecondUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSecondVideo(URL.createObjectURL(file));
+      try {
+        const base64 = await fileToBase64(file);
+        setSecondVideoData(base64);
+      } catch (err) {
+        console.error('Failed to convert video to base64:', err);
+      }
+    }
+  };
 
   // Parse and handle CSV upload
   const handleCSVUpload = async (e) => {
@@ -113,21 +155,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
 
   const leads = getMappedLeads();
   const currentLead = leads[currentLeadIndex] || { firstName: 'FirstName', companyName: 'CompanyName', websiteUrl: 'https://example.com' };
-
-  // Video handlers
-  const handleIntroUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIntroVideo(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSecondUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSecondVideo(URL.createObjectURL(file));
-    }
-  };
 
   // Preview controls
   const startPreview = () => {
@@ -164,13 +191,393 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     }
   };
 
-  // Start Video Creation
+  // ============================================
+  // FIXED: Generate actual landing pages with video data
+  // ============================================
+  const generateLandingPageHTML = (lead, videoId, settings) => {
+    const {
+      introVideoData,
+      secondVideoData,
+      useSecondVideo,
+      transitionTime,
+      videoMode,
+      videoPosition,
+      videoShape,
+      videoTitle,
+      videoDescription,
+      buttonText,
+      buttonLink,
+      bgColor,
+      textColor,
+      darkMode
+    } = settings;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${videoTitle} - ${lead.firstName || lead.companyName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: ${darkMode ? '#1a1a2e' : '#f5f5f5'};
+      overflow: hidden;
+      height: 100vh;
+    }
+    
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Website Background iframe */
+    .website-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      z-index: 1;
+    }
+    
+    /* Overlay for better video visibility */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.15);
+      z-index: 2;
+      pointer-events: none;
+    }
+    
+    /* Video Bubble */
+    .video-bubble {
+      position: fixed;
+      z-index: 100;
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      cursor: pointer;
+      ${videoPosition === 'bottom-left' ? 'bottom: 20px; left: 20px;' : ''}
+      ${videoPosition === 'bottom-right' ? 'bottom: 20px; right: 20px;' : ''}
+      ${videoPosition === 'top-left' ? 'top: 20px; left: 20px;' : ''}
+      ${videoPosition === 'top-right' ? 'top: 20px; right: 20px;' : ''}
+      width: ${videoMode === 'small' ? '120px' : videoMode === 'big' ? '180px' : '180px'};
+      height: ${videoMode === 'small' ? '120px' : videoMode === 'big' ? '180px' : '180px'};
+      border-radius: ${videoShape === 'circle' ? '50%' : '16px'};
+    }
+    
+    .video-bubble.expanded {
+      ${videoMode === 'fullscreen' ? `
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+      ` : videoMode === 'big' ? `
+        width: 320px !important;
+        height: 320px !important;
+      ` : ''}
+    }
+    
+    .video-bubble video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Pulse ring animation */
+    .pulse-ring {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 3px solid ${bgColor};
+      border-radius: inherit;
+      animation: pulse 2s ease-out infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+    
+    /* Info Card */
+    .info-card {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: ${darkMode ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)'};
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 200;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    
+    .brand {
+      font-size: 18px;
+      font-weight: bold;
+      color: ${bgColor};
+    }
+    
+    .info-title {
+      color: ${darkMode ? '#fff' : '#333'};
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .info-name {
+      color: ${darkMode ? 'rgba(255,255,255,0.7)' : '#666'};
+      font-size: 13px;
+    }
+    
+    .cta-button {
+      background: ${bgColor};
+      color: ${textColor};
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .cta-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    /* Video only page styles */
+    .video-only-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+      background: ${darkMode ? '#1a1a2e' : '#f5f5f5'};
+    }
+    
+    .video-player {
+      max-width: 800px;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    
+    .video-player video {
+      width: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Website Background -->
+    <iframe 
+      class="website-frame" 
+      src="${lead.websiteUrl}" 
+      sandbox="allow-scripts allow-same-origin"
+      loading="lazy"
+    ></iframe>
+    
+    <!-- Overlay -->
+    <div class="overlay"></div>
+    
+    <!-- Video Bubble -->
+    <div class="video-bubble" id="videoBubble">
+      <video id="introVideo" muted playsinline autoplay loop>
+        <source src="${introVideoData}" type="video/mp4">
+      </video>
+      <div class="pulse-ring" id="pulseRing"></div>
+    </div>
+    
+    ${useSecondVideo && secondVideoData ? `
+    <video id="secondVideo" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:150;">
+      <source src="${secondVideoData}" type="video/mp4">
+    </video>
+    ` : ''}
+    
+    <!-- Info Card -->
+    <div class="info-card">
+      <span class="brand">°RepliQ</span>
+      <div>
+        <p class="info-title">${videoTitle}</p>
+        <p class="info-name">For ${lead.firstName || ''} ${lead.companyName ? '@ ' + lead.companyName : ''}</p>
+      </div>
+      ${buttonText && buttonLink ? `<a href="${buttonLink}" class="cta-button" target="_blank">${buttonText}</a>` : ''}
+    </div>
+  </div>
+  
+  <script>
+    const bubble = document.getElementById('videoBubble');
+    const pulseRing = document.getElementById('pulseRing');
+    const introVideo = document.getElementById('introVideo');
+    const secondVideo = document.getElementById('secondVideo');
+    const transitionTime = ${transitionTime * 1000};
+    const videoMode = '${videoMode}';
+    const useSecondVideo = ${useSecondVideo && secondVideoData ? 'true' : 'false'};
+    
+    let hasExpanded = false;
+    
+    // Auto-expand after transition time
+    setTimeout(() => {
+      if (!hasExpanded) {
+        expandBubble();
+      }
+    }, transitionTime);
+    
+    // Click to expand
+    bubble.addEventListener('click', () => {
+      if (!hasExpanded) {
+        expandBubble();
+      }
+    });
+    
+    function expandBubble() {
+      hasExpanded = true;
+      pulseRing.style.display = 'none';
+      bubble.classList.add('expanded');
+      
+      if (useSecondVideo && secondVideo) {
+        setTimeout(() => {
+          bubble.style.display = 'none';
+          secondVideo.style.display = 'block';
+          secondVideo.play();
+        }, 800);
+      }
+    }
+    
+    // Start video
+    introVideo.play().catch(e => console.log('Autoplay blocked:', e));
+  </script>
+</body>
+</html>`;
+  };
+
+  // Generate video-only page HTML
+  const generateVideoOnlyHTML = (lead, videoId, settings) => {
+    const { introVideoData, secondVideoData, useSecondVideo, videoTitle, bgColor, textColor, darkMode, buttonText, buttonLink } = settings;
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video - ${lead.firstName || lead.companyName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: ${darkMode ? '#1a1a2e' : '#f5f5f5'};
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .video-container {
+      max-width: 800px;
+      width: 100%;
+    }
+    .video-wrapper {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      background: #000;
+    }
+    video {
+      width: 100%;
+      display: block;
+    }
+    .info {
+      margin-top: 24px;
+      text-align: center;
+    }
+    .title {
+      color: ${darkMode ? '#fff' : '#333'};
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .name {
+      color: ${darkMode ? 'rgba(255,255,255,0.7)' : '#666'};
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    .cta-button {
+      display: inline-block;
+      background: ${bgColor};
+      color: ${textColor};
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .cta-button:hover {
+      transform: scale(1.05);
+    }
+    .brand {
+      margin-top: 32px;
+      font-size: 14px;
+      color: ${darkMode ? 'rgba(255,255,255,0.5)' : '#999'};
+    }
+    .brand span {
+      color: ${bgColor};
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <div class="video-wrapper">
+      <video controls autoplay>
+        <source src="${introVideoData}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <div class="info">
+      <p class="title">${videoTitle}</p>
+      <p class="name">For ${lead.firstName || ''} ${lead.companyName ? '@ ' + lead.companyName : ''}</p>
+      ${buttonText && buttonLink ? `<a href="${buttonLink}" class="cta-button" target="_blank">${buttonText}</a>` : ''}
+    </div>
+    <p class="brand">Powered by <span>°RepliQ</span></p>
+  </div>
+</body>
+</html>`;
+  };
+
+  // ============================================
+  // FIXED: Start Video Creation - Actually generates and saves landing pages
+  // ============================================
   const startVideoCreation = async () => {
     if (leads.length === 0) {
       alert('Please upload a CSV with leads first!');
       return;
     }
-    if (!introVideo) {
+    if (!introVideo || !introVideoData) {
       alert('Please upload an intro video first!');
       return;
     }
@@ -180,40 +587,77 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     setCreatedVideos([]);
     setShowResults(false);
 
-    const baseUrl = 'https://app.repliq.co';
+    const baseUrl = window.location.origin + window.location.pathname;
     const generatedVideos = [];
+
+    // Settings object to pass to HTML generators
+    const settings = {
+      introVideoData,
+      secondVideoData,
+      useSecondVideo,
+      transitionTime,
+      videoMode,
+      videoPosition,
+      videoShape,
+      videoTitle,
+      videoDescription,
+      buttonText,
+      buttonLink,
+      bgColor,
+      textColor,
+      darkMode
+    };
 
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i];
       setCurrentProcessingLead(lead);
       setCreationProgress(Math.round(((i) / leads.length) * 100));
 
-      // Simulate processing time
-      await delay(300 + Math.random() * 500);
+      await delay(100);
 
-      const videoId = generateVideoId();
-      const videoLink = `${baseUrl}/videos/${videoId}`;
-      const mediaLink = `${baseUrl}/medias/${videoId}`;
-      const backgroundLink = `${baseUrl}/background/${videoId}`;
+      const videoId = generateUniqueId();
+      
+      // Generate landing page HTML
+      const landingPageHTML = generateLandingPageHTML(lead, videoId, settings);
+      const videoOnlyHTML = generateVideoOnlyHTML(lead, videoId, settings);
+      
+      // Create Blob URLs for the landing pages
+      const landingPageBlob = new Blob([landingPageHTML], { type: 'text/html' });
+      const videoOnlyBlob = new Blob([videoOnlyHTML], { type: 'text/html' });
+      
+      // Store in localStorage for persistence
+      try {
+        const storageData = {
+          id: videoId,
+          lead,
+          settings,
+          landingPageHTML,
+          videoOnlyHTML,
+          createdAt: new Date().toISOString()
+        };
+        localStorage.setItem(LANDING_PAGE_PREFIX + videoId, JSON.stringify(storageData));
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
 
-      const videoHtmlEmail = `<a style="text-decoration:none;color:inherit;max-width:100%;" href="${videoLink}"><div style="display:block;"><img alt="" height="250" width="460" style="max-width:100%;background:url('${baseUrl}/loading/fekozf') no-repeat;display:block;background-position:center;" src="${mediaLink}" /></div><span style="display:inline-block;font-weight:bold;">Video for  <span style="text-decoration:underline;color:blue;">${lead.firstName} ${lead.companyName} - Watch Video</span></span></a>`;
-      
-      const shortVideoHtml = `<a href="${videoLink}"><img alt="" height="250" width="460" style="max-width: 100%;" src="${mediaLink}" /></a><br />`;
-      
-      const imgHtmlEmail = `<img alt="" height="250" width="460" style="max-width: 100%;" src="${mediaLink}" /><br />`;
+      // Create download links for the HTML files
+      const landingPageLink = `${baseUrl}#landing-${videoId}`;
+      const videoOnlyLink = `${baseUrl}#video-${videoId}`;
 
       generatedVideos.push({
-        id: i,
+        id: videoId,
         success: 'YES',
         originUrl: lead.websiteUrl,
         firstName: lead.firstName,
         lastName: lead.companyName,
-        videoLink,
-        videoHtmlEmail,
-        shortVideoHtml,
-        videoPreview: mediaLink,
-        backgroundImageLink: backgroundLink,
-        imgHtmlEmail
+        landingPageLink, // Link to landing page with website background + video
+        videoOnlyLink, // Link to video-only page
+        videoLink: landingPageLink, // For compatibility
+        landingPageBlob,
+        videoOnlyBlob,
+        // Downloadable HTML file content
+        landingPageHTML,
+        videoOnlyHTML
       });
     }
 
@@ -225,9 +669,72 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     setShowResults(true);
   };
 
-  // Export CSV
+  // ============================================
+  // FIXED: Export CSV with actual links
+  // ============================================
   const handleExportCSV = () => {
-    exportVideosCSV(createdVideos);
+    const headers = [
+      'Id',
+      'Success',
+      'Website URL',
+      'First Name', 
+      'Company Name',
+      'Landing Page Link',
+      'Video Only Link'
+    ];
+
+    const rows = createdVideos.map(video => [
+      video.id,
+      video.success,
+      video.originUrl,
+      video.firstName,
+      video.lastName,
+      video.landingPageLink,
+      video.videoOnlyLink
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => {
+        const str = String(cell || '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `repliq_videos_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Download individual landing page HTML
+  const downloadLandingPage = (video) => {
+    const blob = new Blob([video.landingPageHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `landing-${video.firstName}-${video.id}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Download all landing pages as individual files
+  const downloadAllLandingPages = () => {
+    createdVideos.forEach((video, index) => {
+      setTimeout(() => {
+        downloadLandingPage(video);
+      }, index * 500); // Stagger downloads
+    });
   };
 
   useEffect(() => {
@@ -263,6 +770,11 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     ...getPositionStyles(),
     ...getBubbleSize(),
     borderRadius: phase === 'expanded' && videoMode === 'fullscreen' ? '0' : videoShape === 'circle' ? '50%' : '16px',
+    overflow: 'hidden',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+    transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+    zIndex: 100,
+    cursor: 'pointer'
   };
 
   // Remove lead
@@ -394,28 +906,19 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
                   </div>
                 </div>
                 
-                <div className="leads-table">
-                  <div className="leads-table-header">
-                    <span>#</span>
-                    <span>Website</span>
-                    <span>Name</span>
-                    <span>Company</span>
-                    <span></span>
-                  </div>
-                  <div>
-                    {leads.slice(0, 5).map((lead) => (
-                      <div key={lead.id} className="leads-table-row">
-                        <span className="leads-table-cell">{lead.id}</span>
-                        <span className="leads-table-cell url">{lead.websiteUrl.slice(0, 20)}...</span>
-                        <span className="leads-table-cell">{lead.firstName}</span>
-                        <span className="leads-table-cell">{lead.companyName}</span>
-                        <button onClick={() => removeLead(lead.id)} className="remove-btn">×</button>
+                {/* Leads Preview */}
+                <div className="leads-preview">
+                  <h4 className="sub-title">Leads Preview ({leads.length})</h4>
+                  <div className="leads-list">
+                    {leads.slice(0, 5).map((lead, i) => (
+                      <div key={i} className="lead-item">
+                        <span className="lead-name">{lead.firstName || 'N/A'}</span>
+                        <span className="lead-company">{lead.companyName || 'N/A'}</span>
+                        <span className="lead-url">{lead.websiteUrl ? '🌐' : '⚠️'}</span>
                       </div>
                     ))}
+                    {leads.length > 5 && <p className="more-leads">+{leads.length - 5} more</p>}
                   </div>
-                  {leads.length > 5 && (
-                    <p className="more-leads">+{leads.length - 5} more leads...</p>
-                  )}
                 </div>
               </>
             )}
@@ -541,29 +1044,42 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
                 </div>
               </div>
               
-              <div className="color-row">
-                <ColorPicker label="Text" value={textColor} onChange={setTextColor} />
-                <ColorPicker label="BG" value={bgColor} onChange={setBgColor} />
-                <ColorPicker label="Hover Text" value={textHoverColor} onChange={setTextHoverColor} />
-                <ColorPicker label="Hover BG" value={bgHoverColor} onChange={setBgHoverColor} />
+              <div className="color-pickers">
+                <div className="color-picker-group">
+                  <label className="input-label">Background</label>
+                  <ColorPicker color={bgColor} onChange={setBgColor} />
+                </div>
+                <div className="color-picker-group">
+                  <label className="input-label">Text</label>
+                  <ColorPicker color={textColor} onChange={setTextColor} />
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Section 5: Display Options */}
+          <div className="repliq-section">
+            <h3 className="repliq-section-title">
+              <span>🎨</span> 5. Display Options
+            </h3>
             
-            <div className="toggles-grid">
-              <label className="toggle-item">
-                <input type="checkbox" checked={displayTab} onChange={() => setDisplayTab(!displayTab)} className="checkbox" />
-                <span>Display tab</span>
+            <div className="toggle-row">
+              <label className="checkbox-label">
+                <input type="checkbox" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} className="checkbox" />
+                Dark mode
               </label>
-              <label className="toggle-item">
-                <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="checkbox" />
-                <span>Dark mode</span>
+            </div>
+            
+            <div className="toggle-row">
+              <label className="checkbox-label">
+                <input type="checkbox" checked={scrollBehavior === 'down'} onChange={(e) => setScrollBehavior(e.target.checked ? 'down' : 'static')} className="checkbox" />
+                <span>Scroll animation ↓</span>
               </label>
-              <label className="toggle-item">
-                <input type="checkbox" checked={scrollBehavior === 'down'} onChange={() => setScrollBehavior(scrollBehavior === 'down' ? 'none' : 'down')} className="checkbox" />
-                <span>Scroll down ↓</span>
-              </label>
-              <label className="toggle-item">
-                <input type="checkbox" checked={mouseDisplay === 'moving'} onChange={() => setMouseDisplay(mouseDisplay === 'moving' ? 'static' : 'moving')} className="checkbox" />
+            </div>
+            
+            <div className="toggle-row">
+              <label className="checkbox-label">
+                <input type="checkbox" checked={mouseDisplay === 'moving'} onChange={(e) => setMouseDisplay(e.target.checked ? 'moving' : 'static')} className="checkbox" />
                 <span>Moving mouse ↗</span>
               </label>
             </div>
@@ -618,28 +1134,47 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
             </div>
             
             <div className={`browser-content ${darkMode ? 'dark' : ''}`}>
-              <div className="mock-site">
-                <div className={`mock-header ${darkMode ? 'dark' : ''}`}>
-                  <div className="mock-logo" />
-                  <div className="mock-nav">
-                    <div className="mock-nav-item" />
-                    <div className="mock-nav-item" />
-                    <div className="mock-nav-item" />
+              {/* Website iframe preview */}
+              {currentLead.websiteUrl && currentLead.websiteUrl.startsWith('http') ? (
+                <iframe 
+                  src={currentLead.websiteUrl}
+                  className="website-preview-iframe"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  sandbox="allow-scripts allow-same-origin"
+                  loading="lazy"
+                  title="Website Preview"
+                />
+              ) : (
+                <div className="mock-site">
+                  <div className={`mock-header ${darkMode ? 'dark' : ''}`}>
+                    <div className="mock-logo" />
+                    <div className="mock-nav">
+                      <div className="mock-nav-item" />
+                      <div className="mock-nav-item" />
+                      <div className="mock-nav-item" />
+                    </div>
+                  </div>
+                  <div className="mock-hero">
+                    <h2 className="mock-hero-title" style={{ color: darkMode ? '#fff' : '#333' }}>
+                      {currentLead.companyName || 'Your Prospect'}
+                    </h2>
+                    <h1 className="mock-hero-subtitle">
+                      Website Preview
+                    </h1>
+                    <p className="mock-hero-text" style={{ color: darkMode ? 'rgba(255,255,255,0.6)' : '#666' }}>
+                      Upload CSV with website URLs to see actual websites
+                    </p>
+                    <button className="mock-cta">LEARN MORE</button>
                   </div>
                 </div>
-                <div className="mock-hero">
-                  <h2 className="mock-hero-title" style={{ color: darkMode ? '#fff' : '#333' }}>
-                    Find, Contact & Close
-                  </h2>
-                  <h1 className="mock-hero-subtitle">
-                    Your Ideal Clients.
-                  </h1>
-                  <p className="mock-hero-text" style={{ color: darkMode ? 'rgba(255,255,255,0.6)' : '#666' }}>
-                    Instantly turn leads into clients with Automated Outreach
-                  </p>
-                  <button className="mock-cta">START FOR FREE</button>
-                </div>
-              </div>
+              )}
               
               <div 
                 className={`video-bubble ${phase === 'expanded' && videoMode === 'fullscreen' ? 'fullscreen-expanded' : ''}`}
@@ -751,13 +1286,13 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
             <p className="progress-text">{creationProgress}% Complete</p>
             
             <p className="modal-note">
-              {Math.round((leads.length * 0.5) - (creationProgress / 100 * leads.length * 0.5))}s remaining...
+              Generating landing pages with video overlays...
             </p>
           </div>
         </div>
       )}
 
-      {/* Results Modal */}
+      {/* Results Modal - FIXED with actual download options */}
       {showResults && (
         <div className="modal-overlay">
           <div className="results-modal">
@@ -766,29 +1301,42 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
             <div className="success-icon">✅</div>
             <h2 className="modal-title">Videos Created Successfully!</h2>
             <p className="modal-subtitle">
-              {createdVideos.length} personalized videos are ready
+              {createdVideos.length} personalized landing pages are ready
             </p>
             
             {/* Sample Results */}
             <div className="results-preview">
-              <p className="results-title">Sample Results</p>
-              {createdVideos.slice(0, 3).map((video, i) => (
+              <p className="results-title">Generated Landing Pages</p>
+              {createdVideos.slice(0, 5).map((video, i) => (
                 <div key={i} className="result-item">
                   <span className="result-name">{video.firstName} - {video.lastName}</span>
-                  <a href={video.videoLink} className="result-link" target="_blank" rel="noopener noreferrer">
-                    View Video →
-                  </a>
+                  <div className="result-actions">
+                    <button 
+                      onClick={() => downloadLandingPage(video)} 
+                      className="result-download-btn"
+                      title="Download Landing Page HTML"
+                    >
+                      📥 Download
+                    </button>
+                  </div>
                 </div>
               ))}
-              {createdVideos.length > 3 && (
-                <p className="more-results">+{createdVideos.length - 3} more videos</p>
+              {createdVideos.length > 5 && (
+                <p className="more-results">+{createdVideos.length - 5} more videos</p>
               )}
             </div>
             
-            <button onClick={handleExportCSV} className="export-button">
-              📥 Export All to CSV
-            </button>
-            <p className="export-note">Download all video links and embed codes</p>
+            <div className="export-buttons">
+              <button onClick={handleExportCSV} className="export-button">
+                📥 Export CSV with Links
+              </button>
+              <button onClick={downloadAllLandingPages} className="export-button secondary">
+                📦 Download All HTML Files
+              </button>
+            </div>
+            <p className="export-note">
+              CSV includes Landing Page links and Video-only links for each lead
+            </p>
           </div>
         </div>
       )}
