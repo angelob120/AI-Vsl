@@ -86,63 +86,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   };
 
   // Save website to PostgreSQL and generate shareable link
-  // Save website to PostgreSQL and generate shareable link
-const saveAndGenerateLink = async () => {
-  setIsSaving(true);
-  
-  const siteId = generateUniqueId();
-  const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
-  
-  const websiteData = {
-    id: siteId,
-    formData: { ...formData },
-    images: { ...images },
-    link: link
-  };
-
-  try {
-    const result = await saveWebsite(websiteData);
-    console.log('Save result:', result); // <-- Add this for debugging
+  const saveAndGenerateLink = async () => {
+    setIsSaving(true);
     
-    // More robust check
-    if (result && (result.success || result.website)) {
-      setGeneratedLink(link);
-      
-      const savedSite = result.website || {
-        id: siteId,
-        formData: { ...formData },
-        images: { ...images },
-        createdAt: new Date().toISOString(),
-        link: link
-      };
-      
-      setSavedWebsites(prev => [savedSite, ...prev]);
-    } else {
-      console.error('Unexpected API response:', result);
-      alert('Failed to save website. Please try again.');
-    }
-  } catch (error) {
-    console.error('Save error:', error);
-    alert('Failed to save website. Please check your connection and try again.');
-  }
-  
-  setIsSaving(false);
-};
-
-  const handleDownloadCSV = () => {
-    if (savedWebsites.length === 0) {
-      alert('No websites saved yet. Generate some links first!');
-      return;
-    }
-    exportWebsitesCSV(savedWebsites);
-  };
-
-  const clearForm = async () => {
-  // Auto-save current website if there's content
-  const hasContent = formData.companyName && formData.companyName.trim() !== '';
-  
-  if (hasContent) {
-    // Save current website first
     const siteId = generateUniqueId();
     const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
     
@@ -155,8 +101,11 @@ const saveAndGenerateLink = async () => {
 
     try {
       const result = await saveWebsite(websiteData);
+      console.log('Save result:', result);
       
       if (result && (result.success || result.website)) {
+        setGeneratedLink(link);
+        
         const savedSite = result.website || {
           id: siteId,
           formData: { ...formData },
@@ -164,18 +113,64 @@ const saveAndGenerateLink = async () => {
           createdAt: new Date().toISOString(),
           link: link
         };
+        
         setSavedWebsites(prev => [savedSite, ...prev]);
+      } else {
+        console.error('Unexpected API response:', result);
+        alert('Failed to save website. Please try again.');
       }
     } catch (error) {
-      console.error('Auto-save error:', error);
+      console.error('Save error:', error);
+      alert('Failed to save website. Please check your connection and try again.');
     }
-  }
-  
-  // Clear form for new website
-  setFormData(defaultContractorFormData);
-  setImages(defaultContractorImages);
-  setGeneratedLink(null);
-};
+    
+    setIsSaving(false);
+  };
+
+  const handleDownloadCSV = () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites saved yet. Generate some links first!');
+      return;
+    }
+    exportWebsitesCSV(savedWebsites);
+  };
+
+  const clearForm = async () => {
+    const hasContent = formData.companyName && formData.companyName.trim() !== '';
+    
+    if (hasContent) {
+      const siteId = generateUniqueId();
+      const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+      
+      const websiteData = {
+        id: siteId,
+        formData: { ...formData },
+        images: { ...images },
+        link: link
+      };
+
+      try {
+        const result = await saveWebsite(websiteData);
+        
+        if (result && (result.success || result.website)) {
+          const savedSite = result.website || {
+            id: siteId,
+            formData: { ...formData },
+            images: { ...images },
+            createdAt: new Date().toISOString(),
+            link: link
+          };
+          setSavedWebsites(prev => [savedSite, ...prev]);
+        }
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      }
+    }
+    
+    setFormData(defaultContractorFormData);
+    setImages(defaultContractorImages);
+    setGeneratedLink(null);
+  };
 
   const duplicateWebsite = (website) => {
     setFormData({ ...website.formData });
@@ -184,7 +179,6 @@ const saveAndGenerateLink = async () => {
     setViewMode('builder');
   };
 
-  // Delete website from PostgreSQL via API
   const handleDeleteWebsite = async (siteId) => {
     if (window.confirm('Are you sure you want to delete this?')) {
       try {
@@ -221,6 +215,37 @@ const saveAndGenerateLink = async () => {
           ...prev,
           [type]: dataUrl
         }));
+      }
+    }
+  };
+
+  // NEW: Handle paste for images
+  const handlePaste = async (type, e) => {
+    e.preventDefault();
+    
+    const clipboardData = e.clipboardData || window.clipboardData;
+    const items = clipboardData?.items;
+    
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          const dataUrl = await readFileAsDataURL(file);
+          if (type === 'gallery') {
+            setImages(prev => ({
+              ...prev,
+              gallery: [...prev.gallery, dataUrl]
+            }));
+          } else {
+            setImages(prev => ({
+              ...prev,
+              [type]: dataUrl
+            }));
+          }
+          return;
+        }
       }
     }
   };
@@ -268,8 +293,6 @@ const saveAndGenerateLink = async () => {
     }
   };
 
-
-    // Delete ALL websites with confirmation
   const handleClearAllWebsites = async () => {
     if (savedWebsites.length === 0) {
       alert('No websites to delete.');
@@ -281,7 +304,6 @@ const saveAndGenerateLink = async () => {
     );
     
     if (confirmed) {
-      // Double confirmation for safety
       const doubleConfirmed = window.confirm(
         '🚨 FINAL WARNING: You are about to delete ALL saved websites.\n\nClick OK to permanently delete everything.'
       );
@@ -312,7 +334,6 @@ const saveAndGenerateLink = async () => {
     );
   }
 
-  // Full-screen preview mode for shared links
   if (viewMode === 'preview' && previewData) {
     return (
       <div style={{ background: '#e5e7eb', minHeight: '100vh' }}>
@@ -461,13 +482,22 @@ const saveAndGenerateLink = async () => {
           </div>
         </div>
         
-        {/* Images */}
+        {/* Images - UPDATED WITH PASTE SUPPORT */}
         <div className="form-section">
           <h2 className="form-section-title">Images</h2>
           
+          {/* Company Logo */}
           <div className="image-upload-section">
             <label className="image-upload-label">Company Logo</label>
-            <div className={`image-upload-area ${images.logo ? 'has-image' : ''}`}>
+            <div 
+              className={`image-upload-area ${images.logo ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('logo', e)}
+              onClick={(e) => {
+                if (e.target.closest('.image-remove-btn')) return;
+                e.currentTarget.focus();
+              }}
+            >
               {images.logo ? (
                 <>
                   <img src={images.logo} alt="Logo" className="uploaded-image-preview logo" />
@@ -476,8 +506,8 @@ const saveAndGenerateLink = async () => {
               ) : (
                 <>
                   <div className="image-upload-icon">🏢</div>
-                  <div className="image-upload-text">Upload your logo</div>
-                  <div className="image-upload-hint">PNG or SVG recommended</div>
+                  <div className="image-upload-text">Upload or paste your logo</div>
+                  <div className="image-upload-hint">PNG or SVG recommended • Click & Ctrl+V to paste</div>
                 </>
               )}
               <input
@@ -489,9 +519,18 @@ const saveAndGenerateLink = async () => {
             </div>
           </div>
           
+          {/* Hero Background */}
           <div className="image-upload-section">
             <label className="image-upload-label">Hero Background</label>
-            <div className={`image-upload-area ${images.hero ? 'has-image' : ''}`}>
+            <div 
+              className={`image-upload-area ${images.hero ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('hero', e)}
+              onClick={(e) => {
+                if (e.target.closest('.image-remove-btn')) return;
+                e.currentTarget.focus();
+              }}
+            >
               {images.hero ? (
                 <>
                   <img src={images.hero} alt="Hero" className="uploaded-image-preview" />
@@ -500,8 +539,8 @@ const saveAndGenerateLink = async () => {
               ) : (
                 <>
                   <div className="image-upload-icon">🖼️</div>
-                  <div className="image-upload-text">Upload hero image</div>
-                  <div className="image-upload-hint">Recommended: 1920x800px</div>
+                  <div className="image-upload-text">Upload or paste hero image</div>
+                  <div className="image-upload-hint">Recommended: 1920x800px • Click & Ctrl+V to paste</div>
                 </>
               )}
               <input
@@ -513,9 +552,18 @@ const saveAndGenerateLink = async () => {
             </div>
           </div>
           
+          {/* About / Team Photo */}
           <div className="image-upload-section">
             <label className="image-upload-label">About / Team Photo</label>
-            <div className={`image-upload-area ${images.about ? 'has-image' : ''}`}>
+            <div 
+              className={`image-upload-area ${images.about ? 'has-image' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('about', e)}
+              onClick={(e) => {
+                if (e.target.closest('.image-remove-btn')) return;
+                e.currentTarget.focus();
+              }}
+            >
               {images.about ? (
                 <>
                   <img src={images.about} alt="About" className="uploaded-image-preview" />
@@ -524,8 +572,8 @@ const saveAndGenerateLink = async () => {
               ) : (
                 <>
                   <div className="image-upload-icon">👷</div>
-                  <div className="image-upload-text">Upload team photo</div>
-                  <div className="image-upload-hint">Show your team at work</div>
+                  <div className="image-upload-text">Upload or paste team photo</div>
+                  <div className="image-upload-hint">Show your team at work • Click & Ctrl+V to paste</div>
                 </>
               )}
               <input
@@ -537,6 +585,7 @@ const saveAndGenerateLink = async () => {
             </div>
           </div>
           
+          {/* Project Gallery */}
           <div className="image-upload-section">
             <label className="image-upload-label">Project Gallery</label>
             <div className="gallery-grid">
@@ -547,7 +596,12 @@ const saveAndGenerateLink = async () => {
                 </div>
               ))}
               {images.gallery.length < 6 && (
-                <div className="gallery-add">
+                <div 
+                  className="gallery-add"
+                  tabIndex={0}
+                  onPaste={(e) => handlePaste('gallery', e)}
+                  onClick={(e) => e.currentTarget.focus()}
+                >
                   <span>+</span>
                   <input
                     type="file"
@@ -570,10 +624,10 @@ const saveAndGenerateLink = async () => {
               <button
                 key={index}
                 className={`color-preset ${formData.primaryColor === preset.primary ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({
-                  ...prev,
-                  primaryColor: preset.primary,
-                  accentColor: preset.accent
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  primaryColor: preset.primary, 
+                  accentColor: preset.accent 
                 }))}
               >
                 <div className="color-preset-dots">
@@ -587,42 +641,31 @@ const saveAndGenerateLink = async () => {
           
           <div className="color-picker-row">
             <div className="color-picker-group">
-              <label className="form-label">Primary</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#fafafa', border: '1.5px solid #e5e7eb', borderRadius: 10 }}>
-                <input
-                  type="color"
-                  name="primaryColor"
-                  value={formData.primaryColor}
-                  onChange={handleChange}
-                  style={{ width: 32, height: 32, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0 }}
-                />
-                <span style={{ fontSize: 12, fontFamily: "'SF Mono', monospace", color: '#6b7280', textTransform: 'uppercase' }}>
-                  {formData.primaryColor}
-                </span>
-              </div>
+              <label className="form-label">Primary Color</label>
+              <input
+                type="color"
+                value={formData.primaryColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
+                className="form-input"
+                style={{ height: 40, padding: 4 }}
+              />
             </div>
-            
             <div className="color-picker-group">
-              <label className="form-label">Accent</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#fafafa', border: '1.5px solid #e5e7eb', borderRadius: 10 }}>
-                <input
-                  type="color"
-                  name="accentColor"
-                  value={formData.accentColor}
-                  onChange={handleChange}
-                  style={{ width: 32, height: 32, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0 }}
-                />
-                <span style={{ fontSize: 12, fontFamily: "'SF Mono', monospace", color: '#6b7280', textTransform: 'uppercase' }}>
-                  {formData.accentColor}
-                </span>
-              </div>
+              <label className="form-label">Accent Color</label>
+              <input
+                type="color"
+                value={formData.accentColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
+                className="form-input"
+                style={{ height: 40, padding: 4 }}
+              />
             </div>
           </div>
         </div>
         
         {/* Services */}
         <div className="form-section">
-          <h2 className="form-section-title">Services Offered</h2>
+          <h2 className="form-section-title">Services</h2>
           
           <div className="services-list">
             {formData.services.map((service, index) => (
@@ -721,4 +764,3 @@ const saveAndGenerateLink = async () => {
     </div>
   );
 }
-
