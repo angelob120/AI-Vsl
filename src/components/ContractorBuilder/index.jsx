@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import WebsitePreview from './WebsitePreview';
 import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
 import { exportWebsitesCSV } from '../../utils/csv';
