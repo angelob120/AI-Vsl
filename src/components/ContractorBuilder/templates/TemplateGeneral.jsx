@@ -222,7 +222,7 @@ export default function TemplateGeneral({ formData, images }) {
             <h4 className="tg-footer-title">Services</h4>
             <ul className="tg-footer-links">
               {(data.services || []).slice(0, 4).map((service, i) => (
-                <li key={i}><a href="#">{service}</a></li>
+                <li key={i}><span className="footer-service-link">{service}</span></li>
               ))}
             </ul>
           </div>

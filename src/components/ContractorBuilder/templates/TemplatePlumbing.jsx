@@ -255,7 +255,7 @@ export default function TemplatePlumbing({ formData, images }) {
             <h4>Services</h4>
             <ul>
               {(data.services || []).slice(0, 4).map((service, i) => (
-                <li key={i}><a href="#">{service}</a></li>
+                <li key={i}><span className="footer-service-link">{service}</span></li>
               ))}
             </ul>
           </div>

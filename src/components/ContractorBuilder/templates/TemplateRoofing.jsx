@@ -271,7 +271,7 @@ export default function TemplateRoofing({ formData, images }) {
             <h4 className="tr-footer-title">Services</h4>
             <ul className="tr-footer-links">
               {(data.services || []).slice(0, 4).map((service, i) => (
-                <li key={i}><a href="#">{service}</a></li>
+                <li key={i}><span className="footer-service-link">{service}</span></li>
               ))}
             </ul>
           </div>
