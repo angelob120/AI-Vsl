@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import WebsitePreview from './WebsitePreview';
+import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
 import { exportWebsitesCSV } from '../../utils/csv';
 import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
@@ -11,6 +12,7 @@ import {
   copyToClipboard 
 } from '../../utils/helpers';
 import './styles.css';
+import './template-styles.css';
 
 // Generate unique ID (moved here since we're not importing from storage)
 const generateUniqueId = () => {
@@ -22,13 +24,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     ownerName: 'John Mitchell',
     companyName: 'Mitchell Construction',
     phone: '(555) 123-4567',
-    email: 'email@email.com',           // ← Updated
+    email: 'email@email.com',
     tagline: 'Building Dreams, One Project at a Time',
     primaryColor: '#1a3a5c',
     accentColor: '#c9a227',
     services: ['Kitchen Remodels', 'Bathroom Renovations', 'Home Additions', 'Deck Building'],
     yearsExperience: '25',
-    address: '123 Main Street'          // ← Updated
+    address: '123 Main Street'
   });
 
   const [images, setImages] = useState({
@@ -37,6 +39,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     about: null,
     gallery: []
   });
+
+  // Template state - default to 'general'
+  const [selectedTemplate, setSelectedTemplate] = useState('general');
 
   const [savedWebsites, setSavedWebsites] = useState([]);
   const [generatedLink, setGeneratedLink] = useState(null);
@@ -74,9 +79,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   // Load a specific website by ID from PostgreSQL via API
   const loadWebsiteById = async (siteId) => {
     try {
-      const data = await getWebsiteById(siteId);
-      if (data) {
-        setPreviewData(data);
+      const website = await getWebsiteById(siteId);
+      if (website) {
+        setPreviewData({
+          formData: website.formData,
+          images: website.images,
+          template: website.template || 'general'
+        });
         setViewMode('preview');
       }
     } catch (e) {
@@ -85,8 +94,12 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     setIsLoading(false);
   };
 
-  // Save website to PostgreSQL and generate shareable link
   const saveAndGenerateLink = async () => {
+    if (!formData.companyName || formData.companyName.trim() === '') {
+      alert('Please enter a company name first!');
+      return;
+    }
+    
     setIsSaving(true);
     
     const siteId = generateUniqueId();
@@ -96,27 +109,25 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
       id: siteId,
       formData: { ...formData },
       images: { ...images },
+      template: selectedTemplate,
       link: link
     };
 
     try {
       const result = await saveWebsite(websiteData);
-      console.log('Save result:', result);
       
       if (result && (result.success || result.website)) {
-        setGeneratedLink(link);
-        
         const savedSite = result.website || {
           id: siteId,
           formData: { ...formData },
           images: { ...images },
+          template: selectedTemplate,
           createdAt: new Date().toISOString(),
           link: link
         };
-        
         setSavedWebsites(prev => [savedSite, ...prev]);
+        setGeneratedLink(link);
       } else {
-        console.error('Unexpected API response:', result);
         alert('Failed to save website. Please try again.');
       }
     } catch (error) {
@@ -146,6 +157,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
         id: siteId,
         formData: { ...formData },
         images: { ...images },
+        template: selectedTemplate,
         link: link
       };
 
@@ -157,6 +169,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             id: siteId,
             formData: { ...formData },
             images: { ...images },
+            template: selectedTemplate,
             createdAt: new Date().toISOString(),
             link: link
           };
@@ -175,6 +188,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   const duplicateWebsite = (website) => {
     setFormData({ ...website.formData });
     setImages({ ...website.images });
+    setSelectedTemplate(website.template || 'general');
     setGeneratedLink(null);
     setViewMode('builder');
   };
@@ -352,6 +366,19 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     }
   };
 
+  // Get the currently selected template component
+  const getCurrentTemplate = () => {
+    const template = getTemplateById(selectedTemplate);
+    return template.component;
+  };
+
+  // Render the preview with the selected template
+  const renderPreview = (data, imgs, templateId) => {
+    const template = getTemplateById(templateId || selectedTemplate);
+    const TemplateComponent = template.component;
+    return <TemplateComponent formData={data} images={imgs} />;
+  };
+
   if (isLoading) {
     return (
       <div className="loading-screen">
@@ -368,11 +395,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
           ← Back to Builder
         </button>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: 24 }}>
-          <WebsitePreview formData={previewData.formData} images={previewData.images} />
+          {renderPreview(previewData.formData, previewData.images, previewData.template)}
         </div>
       </div>
     );
   }
+
+  const SelectedTemplateComponent = getCurrentTemplate();
 
   return (
     <div className="contractor-builder">
@@ -419,6 +448,23 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             </div>
           </div>
         )}
+
+        {/* Template Selection */}
+        <div className="form-section">
+          <h2 className="form-section-title">Choose Template</h2>
+          <div className="template-grid">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                className={`template-option ${selectedTemplate === template.id ? 'active' : ''}`}
+                onClick={() => setSelectedTemplate(template.id)}
+              >
+                <span className="template-icon">{template.icon}</span>
+                <span className="template-name">{template.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         
         {/* Business Information */}
         <div className="form-section">
@@ -509,7 +555,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
           </div>
         </div>
         
-        {/* Images - UPDATED WITH PASTE SUPPORT */}
+        {/* Images - WITH PASTE SUPPORT */}
         <div className="form-section">
           <h2 className="form-section-title">Images</h2>
           
@@ -715,7 +761,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               placeholder="Add a service..."
               onKeyPress={(e) => e.key === 'Enter' && addService()}
             />
-            <button className="add-service-btn" onClick={addService}>Add</button>
+            <button className="add-service-btn" onClick={addService}>
+              Add
+            </button>
           </div>
         </div>
         
@@ -723,22 +771,23 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
         <div className="saved-websites-section">
           <div className="saved-websites-header">
             <div className="saved-websites-title">
-              📁 Saved Websites
               <span className="saved-count">{savedWebsites.length}</span>
+              Saved Websites
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                className="download-csv-btn" 
-                onClick={handleClearAllWebsites}
-                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
-                title="Delete all saved websites"
-              >
-                🗑️ Clear All
-              </button>
-              <button className="download-csv-btn" onClick={handleDownloadCSV}>
-                📥 Export CSV
-              </button>
-            </div>
+            {savedWebsites.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="download-csv-btn" onClick={handleDownloadCSV}>
+                  📥 Export CSV
+                </button>
+                <button 
+                  className="download-csv-btn" 
+                  onClick={handleClearAllWebsites}
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+                >
+                  🗑️ Clear All
+                </button>
+              </div>
+            )}
           </div>
           
           {savedWebsites.length === 0 ? (
@@ -755,7 +804,10 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
                   />
                   <div className="saved-website-info">
                     <div className="saved-website-name">{site.formData.companyName}</div>
-                    <div className="saved-website-date">{new Date(site.createdAt).toLocaleDateString()}</div>
+                    <div className="saved-website-date">
+                      {new Date(site.createdAt).toLocaleDateString()}
+                      {site.template && <span className="saved-website-template"> • {getTemplateById(site.template).icon}</span>}
+                    </div>
                   </div>
                   <div className="saved-website-actions">
                     <button 
@@ -789,12 +841,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
       
       {/* Preview Panel */}
       <div className="preview-panel">
-        <WebsitePreview formData={formData} images={images} />
+        <SelectedTemplateComponent formData={formData} images={images} />
       </div>
     </div>
   );
 }
-
-
-
-
