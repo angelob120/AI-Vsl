@@ -232,27 +232,20 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
     
     const confirmed = window.confirm(
-      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!\n\nAre you sure you want to continue?`
+      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!`
     );
     
     if (confirmed) {
-      const doubleConfirmed = window.confirm(
-        '🚨 FINAL WARNING: You are about to delete ALL saved websites.\n\nClick OK to permanently delete everything.'
-      );
-      
-      if (doubleConfirmed) {
-        try {
-          const success = await deleteAllWebsites();
-          if (success) {
-            setSavedWebsites([]);
-            alert('All websites have been deleted.');
-          } else {
-            alert('Failed to delete websites.');
-          }
-        } catch (error) {
-          console.error('Clear all error:', error);
-          alert('Failed to delete websites. Please try again.');
+      try {
+        const success = await deleteAllWebsites();
+        if (success) {
+          setSavedWebsites([]);
+        } else {
+          alert('Failed to delete websites.');
         }
+      } catch (error) {
+        console.error('Clear all error:', error);
+        alert('Failed to delete websites. Please try again.');
       }
     }
   };
