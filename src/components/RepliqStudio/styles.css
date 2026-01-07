@@ -405,8 +405,9 @@
 
 /* Color Row */
 .color-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
   margin-top: 12px;
 }
 
