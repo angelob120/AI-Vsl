@@ -12,7 +12,7 @@ import {
   copyToClipboard 
 } from '../../utils/helpers';
 import './styles.css';
-import './template-styles.css';
+import './templates/template-styles.css';
 
 // Generate unique ID (moved here since we're not importing from storage)
 const generateUniqueId = () => {
