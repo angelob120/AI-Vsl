@@ -18,7 +18,7 @@ const generateUniqueId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 };
 
-export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSitePreview = false }) {
+export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSitePreview = false, isDarkMode = false }) {
   const [formData, setFormData] = useState({
     ownerName: 'John Mitchell',
     companyName: 'Mitchell Construction',
@@ -66,8 +66,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const loadSavedWebsites = async () => {
     try {
       const websites = await getAllWebsites();
-      console.log('Loaded websites from API:', websites); // Debug log
-      // Sort by createdAt descending
+      console.log('Loaded websites from API:', websites);
       websites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setSavedWebsites(websites);
     } catch (e) {
@@ -80,7 +79,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const loadWebsiteById = async (siteId) => {
     try {
       const website = await getWebsiteById(siteId);
-      console.log('Loaded website by ID:', website); // Debug log
+      console.log('Loaded website by ID:', website);
       if (website) {
         setPreviewData({
           formData: website.formData,
@@ -106,24 +105,22 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     const siteId = generateUniqueId();
     const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
     
-    // Important: Use the current selectedTemplate value
     const websiteData = {
       id: siteId,
       formData: { ...formData },
       images: { ...images },
-      template: selectedTemplate, // This should be the currently selected template
+      template: selectedTemplate,
       link: link
     };
 
-    console.log('Saving website with template:', selectedTemplate); // Debug log
-    console.log('Full websiteData:', websiteData); // Debug log
+    console.log('Saving website with template:', selectedTemplate);
+    console.log('Full websiteData:', websiteData);
 
     try {
       const result = await saveWebsite(websiteData);
-      console.log('Save result:', result); // Debug log
+      console.log('Save result:', result);
       
       if (result && (result.success || result.website)) {
-        // Use the template from the response if available, otherwise use selectedTemplate
         const savedSite = result.website || {
           id: siteId,
           formData: { ...formData },
@@ -133,12 +130,11 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           link: link
         };
         
-        // Ensure template is set correctly
         if (!savedSite.template) {
           savedSite.template = selectedTemplate;
         }
         
-        console.log('Saved site with template:', savedSite.template); // Debug log
+        console.log('Saved site with template:', savedSite.template);
         setSavedWebsites(prev => [savedSite, ...prev]);
         setGeneratedLink(link);
       } else {
@@ -188,7 +184,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             link: link
           };
           
-          // Ensure template is set correctly
           if (!savedSite.template) {
             savedSite.template = selectedTemplate;
           }
@@ -202,7 +197,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     
     setFormData(defaultContractorFormData);
     setImages(defaultContractorImages);
-    setSelectedTemplate('general'); // Reset template to default
+    setSelectedTemplate('general');
     setGeneratedLink(null);
   };
 
@@ -397,7 +392,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   if (isLoading) {
     return (
-      <div className="loading-screen">
+      <div className={`loading-screen ${isDarkMode ? 'dark' : ''}`}>
         <div className="loading-spinner"></div>
         Loading...
       </div>
@@ -436,8 +431,8 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   // Regular preview mode (in-builder preview with Back button)
   if (viewMode === 'preview' && previewData) {
     return (
-      <div style={{ background: '#e5e7eb', minHeight: '100vh' }}>
-        <button className="preview-back-btn" onClick={backToBuilder}>
+      <div style={{ background: isDarkMode ? '#1a1a2e' : '#e5e7eb', minHeight: '100vh' }}>
+        <button className={`preview-back-btn ${isDarkMode ? 'dark' : ''}`} onClick={backToBuilder}>
           ← Back to Builder
         </button>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: 24 }}>
@@ -450,9 +445,9 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const SelectedTemplateComponent = getCurrentTemplate();
 
   return (
-    <div className="contractor-builder">
+    <div className={`contractor-builder ${isDarkMode ? 'dark' : ''}`}>
       {/* Form Panel */}
-      <div className="form-panel">
+      <div className={`form-panel ${isDarkMode ? 'dark' : ''}`}>
         <h1 className="form-title">Website Builder</h1>
         <p className="form-subtitle">
           Customize your contractor website with your business information and brand colors.
@@ -468,7 +463,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         </div>
         
         {generatedLink && (
-          <div className="generated-link-box">
+          <div className={`generated-link-box ${isDarkMode ? 'dark' : ''}`}>
             <div className="generated-link-label">
               ✅ Website Link Generated!
             </div>
@@ -497,7 +492,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             {templates.map((template) => (
               <button
                 key={template.id}
-                className={`template-option ${selectedTemplate === template.id ? 'active' : ''}`}
+                className={`template-option ${selectedTemplate === template.id ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
                 onClick={() => setSelectedTemplate(template.id)}
               >
                 <span className="template-icon">{template.icon}</span>
@@ -518,7 +513,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
               placeholder="Your Company Name"
             />
           </div>
@@ -530,31 +525,19 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               name="ownerName"
               value={formData.ownerName}
               onChange={handleChange}
-              className="form-input"
-              placeholder="John Smith"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Tagline</label>
-            <input
-              type="text"
-              name="tagline"
-              value={formData.tagline}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Your company tagline"
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Owner's Name"
             />
           </div>
           
           <div className="form-group">
             <label className="form-label">Phone Number</label>
             <input
-              type="text"
+              type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
               placeholder="(555) 123-4567"
             />
           </div>
@@ -566,11 +549,35 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="form-input"
-              placeholder="info@company.com"
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="email@email.com"
             />
           </div>
           
+          <div className="form-group">
+            <label className="form-label">Tagline</label>
+            <input
+              type="text"
+              name="tagline"
+              value={formData.tagline}
+              onChange={handleChange}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Your company tagline"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Years of Experience</label>
+            <input
+              type="text"
+              name="yearsExperience"
+              value={formData.yearsExperience}
+              onChange={handleChange}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="25"
+            />
+          </div>
+
           <div className="form-group">
             <label className="form-label">Address</label>
             <input
@@ -578,33 +585,47 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               name="address"
               value={formData.address}
               onChange={handleChange}
-              className="form-input"
-              placeholder="123 Main St, City, ST 12345"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Years in Business</label>
-            <input
-              type="text"
-              name="yearsExperience"
-              value={formData.yearsExperience}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="10"
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="123 Main Street"
             />
           </div>
         </div>
         
-        {/* Images - WITH PASTE SUPPORT */}
+        {/* Services */}
+        <div className="form-section">
+          <h2 className="form-section-title">Services</h2>
+          
+          <div className="services-input-row">
+            <input
+              type="text"
+              value={newService}
+              onChange={(e) => setNewService(e.target.value)}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Add a service..."
+              onKeyPress={(e) => e.key === 'Enter' && addService()}
+            />
+            <button className="add-service-btn" onClick={addService}>+</button>
+          </div>
+          
+          <div className="services-list">
+            {formData.services.map((service, index) => (
+              <div key={index} className={`service-tag ${isDarkMode ? 'dark' : ''}`}>
+                <span>{service}</span>
+                <button className="service-remove" onClick={() => removeService(index)}>×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Images */}
         <div className="form-section">
           <h2 className="form-section-title">Images</h2>
           
-          {/* Company Logo */}
+          {/* Logo */}
           <div className="image-upload-section">
-            <label className="image-upload-label">Company Logo</label>
+            <label className="image-upload-label">Logo</label>
             <div 
-              className={`image-upload-area ${images.logo ? 'has-image' : ''}`}
+              className={`image-upload-area ${images.logo ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('logo', e)}
               onContextMenu={(e) => {
@@ -636,7 +657,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           <div className="image-upload-section">
             <label className="image-upload-label">Hero Background</label>
             <div 
-              className={`image-upload-area ${images.hero ? 'has-image' : ''}`}
+              className={`image-upload-area ${images.hero ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('hero', e)}
               onContextMenu={(e) => {
@@ -668,7 +689,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           <div className="image-upload-section">
             <label className="image-upload-label">About Section Image</label>
             <div 
-              className={`image-upload-area ${images.about ? 'has-image' : ''}`}
+              className={`image-upload-area ${images.about ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('about', e)}
               onContextMenu={(e) => {
@@ -707,7 +728,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 </div>
               ))}
               <div 
-                className="gallery-add"
+                className={`gallery-add ${isDarkMode ? 'dark' : ''}`}
                 tabIndex={0}
                 onPaste={(e) => handlePaste('gallery', e)}
                 onContextMenu={(e) => {
@@ -737,108 +758,85 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             {colorPresets.map((preset) => (
               <button
                 key={preset.name}
-                className={`color-preset ${formData.primaryColor === preset.primary && formData.accentColor === preset.accent ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ 
-                  ...prev, 
-                  primaryColor: preset.primary, 
-                  accentColor: preset.accent 
+                className={`color-preset ${formData.primaryColor === preset.primary && formData.accentColor === preset.accent ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  primaryColor: preset.primary,
+                  accentColor: preset.accent
                 }))}
+                title={preset.name}
               >
-                <div className="color-preset-dots">
-                  <div className="color-dot" style={{ background: preset.primary }} />
-                  <div className="color-dot" style={{ background: preset.accent }} />
-                </div>
-                <div className="color-preset-name">{preset.name}</div>
+                <div 
+                  className="color-preset-swatch"
+                  style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }}
+                />
               </button>
             ))}
           </div>
           
-          <div className="color-picker-row">
-            <div className="color-picker-group">
+          <div className="color-pickers">
+            <div className="form-group">
               <label className="form-label">Primary Color</label>
-              <input
-                type="color"
-                value={formData.primaryColor}
-                onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
-                className="form-input"
-                style={{ height: 40, padding: 4 }}
-              />
+              <div className={`color-input-wrapper ${isDarkMode ? 'dark' : ''}`}>
+                <input
+                  type="color"
+                  value={formData.primaryColor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
+                  className="color-input"
+                />
+                <span className="color-value">{formData.primaryColor}</span>
+              </div>
             </div>
-            <div className="color-picker-group">
+            
+            <div className="form-group">
               <label className="form-label">Accent Color</label>
-              <input
-                type="color"
-                value={formData.accentColor}
-                onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
-                className="form-input"
-                style={{ height: 40, padding: 4 }}
-              />
+              <div className={`color-input-wrapper ${isDarkMode ? 'dark' : ''}`}>
+                <input
+                  type="color"
+                  value={formData.accentColor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
+                  className="color-input"
+                />
+                <span className="color-value">{formData.accentColor}</span>
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* Services */}
-        <div className="form-section">
-          <h2 className="form-section-title">Services</h2>
-          
-          <div className="services-list">
-            {formData.services.map((service, index) => (
-              <div key={index} className="service-tag">
-                {service}
-                <button className="service-remove" onClick={() => removeService(index)}>×</button>
-              </div>
-            ))}
-          </div>
-          
-          <div className="add-service-row">
-            <input
-              type="text"
-              value={newService}
-              onChange={(e) => setNewService(e.target.value)}
-              className="form-input"
-              placeholder="Add a service..."
-              onKeyPress={(e) => e.key === 'Enter' && addService()}
-            />
-            <button className="add-service-btn" onClick={addService}>
-              Add
-            </button>
-          </div>
-        </div>
-        
+
         {/* Saved Websites */}
-        <div className="saved-websites-section">
+        <div className="form-section">
           <div className="saved-websites-header">
-            <div className="saved-websites-title">
-              <span className="saved-count">{savedWebsites.length}</span>
-              Saved Websites
+            <h2 className="form-section-title" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
+              Saved Websites ({savedWebsites.length})
+            </h2>
+            <div className="saved-websites-actions">
+              <button 
+                className={`saved-header-btn ${isDarkMode ? 'dark' : ''}`}
+                onClick={handleDownloadCSV}
+                title="Download CSV"
+              >
+                📥 CSV
+              </button>
+              <button 
+                className={`saved-header-btn danger ${isDarkMode ? 'dark' : ''}`}
+                onClick={handleClearAllWebsites}
+                title="Clear All"
+              >
+                🗑️ Clear All
+              </button>
             </div>
-            {savedWebsites.length > 0 && (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="download-csv-btn" onClick={handleDownloadCSV}>
-                  📥 Export CSV
-                </button>
-                <button 
-                  className="download-csv-btn" 
-                  onClick={handleClearAllWebsites}
-                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
-                >
-                  🗑️ Clear All
-                </button>
-              </div>
-            )}
           </div>
           
           {savedWebsites.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>
+            <p style={{ fontSize: 13, color: isDarkMode ? 'rgba(255,255,255,0.5)' : '#9ca3af', textAlign: 'center', padding: '20px 0' }}>
               No websites saved yet. Click "Generate Link" to create one.
             </p>
           ) : (
             <div className="saved-websites-list">
               {savedWebsites.map((site) => {
-                // Get the template info for this saved site
                 const siteTemplate = getTemplateById(site.template || 'general');
                 return (
-                  <div key={site.id} className="saved-website-item">
+                  <div key={site.id} className={`saved-website-item ${isDarkMode ? 'dark' : ''}`}>
                     <div 
                       className="saved-website-color" 
                       style={{ background: `linear-gradient(135deg, ${site.formData?.primaryColor || '#1a3a5c'}, ${site.formData?.accentColor || '#c9a227'})` }}
@@ -852,21 +850,21 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                     </div>
                     <div className="saved-website-actions">
                       <button 
-                        className="saved-action-btn" 
+                        className={`saved-action-btn ${isDarkMode ? 'dark' : ''}`}
                         title="Copy Link"
                         onClick={() => handleCopyLink(site.link)}
                       >
                         🔗
                       </button>
                       <button 
-                        className="saved-action-btn" 
+                        className={`saved-action-btn ${isDarkMode ? 'dark' : ''}`}
                         title="Duplicate"
                         onClick={() => duplicateWebsite(site)}
                       >
                         📋
                       </button>
                       <button 
-                        className="saved-action-btn delete" 
+                        className={`saved-action-btn delete ${isDarkMode ? 'dark' : ''}`}
                         title="Delete"
                         onClick={() => handleDeleteWebsite(site.id)}
                       >
@@ -882,7 +880,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
       </div>
       
       {/* Preview Panel */}
-      <div className="preview-panel">
+      <div className={`preview-panel ${isDarkMode ? 'dark' : ''}`}>
         <SelectedTemplateComponent formData={formData} images={images} />
       </div>
     </div>

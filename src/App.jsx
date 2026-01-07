@@ -11,7 +11,8 @@ import './styles/global.css';
 export default function App() {
   const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
   const [exportedCSV, setExportedCSV] = useState(null);
-  const [isSitePreview, setIsSitePreview] = useState(false); // NEW: Track if viewing a site preview
+  const [isSitePreview, setIsSitePreview] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
 
   // Check URL hash on mount for direct links
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function App() {
       const hash = window.location.hash;
       if (hash.startsWith('#site-')) {
         setCurrentTool('builder');
-        setIsSitePreview(true); // NEW: Set preview mode
+        setIsSitePreview(true);
       } else if (hash === '#repliq') {
         setCurrentTool('repliq');
         setIsSitePreview(false);
@@ -39,6 +40,19 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Load dark mode preference from localStorage
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode !== null) {
+      setIsDarkMode(JSON.parse(savedDarkMode));
+    }
+  }, []);
+
+  // Save dark mode preference
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
+
   // Handle navigation to RepliQ with exported data
   const handleGoToRepliQ = (csvData) => {
     setExportedCSV(csvData);
@@ -54,20 +68,26 @@ export default function App() {
     window.location.hash = '';
   };
 
-  // NEW: If viewing a site preview, render ONLY the ContractorBuilder without any app UI
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  // If viewing a site preview, render ONLY the ContractorBuilder without any app UI
   if (isSitePreview) {
     return (
       <ContractorBuilder 
         onNavigateToRepliq={handleGoToRepliQ}
         isStandaloneSitePreview={true}
+        isDarkMode={false}
       />
     );
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       {/* Navigation Header */}
-      <nav className="app-nav">
+      <nav className={`app-nav ${isDarkMode ? 'dark' : ''}`}>
         <div className="app-nav-brand">
           <span className="app-nav-icon">⚡</span>
           <span className="app-nav-title">Lead Tools Suite</span>
@@ -91,6 +111,16 @@ export default function App() {
         </div>
 
         <div className="app-nav-actions">
+          {/* Dark Mode Toggle */}
+          <button 
+            className={`dark-mode-toggle ${isDarkMode ? 'active' : ''}`}
+            onClick={toggleDarkMode}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            <span className="toggle-icon">{isDarkMode ? '☀️' : '🌙'}</span>
+            <span className="toggle-text">{isDarkMode ? 'Light' : 'Dark'}</span>
+          </button>
+          
           {currentTool === 'builder' && (
             <button 
               className="app-nav-cta"
@@ -108,6 +138,7 @@ export default function App() {
           <ContractorBuilder 
             onNavigateToRepliq={handleGoToRepliQ}
             isStandaloneSitePreview={false}
+            isDarkMode={isDarkMode}
           />
         ) : (
           <RepliqStudio 
@@ -193,6 +224,43 @@ export default function App() {
         .app-nav-actions {
           display: flex;
           gap: 12px;
+          align-items: center;
+        }
+
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .dark-mode-toggle:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: #fff;
+        }
+
+        .dark-mode-toggle.active {
+          background: rgba(255, 193, 7, 0.2);
+          border-color: rgba(255, 193, 7, 0.4);
+          color: #ffc107;
+        }
+
+        .toggle-icon {
+          font-size: 16px;
+        }
+
+        .toggle-text {
+          font-size: 12px;
+          font-weight: 600;
         }
 
         .app-nav-cta {
