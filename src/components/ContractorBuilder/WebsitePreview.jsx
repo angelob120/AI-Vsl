@@ -54,14 +54,10 @@ export default function WebsitePreview({ formData, images }) {
         <div className="hero-bg-pattern" style={{ color: data.accentColor, opacity: imgs.hero ? 0.03 : 0.06 }} />
         
         <div className="hero-content">
-          {imgs.logo ? (
-            <img src={imgs.logo} alt="Logo" style={{ height: 60, marginBottom: 24, objectFit: 'contain' }} />
-          ) : (
-            <div className="hero-badge">
-              <span className="hero-badge-dot" style={{ background: data.accentColor }} />
-              Licensed &amp; Insured Contractor
-            </div>
-          )}
+          <div className="hero-badge">
+            <span className="hero-badge-dot" style={{ background: data.accentColor }} />
+            Licensed &amp; Insured Contractor
+          </div>
           
           <h1 className="hero-title">{data.companyName || 'Your Company'}</h1>
           <p className="hero-tagline">{data.tagline || 'Your tagline here'}</p>
