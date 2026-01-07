@@ -120,15 +120,7 @@ export default function App() {
             <span className="toggle-icon">{isDarkMode ? '☀️' : '🌙'}</span>
             <span className="toggle-text">{isDarkMode ? 'Light' : 'Dark'}</span>
           </button>
-          
-          {currentTool === 'builder' && (
-            <button 
-              className="app-nav-cta"
-              onClick={() => handleGoToRepliQ(null)}
-            >
-              Go to RepliQ →
-            </button>
-          )}
+        
         </div>
       </nav>
 
