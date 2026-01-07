@@ -1,8 +1,9 @@
 /**
- * App.jsx Integration Example
+ * App.jsx - FIXED VERSION
  * 
- * This shows how to integrate the LandingPageViewer with your existing App component
- * to handle the landing page and video-only URL hashes.
+ * This properly integrates the LandingPageViewer to handle landing page URLs.
+ * When someone visits a URL with #landing-{id} or #video-{id}, it renders
+ * the personalized landing page instead of the main app.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -21,8 +22,11 @@ export default function App() {
     const checkHash = () => {
       const hash = window.location.hash;
       
-      // Check if this is a landing page or video-only link
+      console.log('Checking hash:', hash);
+      
+      // CRITICAL: Check if this is a landing page or video-only link FIRST
       if (hash.startsWith('#landing-') || hash.startsWith('#video-')) {
+        console.log('✅ Detected landing page URL');
         setIsLandingPage(true);
         return;
       }
@@ -30,6 +34,7 @@ export default function App() {
       // Check if this is a site preview link (existing functionality)
       if (hash.startsWith('#site-')) {
         setCurrentView('site-preview');
+        setIsLandingPage(false);
         return;
       }
       
@@ -56,8 +61,12 @@ export default function App() {
     setRepliqCSVData(null);
   };
 
-  // If this is a landing page URL, render the landing page viewer
+  // =====================================================
+  // CRITICAL FIX: If this is a landing page URL, ONLY render LandingPageViewer
+  // This must be checked BEFORE any other rendering logic
+  // =====================================================
   if (isLandingPage) {
+    console.log('Rendering LandingPageViewer');
     return <LandingPageViewer />;
   }
 
@@ -76,41 +85,6 @@ export default function App() {
           importedCSV={repliqCSVData}
         />
       )}
-      
-      {currentView === 'site-preview' && (
-        <ContractorBuilder 
-          isStandaloneSitePreview={true}
-          onNavigateToRepliq={handleNavigateToRepliq}
-        />
-      )}
     </div>
   );
 }
-
-
-/**
- * Alternative: Router-based Integration
- * 
- * If you're using React Router, you can set up routes like this:
- * 
- * import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
- * 
- * function App() {
- *   return (
- *     <BrowserRouter>
- *       <Routes>
- *         <Route path="/" element={<ContractorBuilder />} />
- *         <Route path="/repliq" element={<RepliqStudio />} />
- *         <Route path="/landing/:videoId" element={<LandingPageViewerWithParams />} />
- *         <Route path="/video/:videoId" element={<VideoOnlyViewerWithParams />} />
- *       </Routes>
- *     </BrowserRouter>
- *   );
- * }
- * 
- * function LandingPageViewerWithParams() {
- *   const { videoId } = useParams();
- *   // Pass videoId to LandingPageViewer
- *   return <LandingPageViewer videoId={videoId} mode="landing" />;
- * }
- */

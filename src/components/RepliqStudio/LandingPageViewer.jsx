@@ -1,61 +1,118 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const LANDING_PAGE_PREFIX = 'repliq_landing_';
+import { getFromIndexedDB, LANDING_PAGE_PREFIX } from './utils/storage';
 
 export default function LandingPageViewer() {
   const [pageData, setPageData] = useState(null);
   const [error, setError] = useState(null);
-  const [phase, setPhase] = useState('intro');
-  const containerRef = useRef(null);
-  const introVideoRef = useRef(null);
-  const secondVideoRef = useRef(null);
-  const timerRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const videoRef = useRef(null);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    
-    if (hash.startsWith('#landing-') || hash.startsWith('#video-')) {
+    const loadLandingPage = async () => {
+      const hash = window.location.hash;
+      
+      if (!hash.startsWith('#landing-') && !hash.startsWith('#video-')) {
+        setError('Invalid URL');
+        setLoading(false);
+        return;
+      }
+
       const videoId = hash.replace('#landing-', '').replace('#video-', '');
       const isVideoOnly = hash.startsWith('#video-');
       
+      console.log(`Loading landing page: ${videoId}, isVideoOnly: ${isVideoOnly}`);
+
       try {
+        // First try IndexedDB (has full video data)
+        let data = await getFromIndexedDB('landingPages', videoId);
+        
+        if (data) {
+          console.log('✅ Found data in IndexedDB');
+          setPageData({ ...data, isVideoOnly });
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to localStorage
         const storedData = localStorage.getItem(LANDING_PAGE_PREFIX + videoId);
         if (storedData) {
-          const data = JSON.parse(storedData);
+          console.log('✅ Found data in localStorage');
+          data = JSON.parse(storedData);
+          
+          // If video data was stored separately in IndexedDB, retrieve it
+          if (data.settings?.introVideoData === '[[STORED_IN_INDEXEDDB]]') {
+            const introVideo = await getFromIndexedDB('videos', 'intro_video');
+            if (introVideo) {
+              data.settings.introVideoData = introVideo.data;
+            }
+            
+            if (data.settings.secondVideoData === '[[STORED_IN_INDEXEDDB]]') {
+              const secondVideo = await getFromIndexedDB('videos', 'second_video');
+              if (secondVideo) {
+                data.settings.secondVideoData = secondVideo.data;
+              }
+            }
+          }
+          
           setPageData({ ...data, isVideoOnly });
-        } else {
-          setError('Landing page not found. It may have been deleted or never created.');
+          setLoading(false);
+          return;
         }
-      } catch (e) {
-        setError('Failed to load landing page data.');
-      }
-    }
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+        // No data found
+        setError('Landing page not found. It may have been deleted or created in a different browser session.');
+        setLoading(false);
+
+      } catch (e) {
+        console.error('Error loading landing page:', e);
+        setError('Failed to load landing page data.');
+        setLoading(false);
+      }
     };
+
+    loadLandingPage();
   }, []);
 
+  // Auto-play video when data loads
   useEffect(() => {
-    if (pageData && !pageData.isVideoOnly) {
-      // Start the transition timer
-      timerRef.current = setTimeout(() => {
-        setPhase('transitioning');
-        setTimeout(() => {
-          setPhase('expanded');
-          if (secondVideoRef.current && pageData.settings.useSecondVideo && pageData.settings.secondVideoData) {
-            secondVideoRef.current.play();
-          }
-        }, 800);
-      }, (pageData.settings?.transitionTime || 10) * 1000);
-
-      // Auto-play intro video
-      if (introVideoRef.current) {
-        introVideoRef.current.play().catch(e => console.log('Autoplay blocked:', e));
-      }
+    if (pageData && videoRef.current) {
+      // Small delay to ensure video is ready
+      setTimeout(() => {
+        videoRef.current.play().catch(e => console.log('Autoplay blocked:', e));
+      }, 500);
     }
   }, [pageData]);
 
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        color: '#fff',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: '50px', 
+            height: '50px', 
+            border: '3px solid rgba(255,255,255,0.3)',
+            borderTopColor: '#667eea',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p>Loading your personalized video...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
   if (error) {
     return (
       <div style={{
@@ -64,51 +121,51 @@ export default function LandingPageViewer() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#1a1a2e',
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
         color: '#fff',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        padding: '40px'
+        padding: '40px',
+        textAlign: 'center'
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
-        <h1 style={{ marginBottom: '12px' }}>Page Not Found</h1>
-        <p style={{ color: 'rgba(255,255,255,0.7)' }}>{error}</p>
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>😕</div>
+        <h1 style={{ marginBottom: '12px', fontSize: '2rem' }}>Page Not Found</h1>
+        <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '400px' }}>{error}</p>
+        <a 
+          href="/"
+          style={{
+            marginTop: '30px',
+            padding: '12px 32px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '50px',
+            fontWeight: '600'
+          }}
+        >
+          Go Home
+        </a>
       </div>
     );
   }
 
   if (!pageData) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: '#1a1a2e',
-        color: '#fff'
-      }}>
-        <div style={{ fontSize: '24px' }}>Loading...</div>
-      </div>
-    );
+    return null;
   }
 
   const { lead, settings, isVideoOnly } = pageData;
   const {
     introVideoData,
-    secondVideoData,
-    useSecondVideo,
-    videoMode,
-    videoPosition,
-    videoShape,
     videoTitle,
     buttonText,
     buttonLink,
-    bgColor,
-    textColor,
     darkMode
-  } = settings;
+  } = settings || {};
 
-  // Video-only view
-  if (isVideoOnly) {
+  // Determine the greeting name
+  const greetingName = lead?.companyName || lead?.firstName || 'there';
+
+  // Check if we have video data
+  if (!introVideoData || introVideoData === '[[STORED_IN_INDEXEDDB]]') {
     return (
       <div style={{
         display: 'flex',
@@ -116,259 +173,172 @@ export default function LandingPageViewer() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        padding: '40px 20px',
-        background: darkMode ? '#1a1a2e' : '#f5f5f5',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        background: darkMode ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        color: darkMode ? '#fff' : '#000',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        padding: '40px',
+        textAlign: 'center'
       }}>
-        <div style={{
-          maxWidth: '800px',
-          width: '100%'
-        }}>
-          <div style={{
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            background: '#000'
-          }}>
-            <video 
-              controls 
-              autoPlay
-              style={{ width: '100%', display: 'block' }}
-            >
-              <source src={introVideoData} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div style={{ marginTop: '24px', textAlign: 'center' }}>
-            <p style={{
-              color: darkMode ? '#fff' : '#333',
-              fontSize: '20px',
-              fontWeight: '600',
-              marginBottom: '8px'
-            }}>
-              {videoTitle}
-            </p>
-            <p style={{
-              color: darkMode ? 'rgba(255,255,255,0.7)' : '#666',
-              fontSize: '16px',
-              marginBottom: '16px'
-            }}>
-              For {lead.firstName || ''} {lead.companyName ? '@ ' + lead.companyName : ''}
-            </p>
-            {buttonText && buttonLink && (
-              <a 
-                href={buttonLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-block',
-                  background: bgColor,
-                  color: textColor,
-                  padding: '12px 28px',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  transition: 'transform 0.2s'
-                }}
-              >
-                {buttonText}
-              </a>
-            )}
-          </div>
-          <p style={{
-            marginTop: '32px',
-            textAlign: 'center',
-            fontSize: '14px',
-            color: darkMode ? 'rgba(255,255,255,0.5)' : '#999'
-          }}>
-            Powered by <span style={{ color: bgColor, fontWeight: 'bold' }}>°RepliQ</span>
-          </p>
-        </div>
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎬</div>
+        <h1 style={{ marginBottom: '12px', fontSize: '2rem' }}>Video Unavailable</h1>
+        <p style={{ opacity: 0.7, maxWidth: '400px' }}>
+          The video for this landing page couldn't be loaded. It may have been created in a different browser session.
+        </p>
       </div>
     );
   }
 
-  // Get position styles for video bubble
-  const getPositionStyles = () => {
-    const positions = {
-      'bottom-left': { bottom: '20px', left: '20px' },
-      'bottom-right': { bottom: '20px', right: '20px' },
-      'top-left': { top: '20px', left: '20px' },
-      'top-right': { top: '20px', right: '20px' },
-    };
-    return positions[videoPosition] || positions['bottom-left'];
-  };
-
-  // Get bubble size
-  const getBubbleSize = () => {
-    if (phase === 'expanded' && videoMode === 'fullscreen') {
-      return { width: '100%', height: '100%', top: 0, left: 0, right: 0, bottom: 0 };
-    }
-    if (phase === 'expanded' && videoMode === 'big') {
-      return { width: '320px', height: '320px' };
-    }
-    const sizes = { small: '120px', big: '180px', fullscreen: '180px' };
-    return { width: sizes[videoMode], height: sizes[videoMode] };
-  };
-
-  const bubbleStyles = {
-    position: 'fixed',
-    zIndex: 100,
-    transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-    overflow: 'hidden',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-    cursor: 'pointer',
-    ...getPositionStyles(),
-    ...getBubbleSize(),
-    borderRadius: phase === 'expanded' && videoMode === 'fullscreen' ? '0' : videoShape === 'circle' ? '50%' : '16px'
-  };
-
-  const handleBubbleClick = () => {
-    if (phase === 'intro') {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setPhase('transitioning');
-      setTimeout(() => {
-        setPhase('expanded');
-        if (secondVideoRef.current && useSecondVideo && secondVideoData) {
-          secondVideoRef.current.play();
-        }
-      }, 800);
-    }
-  };
-
-  return (
-    <div ref={containerRef} style={{
-      position: 'relative',
-      width: '100%',
-      height: '100vh',
-      overflow: 'hidden',
-      background: darkMode ? '#1a1a2e' : '#f5f5f5',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      {/* Website Background */}
-      <iframe
-        src={lead.websiteUrl}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          zIndex: 1
-        }}
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Background Website"
-      />
-
-      {/* Overlay */}
+  // Video-only view
+  if (isVideoOnly) {
+    return (
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0,0,0,0.15)',
-        zIndex: 2,
-        pointerEvents: 'none'
-      }} />
-
-      {/* Video Bubble */}
-      <div style={bubbleStyles} onClick={handleBubbleClick}>
-        <video
-          ref={introVideoRef}
-          src={introVideoData}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          muted
-          playsInline
-          autoPlay
-          loop
-        />
-        {phase === 'intro' && (
-          <div style={{
-            position: 'absolute',
-            top: '-4px',
-            left: '-4px',
-            right: '-4px',
-            bottom: '-4px',
-            border: `3px solid ${bgColor}`,
-            borderRadius: 'inherit',
-            animation: 'pulse 2s ease-out infinite'
-          }} />
-        )}
-      </div>
-
-      {/* Second Video (fullscreen) */}
-      {useSecondVideo && secondVideoData && phase === 'expanded' && videoMode === 'fullscreen' && (
-        <video
-          ref={secondVideoRef}
-          src={secondVideoData}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: 150
-          }}
-          muted
-          playsInline
-        />
-      )}
-
-      {/* Info Card */}
-      <div style={{
-        position: 'fixed',
-        bottom: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: darkMode ? 'rgba(30,30,46,0.95)' : 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '16px',
-        padding: '16px 24px',
         display: 'flex',
         alignItems: 'center',
-        gap: '20px',
-        zIndex: 200,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: darkMode ? '#1a1a2e' : '#f5f5f5'
       }}>
-        <span style={{ fontSize: '18px', fontWeight: 'bold', color: bgColor }}>°RepliQ</span>
-        <div>
-          <p style={{ color: darkMode ? '#fff' : '#333', fontSize: '14px', fontWeight: '600' }}>
-            {videoTitle}
-          </p>
-          <p style={{ color: darkMode ? 'rgba(255,255,255,0.7)' : '#666', fontSize: '13px' }}>
-            For {lead.firstName || ''} {lead.companyName ? '@ ' + lead.companyName : ''}
-          </p>
+        <video
+          ref={videoRef}
+          controls
+          autoPlay
+          playsInline
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100vh'
+          }}
+        >
+          <source src={introVideoData} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    );
+  }
+
+  // Full landing page view with "Hi COMPANY NAME"
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: darkMode 
+        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' 
+        : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div style={{
+        maxWidth: '800px',
+        width: '100%',
+        textAlign: 'center',
+        animation: 'fadeIn 0.8s ease-out'
+      }}>
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+        
+        {/* PROMINENT GREETING - "Hi COMPANY NAME" */}
+        <h1 style={{
+          fontSize: 'clamp(2rem, 8vw, 3.5rem)',
+          fontWeight: 800,
+          color: darkMode ? '#fff' : '#1a1a2e',
+          marginBottom: '12px',
+          textShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.3)' : 'none',
+          lineHeight: 1.2
+        }}>
+          Hi{' '}
+          <span style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            {greetingName}
+          </span>
+          {' '}👋
+        </h1>
+        
+        {/* Subtitle */}
+        <p style={{
+          fontSize: 'clamp(1rem, 4vw, 1.4rem)',
+          color: darkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+          marginBottom: '40px',
+          fontWeight: 400
+        }}>
+          {videoTitle || 'A video for you'}
+        </p>
+        
+        {/* VIDEO */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '640px',
+          margin: '0 auto 40px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          background: '#000'
+        }}>
+          <video
+            ref={videoRef}
+            controls
+            playsInline
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block'
+            }}
+          >
+            <source src={introVideoData} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
-        {buttonText && buttonLink && (
-          <a 
+        
+        {/* CTA BUTTON */}
+        {buttonLink && (
+          <a
             href={buttonLink}
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              background: bgColor,
-              color: textColor,
-              padding: '10px 20px',
-              borderRadius: '8px',
-              fontWeight: '600',
+              display: 'inline-block',
+              padding: '18px 48px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
               textDecoration: 'none',
-              transition: 'all 0.2s'
+              borderRadius: '50px',
+              fontSize: 'clamp(1rem, 3vw, 1.2rem)',
+              fontWeight: 600,
+              boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+              transition: 'all 0.3s'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 30px rgba(102, 126, 234, 0.6)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.4)';
             }}
           >
-            {buttonText}
+            {buttonText || 'Book a Call'}
           </a>
         )}
+        
+        {/* Powered by */}
+        <p style={{
+          marginTop: '60px',
+          fontSize: '0.9rem',
+          color: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+        }}>
+          Powered by <span style={{ color: '#667eea', fontWeight: 600 }}>°RepliQ</span>
+        </p>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1.3); opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 }
