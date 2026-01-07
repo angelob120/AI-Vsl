@@ -6,28 +6,33 @@ import './styles/global.css';
 /**
  * Main App Component
  * Handles navigation between ContractorBuilder and RepliqStudio
+ * Also handles direct site preview links (hiding all builder UI)
  */
 export default function App() {
   const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
   const [exportedCSV, setExportedCSV] = useState(null);
+  const [isSitePreview, setIsSitePreview] = useState(false); // NEW: Track if viewing a site preview
 
   // Check URL hash on mount for direct links
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.startsWith('#site-')) {
-      setCurrentTool('builder');
-    } else if (hash === '#repliq') {
-      setCurrentTool('repliq');
-    }
+    const checkHash = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#site-')) {
+        setCurrentTool('builder');
+        setIsSitePreview(true); // NEW: Set preview mode
+      } else if (hash === '#repliq') {
+        setCurrentTool('repliq');
+        setIsSitePreview(false);
+      } else {
+        setIsSitePreview(false);
+      }
+    };
+
+    checkHash();
 
     // Listen for hash changes
     const handleHashChange = () => {
-      const newHash = window.location.hash;
-      if (newHash.startsWith('#site-')) {
-        setCurrentTool('builder');
-      } else if (newHash === '#repliq') {
-        setCurrentTool('repliq');
-      }
+      checkHash();
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -38,14 +43,26 @@ export default function App() {
   const handleGoToRepliQ = (csvData) => {
     setExportedCSV(csvData);
     setCurrentTool('repliq');
+    setIsSitePreview(false);
     window.location.hash = '#repliq';
   };
 
   // Handle navigation back to Builder
   const handleGoToBuilder = () => {
     setCurrentTool('builder');
+    setIsSitePreview(false);
     window.location.hash = '';
   };
+
+  // NEW: If viewing a site preview, render ONLY the ContractorBuilder without any app UI
+  if (isSitePreview) {
+    return (
+      <ContractorBuilder 
+        onGoToRepliQ={handleGoToRepliQ}
+        isStandaloneSitePreview={true}
+      />
+    );
+  }
 
   return (
     <div className="app-container">
@@ -90,6 +107,7 @@ export default function App() {
         {currentTool === 'builder' ? (
           <ContractorBuilder 
             onGoToRepliQ={handleGoToRepliQ}
+            isStandaloneSitePreview={false}
           />
         ) : (
           <RepliqStudio 
