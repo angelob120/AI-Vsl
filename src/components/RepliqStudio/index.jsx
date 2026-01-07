@@ -37,13 +37,9 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
   const [textHoverColor, setTextHoverColor] = useState('#818cf8');
   const [bgHoverColor, setBgHoverColor] = useState('#60f5dc');
   const [displayTab, setDisplayTab] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [scrollBehavior, setScrollBehavior] = useState('down');
   const [mouseDisplay, setMouseDisplay] = useState('moving');
-  
-  // Voice cloning
-  const [voiceName, setVoiceName] = useState('');
-  const [voiceLanguage, setVoiceLanguage] = useState('English');
   
   // Preview state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -570,36 +566,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
                 <input type="checkbox" checked={mouseDisplay === 'moving'} onChange={() => setMouseDisplay(mouseDisplay === 'moving' ? 'static' : 'moving')} className="checkbox" />
                 <span>Moving mouse ↗</span>
               </label>
-            </div>
-          </div>
-
-          {/* Section 5: Voice Cloning */}
-          <div className="repliq-section accent">
-            <h3 className="repliq-section-title">
-              <span>🎙️</span> 5. Voice Cloning
-            </h3>
-            
-            <div className="input-row-double">
-              <div className="input-half">
-                <label className="input-label">Your Name</label>
-                <input
-                  type="text"
-                  value={voiceName}
-                  onChange={(e) => setVoiceName(e.target.value)}
-                  className="repliq-input"
-                  placeholder="Your name"
-                />
-              </div>
-              <div className="input-half">
-                <label className="input-label">Language</label>
-                <select value={voiceLanguage} onChange={(e) => setVoiceLanguage(e.target.value)} className="repliq-select">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                  <option>Portuguese</option>
-                </select>
-              </div>
             </div>
           </div>
 
