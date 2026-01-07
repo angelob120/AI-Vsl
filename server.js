@@ -16,10 +16,10 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Initialize database table with template column
+// Initialize database tables
 const initDatabase = async () => {
   try {
-    // Create table if not exists (with template column)
+    // Create contractor_websites table if not exists (with template column)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS contractor_websites (
         id VARCHAR(255) PRIMARY KEY,
@@ -44,8 +44,32 @@ const initDatabase = async () => {
         END IF;
       END $$;
     `);
+
+    // Create webhook_leads table for storing inbound GHL data
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS webhook_leads (
+        id VARCHAR(255) PRIMARY KEY,
+        company_name VARCHAR(500),
+        owner_name VARCHAR(500),
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        phone VARCHAR(100),
+        email VARCHAR(255),
+        address VARCHAR(500),
+        city VARCHAR(255),
+        state VARCHAR(100),
+        postal_code VARCHAR(50),
+        country VARCHAR(100),
+        website VARCHAR(500),
+        tagline TEXT,
+        years_experience VARCHAR(50),
+        services JSONB,
+        raw_data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
-    console.log('Database initialized successfully with template support');
+    console.log('Database initialized successfully with template and webhook_leads support');
   } catch (error) {
     console.error('Database initialization error:', error);
   }
@@ -64,6 +88,215 @@ app.get('/api/health', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ==================== WEBHOOK LEADS ROUTES ====================
+
+// Inbound webhook endpoint for GHL (GoHighLevel)
+app.post('/api/webhook/ghl', async (req, res) => {
+  try {
+    const data = req.body;
+    
+    // Generate unique ID if not provided
+    const id = data.id || data.contact_id || data.contactId || 
+               Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    
+    // Map GHL fields to our schema (handle various field name formats)
+    const lead = {
+      id,
+      company_name: data.companyName || data.company_name || data.company || 
+                    data.businessName || data.business_name || null,
+      owner_name: data.ownerName || data.owner_name || data.owner || null,
+      first_name: data.firstName || data.first_name || data.name?.split(' ')[0] || null,
+      last_name: data.lastName || data.last_name || data.name?.split(' ').slice(1).join(' ') || null,
+      phone: data.phone || data.phoneNumber || data.phone_number || data.mobile || null,
+      email: data.email || data.emailAddress || data.email_address || null,
+      address: data.address || data.address1 || data.streetAddress || data.street_address || null,
+      city: data.city || null,
+      state: data.state || data.region || null,
+      postal_code: data.postalCode || data.postal_code || data.zip || data.zipCode || null,
+      country: data.country || null,
+      website: data.website || data.websiteUrl || data.website_url || data.url || null,
+      tagline: data.tagline || data.slogan || null,
+      years_experience: data.yearsExperience || data.years_experience || data.experience || null,
+      services: data.services || null,
+      raw_data: data
+    };
+
+    const query = `
+      INSERT INTO webhook_leads (
+        id, company_name, owner_name, first_name, last_name, phone, email,
+        address, city, state, postal_code, country, website, tagline,
+        years_experience, services, raw_data, created_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        company_name = COALESCE($2, webhook_leads.company_name),
+        owner_name = COALESCE($3, webhook_leads.owner_name),
+        first_name = COALESCE($4, webhook_leads.first_name),
+        last_name = COALESCE($5, webhook_leads.last_name),
+        phone = COALESCE($6, webhook_leads.phone),
+        email = COALESCE($7, webhook_leads.email),
+        address = COALESCE($8, webhook_leads.address),
+        city = COALESCE($9, webhook_leads.city),
+        state = COALESCE($10, webhook_leads.state),
+        postal_code = COALESCE($11, webhook_leads.postal_code),
+        country = COALESCE($12, webhook_leads.country),
+        website = COALESCE($13, webhook_leads.website),
+        tagline = COALESCE($14, webhook_leads.tagline),
+        years_experience = COALESCE($15, webhook_leads.years_experience),
+        services = COALESCE($16, webhook_leads.services),
+        raw_data = $17
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      lead.id,
+      lead.company_name,
+      lead.owner_name,
+      lead.first_name,
+      lead.last_name,
+      lead.phone,
+      lead.email,
+      lead.address,
+      lead.city,
+      lead.state,
+      lead.postal_code,
+      lead.country,
+      lead.website,
+      lead.tagline,
+      lead.years_experience,
+      lead.services ? JSON.stringify(lead.services) : null,
+      JSON.stringify(lead.raw_data)
+    ]);
+
+    console.log(`Webhook lead received: ${lead.company_name || lead.first_name || lead.id}`);
+
+    res.json({
+      success: true,
+      message: 'Lead received successfully',
+      lead: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ error: 'Failed to process webhook', details: error.message });
+  }
+});
+
+// Get all webhook leads
+app.get('/api/webhook/leads', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM webhook_leads ORDER BY created_at DESC'
+    );
+
+    const leads = result.rows.map(row => ({
+      id: row.id,
+      companyName: row.company_name,
+      ownerName: row.owner_name,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      phone: row.phone,
+      email: row.email,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      postalCode: row.postal_code,
+      country: row.country,
+      website: row.website,
+      tagline: row.tagline,
+      yearsExperience: row.years_experience,
+      services: row.services,
+      rawData: row.raw_data,
+      createdAt: row.created_at
+    }));
+
+    res.json({ success: true, leads });
+  } catch (error) {
+    console.error('Get webhook leads error:', error);
+    res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
+  }
+});
+
+// Get single webhook lead by ID
+app.get('/api/webhook/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM webhook_leads WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      lead: {
+        id: row.id,
+        companyName: row.company_name,
+        ownerName: row.owner_name,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        phone: row.phone,
+        email: row.email,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        postalCode: row.postal_code,
+        country: row.country,
+        website: row.website,
+        tagline: row.tagline,
+        yearsExperience: row.years_experience,
+        services: row.services,
+        rawData: row.raw_data,
+        createdAt: row.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Get webhook lead error:', error);
+    res.status(500).json({ error: 'Failed to fetch lead', details: error.message });
+  }
+});
+
+// Delete single webhook lead
+app.delete('/api/webhook/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM webhook_leads WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    res.json({ success: true, message: 'Lead deleted successfully' });
+  } catch (error) {
+    console.error('Delete webhook lead error:', error);
+    res.status(500).json({ error: 'Failed to delete lead', details: error.message });
+  }
+});
+
+// Delete ALL webhook leads
+app.delete('/api/webhook/leads', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM webhook_leads RETURNING id');
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.rowCount} leads`,
+      deletedCount: result.rowCount
+    });
+  } catch (error) {
+    console.error('Delete all webhook leads error:', error);
+    res.status(500).json({ error: 'Failed to delete leads', details: error.message });
+  }
+});
+
+// ==================== WEBSITE ROUTES ====================
 
 // Save website (with template support)
 app.post('/api/websites', async (req, res) => {
@@ -174,20 +407,21 @@ app.delete('/api/websites/all', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: `Successfully deleted ${result.rowCount} websites` 
+      message: `Deleted ${result.rowCount} websites`,
+      deletedCount: result.rowCount
     });
   } catch (error) {
     console.error('Delete all websites error:', error);
-    res.status(500).json({ error: 'Failed to delete all websites', details: error.message });
+    res.status(500).json({ error: 'Failed to delete websites', details: error.message });
   }
 });
 
-// Delete single website by ID
+// Delete single website
 app.delete('/api/websites/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM contractor_websites WHERE id = $1 RETURNING *',
+      'DELETE FROM contractor_websites WHERE id = $1 RETURNING id',
       [id]
     );
 
@@ -195,19 +429,19 @@ app.delete('/api/websites/:id', async (req, res) => {
       return res.status(404).json({ error: 'Website not found' });
     }
 
-    res.json({ success: true, message: 'Website deleted' });
+    res.json({ success: true, message: 'Website deleted successfully' });
   } catch (error) {
     console.error('Delete website error:', error);
     res.status(500).json({ error: 'Failed to delete website', details: error.message });
   }
 });
 
-// ==================== SERVE REACT APP ====================
+// ==================== STATIC FILE SERVING ====================
 
-// Serve static files from the React build folder
+// Serve static files from React build
 app.use(express.static(path.join(__dirname, 'build')));
 
-// For any other request, serve the React app
+// For any other route, serve the React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
@@ -215,6 +449,5 @@ app.get('*', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`API available at /api/websites`);
-  console.log(`Supported templates: general, roofing, plumbing, electrical, hvac, landscaping`);
+  console.log(`Webhook endpoint available at: POST /api/webhook/ghl`);
 });

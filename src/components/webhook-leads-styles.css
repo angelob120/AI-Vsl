@@ -1,0 +1,387 @@
+/* ==================== WEBHOOK LEADS STYLES ==================== */
+
+/* Section Header Row */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.form-panel.dark .section-header-row {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.section-header-row .form-section-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Refresh Button */
+.refresh-leads-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.refresh-leads-btn:hover {
+  background: #e5e7eb;
+}
+
+.refresh-leads-btn.dark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.refresh-leads-btn.dark:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.refresh-leads-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* No Leads Text */
+.no-leads-text {
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.no-leads-text.dark {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.webhook-url {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 11px;
+  color: #3b82f6;
+  word-break: break-all;
+}
+
+.no-leads-text.dark .webhook-url {
+  background: rgba(4, 207, 175, 0.15);
+  color: #04CFAF;
+}
+
+/* Leads List */
+.leads-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.leads-list.dark {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Lead Item */
+.lead-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.lead-item:last-child {
+  border-bottom: none;
+}
+
+.lead-item:hover {
+  background: #f3f4f6;
+}
+
+.lead-item.selected {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+.lead-item.dark {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.lead-item.dark:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lead-item.dark.selected {
+  background: rgba(4, 207, 175, 0.1);
+  border-left-color: #04CFAF;
+}
+
+/* Lead Icon */
+.lead-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.lead-item.dark .lead-icon {
+  background: linear-gradient(135deg, #04CFAF, #60f5dc);
+}
+
+/* Lead Info */
+.lead-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lead-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-item.dark .lead-name {
+  color: #ffffff;
+}
+
+.lead-date {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.lead-item.dark .lead-date {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Lead Delete Button */
+.lead-delete-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+  margin-left: 8px;
+}
+
+.lead-item:hover .lead-delete-btn {
+  opacity: 1;
+}
+
+.lead-delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.lead-delete-btn.dark:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Leads Actions */
+.leads-actions {
+  margin-top: 12px;
+}
+
+/* Delete All Button */
+.delete-all-leads-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-all-leads-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.delete-all-leads-btn.dark {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.delete-all-leads-btn.dark:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Delete All Warning */
+.delete-all-warning {
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.delete-all-warning.dark {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.delete-all-warning p {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 12px;
+}
+
+.delete-all-warning.dark p {
+  color: #f87171;
+}
+
+.warning-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.warning-confirm-btn {
+  padding: 8px 16px;
+  background: #dc2626;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.warning-confirm-btn:hover {
+  background: #b91c1c;
+}
+
+.warning-cancel-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.warning-cancel-btn:hover {
+  background: #f3f4f6;
+}
+
+.delete-all-warning.dark .warning-cancel-btn {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.delete-all-warning.dark .warning-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Section Actions */
+.section-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.section-action-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.section-action-btn:hover {
+  background: #e5e7eb;
+}
+
+.section-action-btn.danger:hover {
+  background: #fee2e2;
+}
+
+.section-action-btn.dark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.section-action-btn.dark:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.section-action-btn.dark.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Scrollbar Styling for Leads List */
+.leads-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.leads-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.leads-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.leads-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.leads-list.dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.leads-list.dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

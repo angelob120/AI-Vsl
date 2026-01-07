@@ -3,6 +3,7 @@ import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
 import { exportWebsitesCSV } from '../../utils/csv';
 import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
+import { getAllWebhookLeads, deleteWebhookLead, deleteAllWebhookLeads, mapLeadToFormData } from '../../api/webhookLeads';
 import { 
   colorPresets, 
   defaultContractorFormData, 
@@ -11,6 +12,7 @@ import {
   copyToClipboard 
 } from '../../utils/helpers';
 import './styles.css';
+import './webhook-leads-styles.css';
 import './templates/template-styles.css';
 
 // Generate unique ID (moved here since we're not importing from storage)
@@ -50,8 +52,15 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const [isSaving, setIsSaving] = useState(false);
   const [newService, setNewService] = useState('');
 
+  // Webhook leads state
+  const [webhookLeads, setWebhookLeads] = useState([]);
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [isLoadingLeads, setIsLoadingLeads] = useState(false);
+  const [showDeleteAllWarning, setShowDeleteAllWarning] = useState(false);
+
   useEffect(() => {
     loadSavedWebsites();
+    loadWebhookLeads();
     
     const hash = window.location.hash;
     if (hash && hash.startsWith('#site-')) {
@@ -62,24 +71,84 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
   }, []);
 
-  // Load all saved websites from PostgreSQL via API
+  // Load all saved websites from database
   const loadSavedWebsites = async () => {
     try {
       const websites = await getAllWebsites();
-      console.log('Loaded websites from API:', websites);
-      websites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setSavedWebsites(websites);
-    } catch (e) {
-      console.log('Failed to load websites:', e);
+    } catch (error) {
+      console.error('Failed to load websites:', error);
     }
-    setIsLoading(false);
   };
 
-  // Load a specific website by ID from PostgreSQL via API
+  // Load all webhook leads from database
+  const loadWebhookLeads = async () => {
+    setIsLoadingLeads(true);
+    try {
+      const leads = await getAllWebhookLeads();
+      setWebhookLeads(leads);
+    } catch (error) {
+      console.error('Failed to load webhook leads:', error);
+    }
+    setIsLoadingLeads(false);
+  };
+
+  // Load a specific lead into the form
+  const handleSelectLead = (lead) => {
+    const mappedData = mapLeadToFormData(lead);
+    
+    // Merge with existing form data, keeping colors and services if not in lead
+    setFormData(prev => ({
+      ...prev,
+      ...mappedData,
+      // Keep existing colors
+      primaryColor: prev.primaryColor,
+      accentColor: prev.accentColor,
+      // Keep existing services if lead has none
+      services: mappedData.services.length > 0 ? mappedData.services : prev.services
+    }));
+    
+    setSelectedLeadId(lead.id);
+    setGeneratedLink(null); // Clear any existing generated link
+  };
+
+  // Delete a single lead
+  const handleDeleteLead = async (leadId, e) => {
+    e.stopPropagation(); // Prevent selecting the lead when clicking delete
+    
+    try {
+      await deleteWebhookLead(leadId);
+      setWebhookLeads(prev => prev.filter(lead => lead.id !== leadId));
+      
+      // If this was the selected lead, clear the selection
+      if (selectedLeadId === leadId) {
+        setSelectedLeadId(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete lead:', error);
+      alert('Failed to delete lead. Please try again.');
+    }
+  };
+
+  // Delete all leads with single warning
+  const handleDeleteAllLeads = async () => {
+    try {
+      const result = await deleteAllWebhookLeads();
+      if (result.success) {
+        setWebhookLeads([]);
+        setSelectedLeadId(null);
+        setShowDeleteAllWarning(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete all leads:', error);
+      alert('Failed to delete leads. Please try again.');
+    }
+  };
+
+  // Load website by ID for preview
   const loadWebsiteById = async (siteId) => {
     try {
       const website = await getWebsiteById(siteId);
-      console.log('Loaded website by ID:', website);
       if (website) {
         setPreviewData({
           formData: website.formData,
@@ -88,166 +157,10 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         });
         setViewMode('preview');
       }
-    } catch (e) {
-      console.log('Failed to load website:', e);
+    } catch (error) {
+      console.error('Failed to load website:', error);
     }
     setIsLoading(false);
-  };
-
-  const saveAndGenerateLink = async () => {
-    if (!formData.companyName || formData.companyName.trim() === '') {
-      alert('Please enter a company name first!');
-      return;
-    }
-    
-    setIsSaving(true);
-    
-    const siteId = generateUniqueId();
-    const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
-    
-    const websiteData = {
-      id: siteId,
-      formData: { ...formData },
-      images: { ...images },
-      template: selectedTemplate,
-      link: link
-    };
-
-    console.log('Saving website with template:', selectedTemplate);
-    console.log('Full websiteData:', websiteData);
-
-    try {
-      const result = await saveWebsite(websiteData);
-      console.log('Save result:', result);
-      
-      if (result && (result.success || result.website)) {
-        const savedSite = result.website || {
-          id: siteId,
-          formData: { ...formData },
-          images: { ...images },
-          template: selectedTemplate,
-          createdAt: new Date().toISOString(),
-          link: link
-        };
-        
-        if (!savedSite.template) {
-          savedSite.template = selectedTemplate;
-        }
-        
-        console.log('Saved site with template:', savedSite.template);
-        setSavedWebsites(prev => [savedSite, ...prev]);
-        setGeneratedLink(link);
-      } else {
-        alert('Failed to save website. Please try again.');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      alert('Failed to save website. Please check your connection and try again.');
-    }
-    
-    setIsSaving(false);
-  };
-
-  const handleDownloadCSV = () => {
-    if (savedWebsites.length === 0) {
-      alert('No websites saved yet. Generate some links first!');
-      return;
-    }
-    exportWebsitesCSV(savedWebsites);
-  };
-
-  const clearForm = async () => {
-    const hasContent = formData.companyName && formData.companyName.trim() !== '';
-    
-    if (hasContent) {
-      const siteId = generateUniqueId();
-      const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
-      
-      const websiteData = {
-        id: siteId,
-        formData: { ...formData },
-        images: { ...images },
-        template: selectedTemplate,
-        link: link
-      };
-
-      try {
-        const result = await saveWebsite(websiteData);
-        
-        if (result && (result.success || result.website)) {
-          const savedSite = result.website || {
-            id: siteId,
-            formData: { ...formData },
-            images: { ...images },
-            template: selectedTemplate,
-            createdAt: new Date().toISOString(),
-            link: link
-          };
-          
-          if (!savedSite.template) {
-            savedSite.template = selectedTemplate;
-          }
-          
-          setSavedWebsites(prev => [savedSite, ...prev]);
-        }
-      } catch (error) {
-        console.error('Auto-save error:', error);
-      }
-    }
-    
-    setFormData(defaultContractorFormData);
-    setImages(defaultContractorImages);
-    setSelectedTemplate('general');
-    setGeneratedLink(null);
-  };
-
-  const duplicateWebsite = (website) => {
-    setFormData({ ...website.formData });
-    setImages({ ...website.images });
-    setSelectedTemplate(website.template || 'general');
-    setGeneratedLink(null);
-    setViewMode('builder');
-  };
-
-  const handleDeleteWebsite = async (siteId) => {
-    if (window.confirm('Are you sure you want to delete this?')) {
-      try {
-        const success = await deleteWebsite(siteId);
-        if (success) {
-          setSavedWebsites(prev => prev.filter(site => site.id !== siteId));
-        } else {
-          alert('Failed to delete website.');
-        }
-      } catch (error) {
-        console.error('Delete error:', error);
-        alert('Failed to delete website. Please try again.');
-      }
-    }
-  };
-
-  const handleClearAllWebsites = async () => {
-    if (savedWebsites.length === 0) {
-      alert('No websites to delete.');
-      return;
-    }
-    
-    const confirmed = window.confirm(
-      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!`
-    );
-    
-    if (confirmed) {
-      try {
-        const success = await deleteAllWebsites();
-        if (success) {
-          setSavedWebsites([]);
-        } else {
-          alert('Failed to delete websites.');
-        }
-      } catch (error) {
-        console.error('Clear all error:', error);
-        alert('Failed to delete websites. Please try again.');
-      }
-    }
   };
 
   const backToBuilder = () => {
@@ -256,32 +169,35 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     window.location.hash = '';
   };
 
-  // Handle image uploads
   const handleImageUpload = async (type, e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (file) {
-      const dataUrl = await readFileAsDataURL(file);
-      if (type === 'gallery') {
-        setImages(prev => ({
-          ...prev,
-          gallery: [...prev.gallery, dataUrl]
-        }));
-      } else {
-        setImages(prev => ({
-          ...prev,
-          [type]: dataUrl
-        }));
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        if (type === 'gallery') {
+          setImages(prev => ({
+            ...prev,
+            gallery: [...prev.gallery, dataUrl]
+          }));
+        } else {
+          setImages(prev => ({
+            ...prev,
+            [type]: dataUrl
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to read file:', error);
       }
     }
   };
 
-  // Handle paste for images
   const handlePaste = async (type, e) => {
-    const items = e.clipboardData?.items;
-    if (items) {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
+    const clipboardItems = e.clipboardData?.items;
+    if (clipboardItems) {
+      for (let item of clipboardItems) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const blob = item.getAsFile();
           const dataUrl = await readFileAsDataURL(blob);
           if (type === 'gallery') {
             setImages(prev => ({
@@ -294,14 +210,12 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               [type]: dataUrl
             }));
           }
-          e.preventDefault();
-          return;
+          break;
         }
       }
     }
   };
 
-  // Handle right-click paste
   const handleContextPaste = async (type) => {
     try {
       const clipboardItems = await navigator.clipboard.read();
@@ -383,6 +297,160 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     return <TemplateComponent formData={data} images={imgs} />;
   };
 
+  // Save and generate link
+  const saveAndGenerateLink = async () => {
+    setIsSaving(true);
+    
+    const siteId = generateUniqueId();
+    const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+    
+    const websiteData = {
+      id: siteId,
+      formData: { ...formData },
+      images: { ...images },
+      template: selectedTemplate,
+      link: link
+    };
+
+    try {
+      const result = await saveWebsite(websiteData);
+      
+      if (result && (result.success || result.website)) {
+        setGeneratedLink(link);
+        
+        const savedSite = result.website || {
+          id: siteId,
+          formData: { ...formData },
+          images: { ...images },
+          template: selectedTemplate,
+          createdAt: new Date().toISOString(),
+          link: link
+        };
+        
+        if (!savedSite.template) {
+          savedSite.template = selectedTemplate;
+        }
+        
+        setSavedWebsites(prev => [savedSite, ...prev]);
+        
+        // Clear lead selection after generating website
+        setSelectedLeadId(null);
+      } else {
+        alert('Failed to save website. Please try again.');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Failed to save website. Please check your connection and try again.');
+    }
+    
+    setIsSaving(false);
+  };
+
+  const handleDownloadCSV = () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites saved yet. Generate some links first!');
+      return;
+    }
+    exportWebsitesCSV(savedWebsites);
+  };
+
+  const clearForm = async () => {
+    const hasContent = formData.companyName && formData.companyName.trim() !== '';
+    
+    if (hasContent) {
+      const siteId = generateUniqueId();
+      const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
+      
+      const websiteData = {
+        id: siteId,
+        formData: { ...formData },
+        images: { ...images },
+        template: selectedTemplate,
+        link: link
+      };
+
+      try {
+        const result = await saveWebsite(websiteData);
+        
+        if (result && (result.success || result.website)) {
+          const savedSite = result.website || {
+            id: siteId,
+            formData: { ...formData },
+            images: { ...images },
+            template: selectedTemplate,
+            createdAt: new Date().toISOString(),
+            link: link
+          };
+          
+          if (!savedSite.template) {
+            savedSite.template = selectedTemplate;
+          }
+          
+          setSavedWebsites(prev => [savedSite, ...prev]);
+        }
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      }
+    }
+    
+    setFormData(defaultContractorFormData);
+    setImages(defaultContractorImages);
+    setSelectedTemplate('general');
+    setGeneratedLink(null);
+    setSelectedLeadId(null);
+  };
+
+  const duplicateWebsite = (website) => {
+    setFormData({ ...website.formData });
+    setImages({ ...website.images });
+    setSelectedTemplate(website.template || 'general');
+    setGeneratedLink(null);
+    setViewMode('builder');
+    setSelectedLeadId(null);
+  };
+
+  const handleDeleteWebsite = async (siteId) => {
+    if (window.confirm('Are you sure you want to delete this?')) {
+      try {
+        const success = await deleteWebsite(siteId);
+        if (success) {
+          setSavedWebsites(prev => prev.filter(site => site.id !== siteId));
+        } else {
+          alert('Failed to delete website.');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('Failed to delete website. Please try again.');
+      }
+    }
+  };
+
+  const handleClearAllWebsites = async () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites to delete.');
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!`
+    );
+    
+    if (confirmed) {
+      try {
+        const success = await deleteAllWebsites();
+        if (success) {
+          setSavedWebsites([]);
+        } else {
+          alert('Failed to delete websites.');
+        }
+      } catch (error) {
+        console.error('Delete all error:', error);
+        alert('Failed to delete websites. Please try again.');
+      }
+    }
+  };
+
+  // Loading screen
   if (isLoading) {
     return (
       <div className={`loading-screen ${isDarkMode ? 'dark' : ''}`}>
@@ -394,8 +462,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   // ============================================
   // STANDALONE SITE PREVIEW MODE (Generated Link View)
-  // When isStandaloneSitePreview is true, render ONLY the website
-  // with NO builder UI, NO navigation, NO "Back to Builder" button
   // ============================================
   if (isStandaloneSitePreview && viewMode === 'preview' && previewData) {
     return (
@@ -437,6 +503,14 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   const SelectedTemplateComponent = getCurrentTemplate();
 
+  // Get display name for a lead
+  const getLeadDisplayName = (lead) => {
+    if (lead.companyName) return lead.companyName;
+    if (lead.firstName || lead.lastName) return `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
+    if (lead.email) return lead.email;
+    return `Lead ${lead.id.substring(0, 8)}`;
+  };
+
   return (
     <div className={`contractor-builder ${isDarkMode ? 'dark' : ''}`}>
       {/* Form Panel */}
@@ -477,6 +551,85 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             </div>
           </div>
         )}
+
+        {/* Webhook Leads Section */}
+        <div className="form-section">
+          <div className="section-header-row">
+            <h2 className="form-section-title">📥 Incoming Leads</h2>
+            <button 
+              className={`refresh-leads-btn ${isDarkMode ? 'dark' : ''}`}
+              onClick={loadWebhookLeads}
+              disabled={isLoadingLeads}
+              title="Refresh leads"
+            >
+              {isLoadingLeads ? '⏳' : '🔄'}
+            </button>
+          </div>
+          
+          {webhookLeads.length === 0 ? (
+            <p className={`no-leads-text ${isDarkMode ? 'dark' : ''}`}>
+              No leads received yet. Configure your GHL webhook to: <br/>
+              <code className="webhook-url">/api/webhook/ghl</code>
+            </p>
+          ) : (
+            <>
+              <div className={`leads-list ${isDarkMode ? 'dark' : ''}`}>
+                {webhookLeads.map((lead) => (
+                  <div 
+                    key={lead.id} 
+                    className={`lead-item ${selectedLeadId === lead.id ? 'selected' : ''} ${isDarkMode ? 'dark' : ''}`}
+                    onClick={() => handleSelectLead(lead)}
+                  >
+                    <div className="lead-icon">👤</div>
+                    <div className="lead-info">
+                      <div className="lead-name">{getLeadDisplayName(lead)}</div>
+                      <div className="lead-date">
+                        {new Date(lead.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <button 
+                      className={`lead-delete-btn ${isDarkMode ? 'dark' : ''}`}
+                      onClick={(e) => handleDeleteLead(lead.id, e)}
+                      title="Remove lead"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Delete All Button */}
+              <div className="leads-actions">
+                {!showDeleteAllWarning ? (
+                  <button 
+                    className={`delete-all-leads-btn ${isDarkMode ? 'dark' : ''}`}
+                    onClick={() => setShowDeleteAllWarning(true)}
+                  >
+                    🗑️ Remove All Leads
+                  </button>
+                ) : (
+                  <div className={`delete-all-warning ${isDarkMode ? 'dark' : ''}`}>
+                    <p>⚠️ Delete all {webhookLeads.length} leads?</p>
+                    <div className="warning-actions">
+                      <button 
+                        className="warning-confirm-btn"
+                        onClick={handleDeleteAllLeads}
+                      >
+                        Yes, Delete All
+                      </button>
+                      <button 
+                        className="warning-cancel-btn"
+                        onClick={() => setShowDeleteAllWarning(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Template Selection */}
         <div className="form-section">
@@ -712,16 +865,16 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           
           {/* Gallery */}
           <div className="image-upload-section">
-            <label className="image-upload-label">Project Gallery</label>
+            <label className="image-upload-label">Gallery Images</label>
             <div className="gallery-grid">
               {images.gallery.map((img, index) => (
-                <div key={index} className="gallery-item">
+                <div key={index} className={`gallery-item ${isDarkMode ? 'dark' : ''}`}>
                   <img src={img} alt={`Gallery ${index + 1}`} />
-                  <button className="image-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
+                  <button className="gallery-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
                 </div>
               ))}
               <div 
-                className={`gallery-add ${isDarkMode ? 'dark' : ''}`}
+                className={`image-upload-area gallery-add ${isDarkMode ? 'dark' : ''}`}
                 tabIndex={0}
                 onPaste={(e) => handlePaste('gallery', e)}
                 onContextMenu={(e) => {
@@ -729,8 +882,9 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                   handleContextPaste('gallery');
                 }}
               >
-                <label style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  +
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">➕</span>
+                  <span className="upload-text">Add</span>
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -742,16 +896,16 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             </div>
           </div>
         </div>
-        
+
         {/* Colors */}
         <div className="form-section">
           <h2 className="form-section-title">Brand Colors</h2>
           
           <div className="color-presets">
-            {colorPresets.map((preset) => (
+            {colorPresets.map((preset, index) => (
               <button
-                key={preset.name}
-                className={`color-preset ${formData.primaryColor === preset.primary && formData.accentColor === preset.accent ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
+                key={index}
+                className={`color-preset ${isDarkMode ? 'dark' : ''}`}
                 onClick={() => setFormData(prev => ({
                   ...prev,
                   primaryColor: preset.primary,
@@ -759,38 +913,49 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 }))}
                 title={preset.name}
               >
-                <div 
-                  className="color-preset-swatch"
-                  style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }}
-                />
+                <div className="color-preview" style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }} />
               </button>
             ))}
           </div>
           
-          <div className="color-pickers">
+          <div className="form-row">
             <div className="form-group">
               <label className="form-label">Primary Color</label>
-              <div className={`color-input-wrapper ${isDarkMode ? 'dark' : ''}`}>
+              <div className="color-input-row">
                 <input
                   type="color"
+                  name="primaryColor"
                   value={formData.primaryColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
-                  className="color-input"
+                  onChange={handleChange}
+                  className="color-picker"
                 />
-                <span className="color-value">{formData.primaryColor}</span>
+                <input
+                  type="text"
+                  name="primaryColor"
+                  value={formData.primaryColor}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
               </div>
             </div>
             
             <div className="form-group">
               <label className="form-label">Accent Color</label>
-              <div className={`color-input-wrapper ${isDarkMode ? 'dark' : ''}`}>
+              <div className="color-input-row">
                 <input
                   type="color"
+                  name="accentColor"
                   value={formData.accentColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
-                  className="color-input"
+                  onChange={handleChange}
+                  className="color-picker"
                 />
-                <span className="color-value">{formData.accentColor}</span>
+                <input
+                  type="text"
+                  name="accentColor"
+                  value={formData.accentColor}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
               </div>
             </div>
           </div>
@@ -798,24 +963,22 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
         {/* Saved Websites */}
         <div className="form-section">
-          <div className="saved-websites-header">
-            <h2 className="form-section-title" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
-              Saved Websites ({savedWebsites.length})
-            </h2>
-            <div className="saved-websites-actions">
+          <div className="section-header-row">
+            <h2 className="form-section-title">Saved Websites</h2>
+            <div className="section-actions">
               <button 
-                className={`saved-header-btn ${isDarkMode ? 'dark' : ''}`}
+                className={`section-action-btn ${isDarkMode ? 'dark' : ''}`}
                 onClick={handleDownloadCSV}
-                title="Download CSV"
+                title="Export as CSV"
               >
-                📥 CSV
+                📥
               </button>
               <button 
-                className={`saved-header-btn danger ${isDarkMode ? 'dark' : ''}`}
+                className={`section-action-btn danger ${isDarkMode ? 'dark' : ''}`}
                 onClick={handleClearAllWebsites}
-                title="Clear All"
+                title="Delete all websites"
               >
-                🗑️ Clear All
+                🗑️
               </button>
             </div>
           </div>
