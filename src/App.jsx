@@ -12,7 +12,7 @@ export default function App() {
   const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
   const [exportedCSV, setExportedCSV] = useState(null);
   const [isSitePreview, setIsSitePreview] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state - DEFAULT TO TRUE
 
   // Check URL hash on mount for direct links
   useEffect(() => {
@@ -40,12 +40,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Load dark mode preference from localStorage
+  // Load dark mode preference from localStorage (only if explicitly set)
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode !== null) {
       setIsDarkMode(JSON.parse(savedDarkMode));
     }
+    // If no saved preference, keep the default (true = dark mode)
   }, []);
 
   // Save dark mode preference
