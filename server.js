@@ -16,19 +16,36 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Initialize database table
+// Initialize database table with template column
 const initDatabase = async () => {
   try {
+    // Create table if not exists (with template column)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS contractor_websites (
         id VARCHAR(255) PRIMARY KEY,
         form_data JSONB NOT NULL,
         images JSONB NOT NULL,
+        template VARCHAR(50) DEFAULT 'general',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         link TEXT NOT NULL
       )
     `);
-    console.log('Database initialized successfully');
+    
+    // Add template column if it doesn't exist (for existing databases)
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'contractor_websites' 
+          AND column_name = 'template'
+        ) THEN 
+          ALTER TABLE contractor_websites ADD COLUMN template VARCHAR(50) DEFAULT 'general';
+        END IF;
+      END $$;
+    `);
+    
+    console.log('Database initialized successfully with template support');
   } catch (error) {
     console.error('Database initialization error:', error);
   }
@@ -48,22 +65,26 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Save website
+// Save website (with template support)
 app.post('/api/websites', async (req, res) => {
   try {
-    const { id, formData, images, link } = req.body;
+    const { id, formData, images, template, link } = req.body;
 
     if (!id || !formData || !images || !link) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Default template to 'general' if not provided
+    const websiteTemplate = template || 'general';
+
     const query = `
-      INSERT INTO contractor_websites (id, form_data, images, link, created_at)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      INSERT INTO contractor_websites (id, form_data, images, template, link, created_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
       ON CONFLICT (id) DO UPDATE SET
         form_data = $2,
         images = $3,
-        link = $4
+        template = $4,
+        link = $5
       RETURNING *
     `;
 
@@ -71,6 +92,7 @@ app.post('/api/websites', async (req, res) => {
       id,
       JSON.stringify(formData),
       JSON.stringify(images),
+      websiteTemplate,
       link
     ]);
 
@@ -80,6 +102,7 @@ app.post('/api/websites', async (req, res) => {
         id: result.rows[0].id,
         formData: result.rows[0].form_data,
         images: result.rows[0].images,
+        template: result.rows[0].template || 'general',
         createdAt: result.rows[0].created_at,
         link: result.rows[0].link
       }
@@ -90,7 +113,7 @@ app.post('/api/websites', async (req, res) => {
   }
 });
 
-// Get all websites
+// Get all websites (with template support)
 app.get('/api/websites', async (req, res) => {
   try {
     const result = await pool.query(
@@ -101,6 +124,7 @@ app.get('/api/websites', async (req, res) => {
       id: row.id,
       formData: row.form_data,
       images: row.images,
+      template: row.template || 'general',
       createdAt: row.created_at,
       link: row.link
     }));
@@ -112,7 +136,7 @@ app.get('/api/websites', async (req, res) => {
   }
 });
 
-// Get single website by ID
+// Get single website by ID (with template support)
 app.get('/api/websites/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -132,6 +156,7 @@ app.get('/api/websites/:id', async (req, res) => {
         id: row.id,
         formData: row.form_data,
         images: row.images,
+        template: row.template || 'general',
         createdAt: row.created_at,
         link: row.link
       }
@@ -191,4 +216,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at /api/websites`);
+  console.log(`Supported templates: general, roofing, plumbing, electrical, hvac, landscaping`);
 });
