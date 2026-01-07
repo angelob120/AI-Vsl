@@ -219,10 +219,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     }
   };
 
-  // NEW: Handle paste for images
+  // Handle paste for images (supports Ctrl+V and right-click paste)
   const handlePaste = async (type, e) => {
-    e.preventDefault();
-    
     const clipboardData = e.clipboardData || window.clipboardData;
     const items = clipboardData?.items;
     
@@ -230,6 +228,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
         const file = items[i].getAsFile();
         if (file) {
           const dataUrl = await readFileAsDataURL(file);
@@ -247,6 +246,34 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
           return;
         }
       }
+    }
+  };
+
+  // Handle right-click paste from context menu
+  const handleContextPaste = async (type) => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const dataUrl = await readFileAsDataURL(blob);
+          if (type === 'gallery') {
+            setImages(prev => ({
+              ...prev,
+              gallery: [...prev.gallery, dataUrl]
+            }));
+          } else {
+            setImages(prev => ({
+              ...prev,
+              [type]: dataUrl
+            }));
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      console.log('Clipboard access denied or no image found');
     }
   };
 
@@ -493,9 +520,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               className={`image-upload-area ${images.logo ? 'has-image' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('logo', e)}
-              onClick={(e) => {
-                if (e.target.closest('.image-remove-btn')) return;
-                e.currentTarget.focus();
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('logo');
               }}
             >
               {images.logo ? (
@@ -506,8 +533,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               ) : (
                 <>
                   <div className="image-upload-icon">🏢</div>
-                  <div className="image-upload-text">Upload or paste your logo</div>
-                  <div className="image-upload-hint">PNG or SVG recommended • Click & Ctrl+V to paste</div>
+                  <div className="image-upload-text">Click to upload or right-click to paste</div>
+                  <div className="image-upload-hint">PNG or SVG recommended</div>
                 </>
               )}
               <input
@@ -526,9 +553,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               className={`image-upload-area ${images.hero ? 'has-image' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('hero', e)}
-              onClick={(e) => {
-                if (e.target.closest('.image-remove-btn')) return;
-                e.currentTarget.focus();
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('hero');
               }}
             >
               {images.hero ? (
@@ -539,8 +566,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               ) : (
                 <>
                   <div className="image-upload-icon">🖼️</div>
-                  <div className="image-upload-text">Upload or paste hero image</div>
-                  <div className="image-upload-hint">Recommended: 1920x800px • Click & Ctrl+V to paste</div>
+                  <div className="image-upload-text">Click to upload or right-click to paste</div>
+                  <div className="image-upload-hint">Recommended: 1920x800px</div>
                 </>
               )}
               <input
@@ -559,9 +586,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               className={`image-upload-area ${images.about ? 'has-image' : ''}`}
               tabIndex={0}
               onPaste={(e) => handlePaste('about', e)}
-              onClick={(e) => {
-                if (e.target.closest('.image-remove-btn')) return;
-                e.currentTarget.focus();
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('about');
               }}
             >
               {images.about ? (
@@ -572,8 +599,8 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               ) : (
                 <>
                   <div className="image-upload-icon">👷</div>
-                  <div className="image-upload-text">Upload or paste team photo</div>
-                  <div className="image-upload-hint">Show your team at work • Click & Ctrl+V to paste</div>
+                  <div className="image-upload-text">Click to upload or right-click to paste</div>
+                  <div className="image-upload-hint">Show your team at work</div>
                 </>
               )}
               <input
@@ -600,7 +627,10 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
                   className="gallery-add"
                   tabIndex={0}
                   onPaste={(e) => handlePaste('gallery', e)}
-                  onClick={(e) => e.currentTarget.focus()}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    handleContextPaste('gallery');
+                  }}
                 >
                   <span>+</span>
                   <input
