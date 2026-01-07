@@ -912,7 +912,15 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           {/* Gallery */}
           <div className="image-upload-section">
             <label className="image-upload-label">Gallery Images</label>
-            <div className="gallery-grid">
+            <div 
+              className="gallery-grid"
+              tabIndex={0}
+              onPaste={(e) => handlePaste('gallery', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('gallery');
+              }}
+            >
               {images.gallery.map((img, index) => (
                 <div key={index} className={`gallery-item ${isDarkMode ? 'dark' : ''}`}>
                   <img src={img} alt={`Gallery ${index + 1}`} className="gallery-image" />
