@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ContractorBuilder from './components/webhook-leads-styles.css';
+import ContractorBuilder from './components/ContractorBuilder';
 import RepliqStudio from './components/RepliqStudio';
 import './styles/global.css';
 
