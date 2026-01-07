@@ -937,3 +937,42 @@ button, a {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Export to RepliQ Button */
+.export-to-repliq-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.export-to-repliq-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.export-to-repliq-btn:active {
+  transform: translateY(0);
+}
+
+/* Dark mode support */
+.form-panel.dark .export-to-repliq-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.form-panel.dark .export-to-repliq-btn:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}

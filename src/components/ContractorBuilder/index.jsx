@@ -354,6 +354,50 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     exportWebsitesCSV(savedWebsites);
   };
 
+  // ============================================
+  // NEW: Export to RepliQ Studio function
+  // ============================================
+  const handleExportToRepliQ = async () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites saved yet. Generate some links first!');
+      return;
+    }
+
+    // Single confirmation alert
+    const confirmed = window.confirm(
+      `⚠️ Export ${savedWebsites.length} website(s) to RepliQ Studio?\n\nThis will:\n• Send all saved websites to RepliQ as leads\n• Delete all saved websites from this list\n\nThis action cannot be undone!`
+    );
+
+    if (confirmed) {
+      // Create CSV data in the format RepliQ expects
+      // Headers: Website URL, First Name (Owner Name), Company Name
+      const csvData = [
+        ['Website Link', 'First Name', 'Company Name'], // Header row
+        ...savedWebsites.map(site => [
+          site.link,
+          site.formData?.ownerName || site.formData?.companyName || '',
+          site.formData?.companyName || ''
+        ])
+      ];
+
+      // Delete all saved websites
+      try {
+        const success = await deleteAllWebsites();
+        if (success) {
+          setSavedWebsites([]);
+        }
+      } catch (error) {
+        console.error('Delete all error:', error);
+        // Continue anyway - data is being exported
+      }
+
+      // Navigate to RepliQ with the CSV data
+      if (onNavigateToRepliq) {
+        onNavigateToRepliq(csvData);
+      }
+    }
+  };
+
   const clearForm = async () => {
     const hasContent = formData.companyName && formData.companyName.trim() !== '';
     
@@ -568,37 +612,35 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           
           {webhookLeads.length === 0 ? (
             <p className={`no-leads-text ${isDarkMode ? 'dark' : ''}`}>
-              No leads received yet. Configure your GHL webhook to: <br/>
-              <code className="webhook-url">/api/webhook/ghl</code>
+              No leads received yet. Send data to the webhook endpoint to see leads here.
             </p>
           ) : (
             <>
-              <div className={`leads-list ${isDarkMode ? 'dark' : ''}`}>
+              <div className="webhook-leads-list">
                 {webhookLeads.map((lead) => (
                   <div 
                     key={lead.id} 
-                    className={`lead-item ${selectedLeadId === lead.id ? 'selected' : ''} ${isDarkMode ? 'dark' : ''}`}
+                    className={`webhook-lead-item ${isDarkMode ? 'dark' : ''} ${selectedLeadId === lead.id ? 'selected' : ''}`}
                     onClick={() => handleSelectLead(lead)}
                   >
-                    <div className="lead-icon">👤</div>
-                    <div className="lead-info">
-                      <div className="lead-name">{getLeadDisplayName(lead)}</div>
-                      <div className="lead-date">
-                        {new Date(lead.createdAt).toLocaleDateString()}
+                    <div className="webhook-lead-info">
+                      <div className="webhook-lead-name">{getLeadDisplayName(lead)}</div>
+                      <div className="webhook-lead-meta">
+                        {lead.email && <span>{lead.email}</span>}
+                        {lead.phone && <span> • {lead.phone}</span>}
                       </div>
                     </div>
                     <button 
-                      className={`lead-delete-btn ${isDarkMode ? 'dark' : ''}`}
+                      className={`webhook-lead-delete ${isDarkMode ? 'dark' : ''}`}
                       onClick={(e) => handleDeleteLead(lead.id, e)}
-                      title="Remove lead"
+                      title="Delete lead"
                     >
-                      ×
+                      🗑️
                     </button>
                   </div>
                 ))}
               </div>
               
-              {/* Delete All Button */}
               <div className="leads-actions">
                 {!showDeleteAllWarning ? (
                   <button 
@@ -672,31 +714,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               value={formData.ownerName}
               onChange={handleChange}
               className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="Owner's Name"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="(555) 123-4567"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="email@email.com"
+              placeholder="Owner/Contact Name"
             />
           </div>
           
@@ -711,29 +729,57 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               placeholder="Your company tagline"
             />
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Years of Experience</label>
-            <input
-              type="text"
-              name="yearsExperience"
-              value={formData.yearsExperience}
-              onChange={handleChange}
-              className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="25"
-            />
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="email@company.com"
+              />
+            </div>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Address</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="123 Main Street"
-            />
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Years Experience</label>
+              <input
+                type="text"
+                name="yearsExperience"
+                value={formData.yearsExperience}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="25"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Address</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="123 Main Street"
+              />
+            </div>
           </div>
         </div>
         
@@ -869,35 +915,24 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             <div className="gallery-grid">
               {images.gallery.map((img, index) => (
                 <div key={index} className={`gallery-item ${isDarkMode ? 'dark' : ''}`}>
-                  <img src={img} alt={`Gallery ${index + 1}`} />
+                  <img src={img} alt={`Gallery ${index + 1}`} className="gallery-image" />
                   <button className="gallery-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
                 </div>
               ))}
-              <div 
-                className={`image-upload-area gallery-add ${isDarkMode ? 'dark' : ''}`}
-                tabIndex={0}
-                onPaste={(e) => handlePaste('gallery', e)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleContextPaste('gallery');
-                }}
-              >
-                <label className="image-upload-placeholder">
-                  <span className="upload-icon">➕</span>
-                  <span className="upload-text">Add</span>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => handleImageUpload('gallery', e)}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
+              <label className={`gallery-add ${isDarkMode ? 'dark' : ''}`}>
+                <span className="gallery-add-icon">+</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleImageUpload('gallery', e)}
+                  style={{ display: 'none' }}
+                />
+              </label>
             </div>
           </div>
         </div>
 
-        {/* Colors */}
+        {/* Brand Colors */}
         <div className="form-section">
           <h2 className="form-section-title">Brand Colors</h2>
           
@@ -913,12 +948,15 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 }))}
                 title={preset.name}
               >
-                <div className="color-preview" style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }} />
+                <div 
+                  className="color-preview" 
+                  style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }}
+                />
               </button>
             ))}
           </div>
           
-          <div className="form-row">
+          <div className="color-pickers">
             <div className="form-group">
               <label className="form-label">Primary Color</label>
               <div className="color-input-row">
@@ -1031,6 +1069,16 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 );
               })}
             </div>
+          )}
+          
+          {/* NEW: Export to RepliQ Button */}
+          {savedWebsites.length > 0 && (
+            <button 
+              className="export-to-repliq-btn"
+              onClick={handleExportToRepliQ}
+            >
+              🚀 Export to RepliQ Studio
+            </button>
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { generateVideoId, delay, readFileAsText } from '../../utils/helpers';
 import { ColorPicker } from '../shared';
 import './styles.css';
 
-export default function RepliqStudio({ onNavigateToBuilder }) {
+export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
   // Video uploads
   const [introVideo, setIntroVideo] = useState(null);
   const [secondVideo, setSecondVideo] = useState(null);
@@ -61,6 +61,28 @@ export default function RepliqStudio({ onNavigateToBuilder }) {
   const introVideoRef = useRef(null);
   const secondVideoRef = useRef(null);
   const timerRef = useRef(null);
+
+  // ============================================
+  // NEW: Handle imported CSV data from ContractorBuilder
+  // ============================================
+  useEffect(() => {
+    if (importedCSV && Array.isArray(importedCSV) && importedCSV.length > 0) {
+      setCsvData(importedCSV);
+      
+      // Set headers from first row
+      const headers = importedCSV[0];
+      setCsvHeaders(headers);
+      setHeaderRowIndex(0);
+      
+      // Auto-map columns based on header names
+      const headersLower = headers.map(h => (h || '').toLowerCase());
+      setColumnMapping({
+        websiteUrl: headers[headersLower.findIndex(h => h.includes('website') || h.includes('url') || h.includes('link'))] || '',
+        firstName: headers[headersLower.findIndex(h => h.includes('first') || h.includes('name') || h.includes('owner'))] || '',
+        companyName: headers[headersLower.findIndex(h => h.includes('company') || h.includes('business'))] || ''
+      });
+    }
+  }, [importedCSV]);
 
   // Parse and handle CSV upload
   const handleCSVUpload = async (e) => {
@@ -524,28 +546,28 @@ export default function RepliqStudio({ onNavigateToBuilder }) {
               </div>
               
               <div className="color-row">
-                <ColorPicker label="Text" value={textColor} onChange={setTextColor} theme="dark" variant="compact" />
-                <ColorPicker label="Background" value={bgColor} onChange={setBgColor} theme="dark" variant="compact" />
-                <ColorPicker label="Text Hover" value={textHoverColor} onChange={setTextHoverColor} theme="dark" variant="compact" />
-                <ColorPicker label="Bg Hover" value={bgHoverColor} onChange={setBgHoverColor} theme="dark" variant="compact" />
+                <ColorPicker label="Text" value={textColor} onChange={setTextColor} />
+                <ColorPicker label="BG" value={bgColor} onChange={setBgColor} />
+                <ColorPicker label="Hover Text" value={textHoverColor} onChange={setTextHoverColor} />
+                <ColorPicker label="Hover BG" value={bgHoverColor} onChange={setBgHoverColor} />
               </div>
             </div>
             
             <div className="toggles-grid">
               <label className="toggle-item">
-                <input type="checkbox" checked={displayTab} onChange={(e) => setDisplayTab(e.target.checked)} className="checkbox" />
+                <input type="checkbox" checked={displayTab} onChange={() => setDisplayTab(!displayTab)} className="checkbox" />
                 <span>Display tab</span>
               </label>
               <label className="toggle-item">
-                <input type="checkbox" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} className="checkbox" />
+                <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="checkbox" />
                 <span>Dark mode</span>
               </label>
               <label className="toggle-item">
-                <input type="checkbox" checked={scrollBehavior === 'down'} onChange={(e) => setScrollBehavior(e.target.checked ? 'down' : 'up')} className="checkbox" />
-                <span>Auto scroll ↕</span>
+                <input type="checkbox" checked={scrollBehavior === 'down'} onChange={() => setScrollBehavior(scrollBehavior === 'down' ? 'none' : 'down')} className="checkbox" />
+                <span>Scroll down ↓</span>
               </label>
               <label className="toggle-item">
-                <input type="checkbox" checked={mouseDisplay === 'moving'} onChange={(e) => setMouseDisplay(e.target.checked ? 'moving' : 'static')} className="checkbox" />
+                <input type="checkbox" checked={mouseDisplay === 'moving'} onChange={() => setMouseDisplay(mouseDisplay === 'moving' ? 'static' : 'moving')} className="checkbox" />
                 <span>Moving mouse ↗</span>
               </label>
             </div>
@@ -783,30 +805,24 @@ export default function RepliqStudio({ onNavigateToBuilder }) {
             
             {/* Sample Results */}
             <div className="results-preview">
-              <h4 className="results-title">Sample Output:</h4>
-              <div>
-                {createdVideos.slice(0, 3).map((video, i) => (
-                  <div key={i} className="result-item">
-                    <span className="result-name">{video.firstName} {video.lastName}</span>
-                    <a href={video.videoLink} target="_blank" rel="noopener noreferrer" className="result-link">
-                      {video.videoLink}
-                    </a>
-                  </div>
-                ))}
-                {createdVideos.length > 3 && (
-                  <p className="more-results">+{createdVideos.length - 3} more videos...</p>
-                )}
-              </div>
+              <p className="results-title">Sample Results</p>
+              {createdVideos.slice(0, 3).map((video, i) => (
+                <div key={i} className="result-item">
+                  <span className="result-name">{video.firstName} - {video.lastName}</span>
+                  <a href={video.videoLink} className="result-link" target="_blank" rel="noopener noreferrer">
+                    View Video →
+                  </a>
+                </div>
+              ))}
+              {createdVideos.length > 3 && (
+                <p className="more-results">+{createdVideos.length - 3} more videos</p>
+              )}
             </div>
             
-            {/* Export Button */}
             <button onClick={handleExportCSV} className="export-button">
-              📥 Download CSV with Video Links
+              📥 Export All to CSV
             </button>
-            
-            <p className="export-note">
-              CSV includes: Video Links, HTML Embeds, Preview Images, Background Links
-            </p>
+            <p className="export-note">Download all video links and embed codes</p>
           </div>
         </div>
       )}
