@@ -22,13 +22,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     ownerName: 'John Mitchell',
     companyName: 'Mitchell Construction',
     phone: '(555) 123-4567',
-    email: 'info@mitchellconstruction.com',
+    email: 'email@email.com',           // ← Updated
     tagline: 'Building Dreams, One Project at a Time',
     primaryColor: '#1a3a5c',
     accentColor: '#c9a227',
     services: ['Kitchen Remodels', 'Bathroom Renovations', 'Home Additions', 'Deck Building'],
     yearsExperience: '25',
-    address: '123 Main Street, Denver, CO 80202'
+    address: '123 Main Street'          // ← Updated
   });
 
   const [images, setImages] = useState({
