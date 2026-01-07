@@ -66,6 +66,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   const loadSavedWebsites = async () => {
     try {
       const websites = await getAllWebsites();
+      console.log('Loaded websites from API:', websites); // Debug log
       // Sort by createdAt descending
       websites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setSavedWebsites(websites);
@@ -79,6 +80,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
   const loadWebsiteById = async (siteId) => {
     try {
       const website = await getWebsiteById(siteId);
+      console.log('Loaded website by ID:', website); // Debug log
       if (website) {
         setPreviewData({
           formData: website.formData,
@@ -104,18 +106,24 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     const siteId = generateUniqueId();
     const link = `${window.location.origin}${window.location.pathname}#site-${siteId}`;
     
+    // Important: Use the current selectedTemplate value
     const websiteData = {
       id: siteId,
       formData: { ...formData },
       images: { ...images },
-      template: selectedTemplate,
+      template: selectedTemplate, // This should be the currently selected template
       link: link
     };
 
+    console.log('Saving website with template:', selectedTemplate); // Debug log
+    console.log('Full websiteData:', websiteData); // Debug log
+
     try {
       const result = await saveWebsite(websiteData);
+      console.log('Save result:', result); // Debug log
       
       if (result && (result.success || result.website)) {
+        // Use the template from the response if available, otherwise use selectedTemplate
         const savedSite = result.website || {
           id: siteId,
           formData: { ...formData },
@@ -124,6 +132,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
           createdAt: new Date().toISOString(),
           link: link
         };
+        
+        // Ensure template is set correctly
+        if (!savedSite.template) {
+          savedSite.template = selectedTemplate;
+        }
+        
+        console.log('Saved site with template:', savedSite.template); // Debug log
         setSavedWebsites(prev => [savedSite, ...prev]);
         setGeneratedLink(link);
       } else {
@@ -172,6 +187,12 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             createdAt: new Date().toISOString(),
             link: link
           };
+          
+          // Ensure template is set correctly
+          if (!savedSite.template) {
+            savedSite.template = selectedTemplate;
+          }
+          
           setSavedWebsites(prev => [savedSite, ...prev]);
         }
       } catch (error) {
@@ -181,6 +202,7 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     
     setFormData(defaultContractorFormData);
     setImages(defaultContractorImages);
+    setSelectedTemplate('general'); // Reset template to default
     setGeneratedLink(null);
   };
 
@@ -214,8 +236,9 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     window.location.hash = '';
   };
 
+  // Handle image uploads
   const handleImageUpload = async (type, e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       const dataUrl = await readFileAsDataURL(file);
       if (type === 'gallery') {
@@ -232,44 +255,13 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
     }
   };
 
-  // Handle paste for images (supports Ctrl+V and right-click paste)
+  // Handle paste for images
   const handlePaste = async (type, e) => {
-    const clipboardData = e.clipboardData || window.clipboardData;
-    const items = clipboardData?.items;
-    
-    if (!items) return;
-    
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        e.preventDefault();
-        const file = items[i].getAsFile();
-        if (file) {
-          const dataUrl = await readFileAsDataURL(file);
-          if (type === 'gallery') {
-            setImages(prev => ({
-              ...prev,
-              gallery: [...prev.gallery, dataUrl]
-            }));
-          } else {
-            setImages(prev => ({
-              ...prev,
-              [type]: dataUrl
-            }));
-          }
-          return;
-        }
-      }
-    }
-  };
-
-  // Handle right-click paste from context menu
-  const handleContextPaste = async (type) => {
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      for (const item of clipboardItems) {
-        const imageType = item.types.find(t => t.startsWith('image/'));
-        if (imageType) {
-          const blob = await item.getType(imageType);
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
           const dataUrl = await readFileAsDataURL(blob);
           if (type === 'gallery') {
             setImages(prev => ({
@@ -282,7 +274,35 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
               [type]: dataUrl
             }));
           }
+          e.preventDefault();
           return;
+        }
+      }
+    }
+  };
+
+  // Handle right-click paste
+  const handleContextPaste = async (type) => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        for (const mimeType of item.types) {
+          if (mimeType.startsWith('image/')) {
+            const blob = await item.getType(mimeType);
+            const dataUrl = await readFileAsDataURL(blob);
+            if (type === 'gallery') {
+              setImages(prev => ({
+                ...prev,
+                gallery: [...prev.gallery, dataUrl]
+              }));
+            } else {
+              setImages(prev => ({
+                ...prev,
+                [type]: dataUrl
+              }));
+            }
+            return;
+          }
         }
       }
     } catch (err) {
@@ -572,26 +592,25 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             >
               {images.logo ? (
                 <>
-                  <img src={images.logo} alt="Logo" className="uploaded-image-preview logo" />
-                  <button className="image-remove-btn" onClick={(e) => { e.stopPropagation(); removeImage('logo'); }}>×</button>
+                  <img src={images.logo} alt="Logo" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('logo')}>×</button>
                 </>
               ) : (
-                <>
-                  <div className="image-upload-icon">🏢</div>
-                  <div className="image-upload-text">Click to upload or right-click to paste</div>
-                  <div className="image-upload-hint">PNG or SVG recommended</div>
-                </>
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">📷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('logo', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                className="image-upload-input"
-                onChange={(e) => handleImageUpload('logo', e)}
-              />
             </div>
           </div>
           
-          {/* Hero Background */}
+          {/* Hero Image */}
           <div className="image-upload-section">
             <label className="image-upload-label">Hero Background</label>
             <div 
@@ -605,28 +624,27 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             >
               {images.hero ? (
                 <>
-                  <img src={images.hero} alt="Hero" className="uploaded-image-preview" />
-                  <button className="image-remove-btn" onClick={(e) => { e.stopPropagation(); removeImage('hero'); }}>×</button>
+                  <img src={images.hero} alt="Hero" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('hero')}>×</button>
                 </>
               ) : (
-                <>
-                  <div className="image-upload-icon">🖼️</div>
-                  <div className="image-upload-text">Click to upload or right-click to paste</div>
-                  <div className="image-upload-hint">Recommended: 1920x800px</div>
-                </>
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">🖼️</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('hero', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                className="image-upload-input"
-                onChange={(e) => handleImageUpload('hero', e)}
-              />
             </div>
           </div>
           
-          {/* About / Team Photo */}
+          {/* About Image */}
           <div className="image-upload-section">
-            <label className="image-upload-label">About / Team Photo</label>
+            <label className="image-upload-label">About Section Image</label>
             <div 
               className={`image-upload-area ${images.about ? 'has-image' : ''}`}
               tabIndex={0}
@@ -638,67 +656,66 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             >
               {images.about ? (
                 <>
-                  <img src={images.about} alt="About" className="uploaded-image-preview" />
-                  <button className="image-remove-btn" onClick={(e) => { e.stopPropagation(); removeImage('about'); }}>×</button>
+                  <img src={images.about} alt="About" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('about')}>×</button>
                 </>
               ) : (
-                <>
-                  <div className="image-upload-icon">👷</div>
-                  <div className="image-upload-text">Click to upload or right-click to paste</div>
-                  <div className="image-upload-hint">Show your team at work</div>
-                </>
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">👷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('about', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                className="image-upload-input"
-                onChange={(e) => handleImageUpload('about', e)}
-              />
             </div>
           </div>
           
-          {/* Project Gallery */}
+          {/* Gallery */}
           <div className="image-upload-section">
             <label className="image-upload-label">Project Gallery</label>
             <div className="gallery-grid">
               {images.gallery.map((img, index) => (
                 <div key={index} className="gallery-item">
-                  <img src={img} alt={`Project ${index + 1}`} />
+                  <img src={img} alt={`Gallery ${index + 1}`} />
                   <button className="image-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
                 </div>
               ))}
-              {images.gallery.length < 6 && (
-                <div 
-                  className="gallery-add"
-                  tabIndex={0}
-                  onPaste={(e) => handlePaste('gallery', e)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    handleContextPaste('gallery');
-                  }}
-                >
-                  <span>+</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="image-upload-input"
+              <div 
+                className="gallery-add"
+                tabIndex={0}
+                onPaste={(e) => handlePaste('gallery', e)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleContextPaste('gallery');
+                }}
+              >
+                <label style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  +
+                  <input 
+                    type="file" 
+                    accept="image/*" 
                     onChange={(e) => handleImageUpload('gallery', e)}
+                    style={{ display: 'none' }}
                   />
-                </div>
-              )}
+                </label>
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Brand Colors */}
+        {/* Colors */}
         <div className="form-section">
           <h2 className="form-section-title">Brand Colors</h2>
           
           <div className="color-presets">
-            {colorPresets.map((preset, index) => (
+            {colorPresets.map((preset) => (
               <button
-                key={index}
-                className={`color-preset ${formData.primaryColor === preset.primary ? 'active' : ''}`}
+                key={preset.name}
+                className={`color-preset ${formData.primaryColor === preset.primary && formData.accentColor === preset.accent ? 'active' : ''}`}
                 onClick={() => setFormData(prev => ({ 
                   ...prev, 
                   primaryColor: preset.primary, 
@@ -795,44 +812,48 @@ export default function ContractorBuilder({ onNavigateToRepliq }) {
             </p>
           ) : (
             <div className="saved-websites-list">
-              {savedWebsites.map((site) => (
-                <div key={site.id} className="saved-website-item">
-                  <div 
-                    className="saved-website-color" 
-                    style={{ background: `linear-gradient(135deg, ${site.formData.primaryColor}, ${site.formData.accentColor})` }}
-                  />
-                  <div className="saved-website-info">
-                    <div className="saved-website-name">{site.formData.companyName}</div>
-                    <div className="saved-website-date">
-                      {new Date(site.createdAt).toLocaleDateString()}
-                      {site.template && <span className="saved-website-template"> • {getTemplateById(site.template).icon}</span>}
+              {savedWebsites.map((site) => {
+                // Get the template info for this saved site
+                const siteTemplate = getTemplateById(site.template || 'general');
+                return (
+                  <div key={site.id} className="saved-website-item">
+                    <div 
+                      className="saved-website-color" 
+                      style={{ background: `linear-gradient(135deg, ${site.formData?.primaryColor || '#1a3a5c'}, ${site.formData?.accentColor || '#c9a227'})` }}
+                    />
+                    <div className="saved-website-info">
+                      <div className="saved-website-name">{site.formData?.companyName || 'Unnamed'}</div>
+                      <div className="saved-website-date">
+                        {new Date(site.createdAt).toLocaleDateString()}
+                        <span className="saved-website-template"> • {siteTemplate.icon} {siteTemplate.name}</span>
+                      </div>
+                    </div>
+                    <div className="saved-website-actions">
+                      <button 
+                        className="saved-action-btn" 
+                        title="Copy Link"
+                        onClick={() => handleCopyLink(site.link)}
+                      >
+                        🔗
+                      </button>
+                      <button 
+                        className="saved-action-btn" 
+                        title="Duplicate"
+                        onClick={() => duplicateWebsite(site)}
+                      >
+                        📋
+                      </button>
+                      <button 
+                        className="saved-action-btn delete" 
+                        title="Delete"
+                        onClick={() => handleDeleteWebsite(site.id)}
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
-                  <div className="saved-website-actions">
-                    <button 
-                      className="saved-action-btn" 
-                      title="Copy Link"
-                      onClick={() => handleCopyLink(site.link)}
-                    >
-                      🔗
-                    </button>
-                    <button 
-                      className="saved-action-btn" 
-                      title="Duplicate"
-                      onClick={() => duplicateWebsite(site)}
-                    >
-                      📋
-                    </button>
-                    <button 
-                      className="saved-action-btn delete" 
-                      title="Delete"
-                      onClick={() => handleDeleteWebsite(site.id)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
