@@ -468,11 +468,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           <Button variant="secondary" onClick={clearForm}>
             🔄 New
           </Button>
-          {onNavigateToRepliq && (
-            <Button variant="accent" onClick={onNavigateToRepliq}>
-              🎥 RepliQ
-            </Button>
-          )}
         </div>
         
         {generatedLink && (
