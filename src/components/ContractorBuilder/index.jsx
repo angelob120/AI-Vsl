@@ -379,10 +379,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   };
 
   const handleCopyLink = async (link) => {
-    const success = await copyToClipboard(link);
-    if (success) {
-      alert('Link copied to clipboard!');
-    }
+    await copyToClipboard(link);
   };
 
   // Get the currently selected template component
