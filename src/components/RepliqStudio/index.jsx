@@ -1,3 +1,5 @@
+// FILE: src/components/RepliqStudio/index.jsx
+// MAIN REPLIQSTUDIO COMPONENT - This is the entry point!
 import React, { useState } from 'react';
 import { useVideoUpload, useCSVData, useVideoCreation } from './hooks';
 import {

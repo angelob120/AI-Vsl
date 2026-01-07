@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/utils/fileHelpers.js
 // File helper utilities
 
 export const fileToBase64 = (file) => {

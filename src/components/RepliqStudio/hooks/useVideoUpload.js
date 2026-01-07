@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/hooks/useVideoUpload.js
 import { useState, useRef } from 'react';
 import { fileToBase64 } from '../utils/fileHelpers';
 import { saveToIndexedDB } from '../utils/storage';

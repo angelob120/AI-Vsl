@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/components/VideoUpload.jsx
 import React from 'react';
 
 export default function VideoUpload({

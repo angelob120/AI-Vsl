@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/components/Header.jsx
 import React from 'react';
 
 export default function Header({ onBack }) {

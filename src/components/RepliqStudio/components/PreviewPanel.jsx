@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/components/PreviewPanel.jsx
 import React, { useRef, useState, useEffect } from 'react';
 
 export default function PreviewPanel({

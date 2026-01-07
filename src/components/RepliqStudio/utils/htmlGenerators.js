@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/utils/htmlGenerators.js
 // HTML generators for landing pages
 
 export const generateLandingPageHTML = (lead, settings) => {

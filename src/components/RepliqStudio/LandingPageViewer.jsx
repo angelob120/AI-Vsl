@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/LandingPageViewer.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { getFromIndexedDB, LANDING_PAGE_PREFIX } from './utils/storage';
 
@@ -76,7 +77,6 @@ export default function LandingPageViewer() {
   // Auto-play video when data loads
   useEffect(() => {
     if (pageData && videoRef.current) {
-      // Small delay to ensure video is ready
       setTimeout(() => {
         videoRef.current.play().catch(e => console.log('Autoplay blocked:', e));
       }, 500);
@@ -316,14 +316,6 @@ export default function LandingPageViewer() {
               fontWeight: 600,
               boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
               transition: 'all 0.3s'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 6px 30px rgba(102, 126, 234, 0.6)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.4)';
             }}
           >
             {buttonText || 'Book a Call'}

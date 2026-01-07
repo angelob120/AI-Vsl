@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/components/CSVUpload.jsx
 import React from 'react';
 import ColumnMapping from './ColumnMapping';
 

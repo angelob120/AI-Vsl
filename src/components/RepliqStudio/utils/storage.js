@@ -1,3 +1,4 @@
+// FILE: src/components/RepliqStudio/utils/storage.js
 // Storage utilities for IndexedDB and localStorage
 
 export const LANDING_PAGE_PREFIX = 'repliq_landing_';
