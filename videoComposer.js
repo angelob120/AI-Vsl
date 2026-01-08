@@ -2,10 +2,23 @@
 // Server-side video composition using FFmpeg
 // Place this in the root directory next to server.js
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
+/**
+ * Check if FFmpeg is installed
+ */
+const checkFFmpeg = () => {
+  try {
+    execSync('ffmpeg -version', { stdio: 'ignore' });
+    execSync('ffprobe -version', { stdio: 'ignore' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 /**
  * Create a scrolling background image for the video
@@ -26,13 +39,15 @@ const createBackgroundImage = async (websiteUrl, width = 1280, height = 2000) =>
     domain = websiteUrl || 'Website';
   }
 
+  // Escape special characters for FFmpeg
+  const safeDomain = domain.replace(/[':]/g, '\\$&');
+
   // Create a simple gradient background image using FFmpeg
-  // This creates a dark gradient that looks like a website placeholder
   return new Promise((resolve, reject) => {
     const args = [
       '-f', 'lavfi',
       '-i', `color=c=#1a1a2e:s=${width}x${height}:d=1`,
-      '-vf', `drawtext=text='${domain}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=100,drawbox=x=100:y=200:w=${width-200}:h=150:color=#667eea@0.3:t=fill,drawbox=x=100:y=400:w=${width-200}:h=150:color=#ffffff@0.1:t=fill,drawbox=x=100:y=600:w=${width-200}:h=150:color=#667eea@0.2:t=fill,drawbox=x=100:y=800:w=${width-200}:h=150:color=#ffffff@0.1:t=fill,drawbox=x=100:y=1000:w=${width-200}:h=150:color=#667eea@0.1:t=fill,drawbox=x=100:y=1200:w=${width-200}:h=150:color=#ffffff@0.05:t=fill,drawbox=x=100:y=1400:w=${width-200}:h=150:color=#667eea@0.1:t=fill,drawbox=x=100:y=1600:w=${width-200}:h=150:color=#ffffff@0.1:t=fill`,
+      '-vf', `drawtext=text='${safeDomain}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=100`,
       '-frames:v', '1',
       '-y',
       imagePath
@@ -45,37 +60,55 @@ const createBackgroundImage = async (websiteUrl, width = 1280, height = 2000) =>
       stderr += data.toString();
     });
 
+    ffmpeg.on('error', (err) => {
+      console.error('FFmpeg spawn error:', err.message);
+      // Create a fallback simple background
+      createSimpleBackground(imagePath, width, height)
+        .then(() => resolve(imagePath))
+        .catch(reject);
+    });
+
     ffmpeg.on('close', (code) => {
       if (code === 0) {
         resolve(imagePath);
       } else {
-        // If fancy background fails, create a simple one
-        const simpleArgs = [
-          '-f', 'lavfi',
-          '-i', `color=c=#1a1a2e:s=${width}x${height}:d=1`,
-          '-frames:v', '1',
-          '-y',
-          imagePath
-        ];
-        
-        const simpleFfmpeg = spawn('ffmpeg', simpleArgs);
-        simpleFfmpeg.on('close', (code2) => {
-          if (code2 === 0) {
-            resolve(imagePath);
-          } else {
-            reject(new Error(`FFmpeg failed: ${stderr}`));
-          }
-        });
+        // Try simple background as fallback
+        createSimpleBackground(imagePath, width, height)
+          .then(() => resolve(imagePath))
+          .catch(() => reject(new Error(`FFmpeg failed: ${stderr}`)));
       }
     });
   });
 };
 
 /**
+ * Create a simple solid color background as fallback
+ */
+const createSimpleBackground = (imagePath, width, height) => {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-f', 'lavfi',
+      '-i', `color=c=#1a1a2e:s=${width}x${height}:d=1`,
+      '-frames:v', '1',
+      '-y',
+      imagePath
+    ];
+    
+    const ffmpeg = spawn('ffmpeg', args);
+    ffmpeg.on('error', reject);
+    ffmpeg.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error('Simple background creation failed'));
+    });
+  });
+};
+
+/**
  * Get video duration using FFprobe
+ * Returns default duration if FFprobe fails
  */
 const getVideoDuration = (videoPath) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const args = [
       '-v', 'error',
       '-show_entries', 'format=duration',
@@ -85,15 +118,27 @@ const getVideoDuration = (videoPath) => {
 
     const ffprobe = spawn('ffprobe', args);
     let stdout = '';
+    let stderr = '';
     
     ffprobe.stdout.on('data', (data) => {
       stdout += data.toString();
     });
 
+    ffprobe.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ffprobe.on('error', (err) => {
+      console.log('FFprobe error, using default duration:', err.message);
+      resolve(10); // Default 10 seconds
+    });
+
     ffprobe.on('close', (code) => {
-      if (code === 0) {
-        resolve(parseFloat(stdout.trim()));
+      if (code === 0 && stdout.trim()) {
+        const duration = parseFloat(stdout.trim());
+        resolve(isNaN(duration) ? 10 : duration);
       } else {
+        console.log('FFprobe failed, using default duration. stderr:', stderr);
         resolve(10); // Default 10 seconds if we can't get duration
       }
     });
@@ -102,14 +147,6 @@ const getVideoDuration = (videoPath) => {
 
 /**
  * Compose video with scrolling background + overlay
- * @param {Object} options
- * @param {string} options.introVideoPath - Path to the intro video file
- * @param {string} options.websiteUrl - URL for branding
- * @param {string} options.displayMode - 'small-bubble', 'big-bubble', 'full-screen'
- * @param {string} options.videoPosition - 'bottom-right', 'bottom-left', 'top-right', 'top-left'
- * @param {string} options.videoShape - 'circle', 'rounded', 'square'
- * @param {string} options.outputPath - Where to save the output video
- * @returns {Promise<string>} - Path to the composed video
  */
 const composeVideo = async (options) => {
   const {
@@ -120,6 +157,11 @@ const composeVideo = async (options) => {
     videoShape = 'circle',
     outputPath
   } = options;
+
+  // Check FFmpeg availability first
+  if (!checkFFmpeg()) {
+    throw new Error('FFmpeg is not installed. Please ensure nixpacks.toml includes ffmpeg-full');
+  }
 
   const tempDir = os.tmpdir();
   const outputFile = outputPath || path.join(tempDir, `composed_${Date.now()}.mp4`);
@@ -171,18 +213,14 @@ const composeVideo = async (options) => {
   }
 
   // Build FFmpeg filter for scrolling background + overlay
-  // The background scrolls from top to bottom over the video duration
   const scrollSpeed = 1280 / duration; // pixels per second
   
   let overlayFilter;
   if (videoShape === 'circle') {
     // Circular mask for the overlay video
     overlayFilter = `[1:v]scale=${overlayWidth}:${overlayHeight},format=rgba,geq=lum='lum(X,Y)':a='if(gt(abs(X-${overlayWidth}/2)^2+abs(Y-${overlayHeight}/2)^2,(${overlayWidth}/2)^2),0,255)'[ov];[bg][ov]overlay=${overlayX}:${overlayY}`;
-  } else if (videoShape === 'rounded') {
-    // Rounded rectangle - approximate with slight transparency at edges
-    overlayFilter = `[1:v]scale=${overlayWidth}:${overlayHeight}[ov];[bg][ov]overlay=${overlayX}:${overlayY}`;
   } else {
-    // Square - no mask needed
+    // Square/rounded - no mask needed
     overlayFilter = `[1:v]scale=${overlayWidth}:${overlayHeight}[ov];[bg][ov]overlay=${overlayX}:${overlayY}`;
   }
 
@@ -206,7 +244,7 @@ const composeVideo = async (options) => {
       outputFile
     ];
 
-    console.log('🎬 Running FFmpeg with filter:', filterComplex);
+    console.log('🎬 Running FFmpeg composition...');
 
     const ffmpeg = spawn('ffmpeg', args);
     
@@ -220,23 +258,24 @@ const composeVideo = async (options) => {
       }
     });
 
+    ffmpeg.on('error', (err) => {
+      // Clean up temp background image
+      try { fs.unlinkSync(bgImagePath); } catch (e) {}
+      reject(new Error(`FFmpeg error: ${err.message}`));
+    });
+
     ffmpeg.on('close', (code) => {
       // Clean up temp background image
-      try {
-        fs.unlinkSync(bgImagePath);
-      } catch (e) {}
+      try { fs.unlinkSync(bgImagePath); } catch (e) {}
 
       if (code === 0) {
         console.log('✅ FFmpeg composition complete');
         resolve(outputFile);
       } else {
-        console.error('❌ FFmpeg failed:', stderr);
-        reject(new Error(`FFmpeg failed with code ${code}: ${stderr}`));
+        console.error('❌ FFmpeg failed with code:', code);
+        console.error('FFmpeg stderr:', stderr.slice(-500)); // Last 500 chars
+        reject(new Error(`FFmpeg failed with code ${code}`));
       }
-    });
-
-    ffmpeg.on('error', (err) => {
-      reject(err);
     });
   });
 };
@@ -252,7 +291,7 @@ const saveBase64ToFile = (base64Data, extension = 'mp4') => {
   const base64 = base64Data.replace(/^data:video\/\w+;base64,/, '');
   
   fs.writeFileSync(filePath, Buffer.from(base64, 'base64'));
-  console.log(`💾 Saved base64 to file: ${filePath}`);
+  console.log(`💾 Saved base64 to file: ${filePath} (${fs.statSync(filePath).size} bytes)`);
   return filePath;
 };
 
@@ -262,13 +301,18 @@ const saveBase64ToFile = (base64Data, extension = 'mp4') => {
 const fileToBase64DataUrl = (filePath) => {
   const buffer = fs.readFileSync(filePath);
   const base64 = buffer.toString('base64');
+  console.log(`📤 Converted file to base64: ${buffer.length} bytes`);
   return `data:video/mp4;base64,${base64}`;
 };
+
+// Log FFmpeg availability on module load
+console.log('🎬 FFmpeg available:', checkFFmpeg());
 
 module.exports = {
   composeVideo,
   createBackgroundImage,
   getVideoDuration,
   saveBase64ToFile,
-  fileToBase64DataUrl
+  fileToBase64DataUrl,
+  checkFFmpeg
 };

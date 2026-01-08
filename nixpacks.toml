@@ -1,14 +1,11 @@
 # nixpacks.toml - Railway build configuration
-# This file tells Railway to include FFmpeg for video processing
+# Installs FFmpeg for server-side video processing
 
 [phases.setup]
-nixPkgs = ["ffmpeg", "nodejs-18_x"]
+nixPkgs = ["ffmpeg-full"]
 
 [phases.install]
-cmds = ["npm ci"]
-
-[phases.build]
-cmds = ["npm run build"]
+cmds = ["npm ci || npm install"]
 
 [start]
 cmd = "npm run start"
