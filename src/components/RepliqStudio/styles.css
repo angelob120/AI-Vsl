@@ -825,6 +825,35 @@
   margin-bottom: 0;
 }
 
+.saved-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-all-btn {
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 6px;
+  color: #10b981;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-all-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.export-all-btn.light {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.export-all-btn.light:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
 .delete-all-btn {
   padding: 6px 12px;
   background: rgba(239, 68, 68, 0.2);

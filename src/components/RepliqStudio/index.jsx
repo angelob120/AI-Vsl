@@ -324,6 +324,30 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     a.click();
   };
 
+  // Export ALL saved videos to CSV
+  const handleExportAllSaved = () => {
+    if (savedVideos.length === 0) return;
+    
+    const csvContent = [
+      ['Company Name', 'First Name', 'Website URL', 'Landing Page Link', 'Video Only Link', 'Created At'],
+      ...savedVideos.map(v => [
+        v.companyName || '',
+        v.firstName || '',
+        v.websiteUrl || '',
+        v.landingPageLink || '',
+        v.videoOnlyLink || '',
+        v.createdAt || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `repliq-all-saved-videos-${Date.now()}.csv`;
+    a.click();
+  };
+
   // Delete a video - UPDATED: Database only, NO localStorage
   const handleDeleteVideo = async (videoId) => {
     if (window.confirm('Delete this video?')) {
@@ -648,9 +672,14 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
             <section className={`studio-card ${isDarkMode ? 'dark' : 'light'}`}>
               <div className="saved-header">
                 <h3>📁 Saved Videos ({savedVideos.length})</h3>
-                <button onClick={handleDeleteAllVideos} className={`delete-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
-                  Delete All
-                </button>
+                <div className="saved-header-actions">
+                  <button onClick={handleExportAllSaved} className={`export-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                    Export All
+                  </button>
+                  <button onClick={handleDeleteAllVideos} className={`delete-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                    Delete All
+                  </button>
+                </div>
               </div>
               
               <div className="saved-list">
