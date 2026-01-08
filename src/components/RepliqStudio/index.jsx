@@ -302,13 +302,20 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
         results.push({
           id: videoId,
           companyName: lead.companyName,
+          firstName: lead.firstName,
+          websiteUrl: lead.websiteUrl,
           link: landingPageLink,
+          createdAt: new Date().toISOString(),
           success: true
         });
       } catch (err) {
         results.push({
           id: videoId,
           companyName: lead.companyName,
+          firstName: lead.firstName,
+          websiteUrl: lead.websiteUrl,
+          link: landingPageLink,
+          createdAt: new Date().toISOString(),
           success: false,
           error: err.message
         });
@@ -340,19 +347,18 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     }
   };
 
-  // Export results to CSV
+  // Export results to CSV - FIXED to match handleExportAllSaved format
   const handleExportResults = () => {
     if (createdVideos.length === 0) return;
     
     const csvContent = [
-      ['Company Name', 'First Name', 'Website URL', 'Landing Page Link', 'Success', 'Created At'],
+      ['Company Name', 'First Name', 'Website URL', 'Landing Page Link', 'Created At'],
       ...createdVideos.map(v => [
         v.companyName || '',
         v.firstName || '',
         v.websiteUrl || '',
         v.link || '',
-        v.success ? 'YES' : 'NO',
-        new Date().toISOString()
+        v.createdAt || ''
       ])
     ].map(row => row.join(',')).join('\n');
 
