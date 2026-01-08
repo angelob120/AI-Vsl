@@ -436,13 +436,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   return (
     <div className={`repliq-studio ${isDarkMode ? 'dark' : 'light'}`}>
       {/* Header */}
-      <header className={`studio-header ${isDarkMode ? 'dark' : 'light'}`}>
-        <button onClick={onNavigateToBuilder} className={`back-btn ${isDarkMode ? 'dark' : 'light'}`}>
-          ← Back to Builder
-        </button>
-        <h1>🎬 RepliQ Studio</h1>
-        <p>Create personalized video landing pages</p>
-      </header>
 
       <div className="studio-grid">
         {/* LEFT COLUMN - Controls */}
