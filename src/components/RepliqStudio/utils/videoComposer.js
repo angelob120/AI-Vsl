@@ -75,95 +75,143 @@ const setClipPath = (ctx, x, y, width, height, shape) => {
 };
 
 /**
- * Capture full-page screenshot using a proxy service or fallback
- * Returns an Image element with the screenshot
+ * Create a styled placeholder background for the website
+ * Since capturing live websites has CORS/timeout issues, we create a nice placeholder
  */
-export const captureWebsiteScreenshot = async (websiteUrl) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+export const createWebsiteBackground = (websiteUrl) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 2000; // Tall for scrolling effect
+    const ctx = canvas.getContext('2d');
     
-    // Try multiple screenshot services (free tiers)
-    const screenshotServices = [
-      // Option 1: Screenshot Machine (free tier)
-      `https://api.screenshotmachine.com?key=guest&url=${encodeURIComponent(websiteUrl)}&dimension=1280xfull&format=png`,
-      // Option 2: Microlink (free tier)
-      `https://api.microlink.io/?url=${encodeURIComponent(websiteUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
-      // Option 3: Fallback placeholder
-      `https://via.placeholder.com/1280x2000/1a1a2e/667eea?text=${encodeURIComponent(new URL(websiteUrl).hostname)}`
+    // Extract domain for display
+    let domain = 'Website';
+    try {
+      if (websiteUrl) {
+        const url = new URL(websiteUrl);
+        domain = url.hostname.replace('www.', '');
+      }
+    } catch (e) {
+      domain = websiteUrl || 'Website';
+    }
+    
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(0.3, '#16213e');
+    gradient.addColorStop(0.6, '#0f3460');
+    gradient.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add subtle grid pattern
+    ctx.strokeStyle = 'rgba(102, 126, 234, 0.1)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    
+    // Header area
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, 80);
+    
+    // Logo placeholder
+    ctx.fillStyle = '#667eea';
+    ctx.beginPath();
+    ctx.arc(60, 40, 20, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Domain text in header
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = 'bold 18px Arial, sans-serif';
+    ctx.fillText(domain, 100, 46);
+    
+    // Navigation placeholders
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(canvas.width - 400 + i * 90, 32, 60, 16);
+    }
+    
+    // Hero section
+    ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
+    ctx.fillRect(100, 120, canvas.width - 200, 300);
+    
+    // Hero text placeholders
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillRect(150, 180, 400, 40);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(150, 240, 300, 20);
+    ctx.fillRect(150, 270, 350, 20);
+    
+    // CTA button
+    ctx.fillStyle = '#667eea';
+    ctx.beginPath();
+    ctx.roundRect(150, 320, 160, 50, 25);
+    ctx.fill();
+    
+    // Content sections
+    const sectionColors = [
+      'rgba(255, 255, 255, 0.03)',
+      'rgba(102, 126, 234, 0.05)',
+      'rgba(255, 255, 255, 0.03)',
+      'rgba(118, 75, 162, 0.05)',
+      'rgba(255, 255, 255, 0.03)'
     ];
-
-    let currentServiceIndex = 0;
-
-    const tryNextService = () => {
-      if (currentServiceIndex >= screenshotServices.length) {
-        // Create a fallback gradient image
-        const canvas = document.createElement('canvas');
-        canvas.width = 1280;
-        canvas.height = 2000;
-        const ctx = canvas.getContext('2d');
-        
-        // Gradient background
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(0.5, '#16213e');
-        gradient.addColorStop(1, '#0f3460');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add website URL text
-        ctx.fillStyle = '#667eea';
-        ctx.font = 'bold 32px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(websiteUrl, canvas.width / 2, 100);
-        
-        // Add placeholder elements
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        for (let i = 0; i < 10; i++) {
-          ctx.fillRect(100, 200 + i * 180, canvas.width - 200, 150);
-        }
-        
-        const fallbackImg = new Image();
-        fallbackImg.onload = () => resolve(fallbackImg);
-        fallbackImg.src = canvas.toDataURL();
-        return;
-      }
-
-      const serviceUrl = screenshotServices[currentServiceIndex];
+    
+    let yPos = 480;
+    for (let section = 0; section < 5; section++) {
+      // Section background
+      ctx.fillStyle = sectionColors[section];
+      ctx.fillRect(0, yPos, canvas.width, 280);
       
-      // Special handling for Microlink (returns JSON)
-      if (serviceUrl.includes('microlink.io')) {
-        fetch(serviceUrl)
-          .then(res => res.json())
-          .then(data => {
-            if (data.data?.screenshot?.url) {
-              img.src = data.data.screenshot.url;
-            } else {
-              currentServiceIndex++;
-              tryNextService();
-            }
-          })
-          .catch(() => {
-            currentServiceIndex++;
-            tryNextService();
-          });
-      } else {
-        img.src = serviceUrl;
+      // Section title
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.fillRect(100, yPos + 40, 250, 28);
+      
+      // Content cards
+      const cardWidth = (canvas.width - 280) / 3;
+      for (let card = 0; card < 3; card++) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.beginPath();
+        ctx.roundRect(100 + card * (cardWidth + 40), yPos + 90, cardWidth, 150, 12);
+        ctx.fill();
+        
+        // Card content lines
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillRect(120 + card * (cardWidth + 40), yPos + 160, cardWidth - 40, 12);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(120 + card * (cardWidth + 40), yPos + 180, cardWidth - 80, 10);
       }
-    };
-
+      
+      yPos += 280;
+    }
+    
+    // Footer
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = '14px Arial, sans-serif';
+    ctx.fillText(`© ${new Date().getFullYear()} ${domain}`, 100, canvas.height - 50);
+    
+    // Create image from canvas
+    const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => {
-      currentServiceIndex++;
-      tryNextService();
-    };
-
-    tryNextService();
+    img.src = canvas.toDataURL('image/png');
   });
 };
 
 /**
- * Load video element from data URL
+ * Load video element from data URL with timeout
  */
 const loadVideoElement = (videoDataUrl) => {
   return new Promise((resolve, reject) => {
@@ -172,11 +220,20 @@ const loadVideoElement = (videoDataUrl) => {
     video.playsInline = true;
     video.crossOrigin = 'anonymous';
     
+    // Timeout after 30 seconds
+    const timeout = setTimeout(() => {
+      reject(new Error('Video loading timed out'));
+    }, 30000);
+    
     video.onloadedmetadata = () => {
+      clearTimeout(timeout);
       video.oncanplaythrough = () => resolve(video);
       video.load();
     };
-    video.onerror = reject;
+    video.onerror = (e) => {
+      clearTimeout(timeout);
+      reject(e);
+    };
     video.src = videoDataUrl;
   });
 };
@@ -184,7 +241,7 @@ const loadVideoElement = (videoDataUrl) => {
 /**
  * Main function to compose video with scrolling background + overlay
  * @param {Object} options
- * @param {string} options.websiteUrl - URL of website to capture
+ * @param {string} options.websiteUrl - URL of website (used for display/branding)
  * @param {string} options.introVideoData - Base64 data URL of intro video
  * @param {string} options.displayMode - 'small-bubble', 'big-bubble', 'full-screen'
  * @param {string} options.videoPosition - 'bottom-right', 'bottom-left', 'top-right', 'top-left'
@@ -218,7 +275,7 @@ export const composeVideo = async (options) => {
   
   onProgress(20);
 
-  // Get or capture website screenshot
+  // Get or create website background
   let screenshotImg;
   if (websiteScreenshot) {
     screenshotImg = new Image();
@@ -226,22 +283,9 @@ export const composeVideo = async (options) => {
     await new Promise(resolve => {
       screenshotImg.onload = resolve;
     });
-  } else if (websiteUrl) {
-    screenshotImg = await captureWebsiteScreenshot(websiteUrl);
   } else {
-    // Create blank background
-    screenshotImg = new Image();
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 1280;
-    tempCanvas.height = 2000;
-    const tempCtx = tempCanvas.getContext('2d');
-    const gradient = tempCtx.createLinearGradient(0, 0, 0, tempCanvas.height);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(1, '#0f3460');
-    tempCtx.fillStyle = gradient;
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-    screenshotImg.src = tempCanvas.toDataURL();
-    await new Promise(resolve => { screenshotImg.onload = resolve; });
+    // Create styled placeholder background (fast and reliable)
+    screenshotImg = await createWebsiteBackground(websiteUrl);
   }
 
   onProgress(40);
