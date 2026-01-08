@@ -1,5 +1,4 @@
 # nixpacks.toml - Railway build configuration
-# Installs Node.js 20 (LTS) AND FFmpeg for server-side video processing
 
 [phases.setup]
 nixPkgs = ["nodejs_20", "ffmpeg-full"]
