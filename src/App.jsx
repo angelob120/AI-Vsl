@@ -1,31 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import ContractorBuilder from './components/ContractorBuilder';
 import RepliqStudio from './components/RepliqStudio';
+import LandingPageViewer from './components/RepliqStudio/LandingPageViewer';
 import './styles/global.css';
 
 /**
  * Main App Component
  * Handles navigation between ContractorBuilder and RepliqStudio
- * Also handles direct site preview links (hiding all builder UI)
+ * Also handles direct site preview links and landing page links
  */
 export default function App() {
   const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
   const [exportedCSV, setExportedCSV] = useState(null);
   const [isSitePreview, setIsSitePreview] = useState(false);
+  const [isLandingPage, setIsLandingPage] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state - DEFAULT TO TRUE
 
   // Check URL hash on mount for direct links
   useEffect(() => {
     const checkHash = () => {
       const hash = window.location.hash;
+      
+      // CRITICAL: Check if this is a landing page or video-only link FIRST
+      if (hash.startsWith('#landing-') || hash.startsWith('#video-')) {
+        setIsLandingPage(true);
+        setIsSitePreview(false);
+        return;
+      }
+      
+      // Check if this is a site preview link
       if (hash.startsWith('#site-')) {
         setCurrentTool('builder');
         setIsSitePreview(true);
+        setIsLandingPage(false);
       } else if (hash === '#repliq') {
         setCurrentTool('repliq');
         setIsSitePreview(false);
+        setIsLandingPage(false);
       } else {
         setIsSitePreview(false);
+        setIsLandingPage(false);
       }
     };
 
@@ -59,6 +73,7 @@ export default function App() {
     setExportedCSV(csvData);
     setCurrentTool('repliq');
     setIsSitePreview(false);
+    setIsLandingPage(false);
     window.location.hash = '#repliq';
   };
 
@@ -66,6 +81,7 @@ export default function App() {
   const handleGoToBuilder = () => {
     setCurrentTool('builder');
     setIsSitePreview(false);
+    setIsLandingPage(false);
     window.location.hash = '';
   };
 
@@ -73,6 +89,11 @@ export default function App() {
   const toggleDarkMode = () => {
     setIsDarkMode(prev => !prev);
   };
+
+  // CRITICAL: If this is a landing page URL, ONLY render LandingPageViewer
+  if (isLandingPage) {
+    return <LandingPageViewer />;
+  }
 
   // If viewing a site preview, render ONLY the ContractorBuilder without any app UI
   if (isSitePreview) {

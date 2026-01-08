@@ -68,8 +68,27 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Create repliq_videos table for storing generated video landing pages
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS repliq_videos (
+        id VARCHAR(255) PRIMARY KEY,
+        lead_data JSONB NOT NULL,
+        settings JSONB NOT NULL,
+        video_data TEXT,
+        second_video_data TEXT,
+        landing_page_html TEXT,
+        video_only_html TEXT,
+        landing_page_link TEXT,
+        video_only_link TEXT,
+        website_url TEXT,
+        company_name VARCHAR(500),
+        first_name VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
-    console.log('Database initialized successfully with template and webhook_leads support');
+    console.log('Database initialized successfully with template, webhook_leads, and repliq_videos support');
   } catch (error) {
     console.error('Database initialization error:', error);
   }
@@ -87,6 +106,187 @@ app.get('/api/health', (req, res) => {
 // Also support /health for backwards compatibility
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ==================== REPLIQ VIDEOS ROUTES ====================
+
+// Save a generated video landing page
+app.post('/api/repliq/videos', async (req, res) => {
+  try {
+    const { 
+      id, 
+      leadData, 
+      settings, 
+      videoData,
+      secondVideoData,
+      landingPageHtml, 
+      videoOnlyHtml, 
+      landingPageLink, 
+      videoOnlyLink,
+      websiteUrl,
+      companyName,
+      firstName
+    } = req.body;
+
+    if (!id || !leadData || !settings) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const query = `
+      INSERT INTO repliq_videos (
+        id, lead_data, settings, video_data, second_video_data,
+        landing_page_html, video_only_html, landing_page_link, video_only_link,
+        website_url, company_name, first_name, created_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        lead_data = $2,
+        settings = $3,
+        video_data = $4,
+        second_video_data = $5,
+        landing_page_html = $6,
+        video_only_html = $7,
+        landing_page_link = $8,
+        video_only_link = $9,
+        website_url = $10,
+        company_name = $11,
+        first_name = $12
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      id,
+      JSON.stringify(leadData),
+      JSON.stringify(settings),
+      videoData || null,
+      secondVideoData || null,
+      landingPageHtml || null,
+      videoOnlyHtml || null,
+      landingPageLink || null,
+      videoOnlyLink || null,
+      websiteUrl || null,
+      companyName || null,
+      firstName || null
+    ]);
+
+    res.json({
+      success: true,
+      video: {
+        id: result.rows[0].id,
+        leadData: result.rows[0].lead_data,
+        settings: result.rows[0].settings,
+        landingPageLink: result.rows[0].landing_page_link,
+        videoOnlyLink: result.rows[0].video_only_link,
+        websiteUrl: result.rows[0].website_url,
+        companyName: result.rows[0].company_name,
+        firstName: result.rows[0].first_name,
+        createdAt: result.rows[0].created_at
+      }
+    });
+  } catch (error) {
+    console.error('Save repliq video error:', error);
+    res.status(500).json({ error: 'Failed to save video', details: error.message });
+  }
+});
+
+// Get all repliq videos
+app.get('/api/repliq/videos', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, lead_data, settings, landing_page_link, video_only_link, website_url, company_name, first_name, created_at FROM repliq_videos ORDER BY created_at DESC'
+    );
+
+    const videos = result.rows.map(row => ({
+      id: row.id,
+      leadData: row.lead_data,
+      settings: row.settings,
+      landingPageLink: row.landing_page_link,
+      videoOnlyLink: row.video_only_link,
+      websiteUrl: row.website_url,
+      companyName: row.company_name,
+      firstName: row.first_name,
+      createdAt: row.created_at
+    }));
+
+    res.json({ success: true, videos });
+  } catch (error) {
+    console.error('Get repliq videos error:', error);
+    res.status(500).json({ error: 'Failed to fetch videos', details: error.message });
+  }
+});
+
+// Get single repliq video by ID (for landing page viewer)
+app.get('/api/repliq/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM repliq_videos WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      video: {
+        id: row.id,
+        leadData: row.lead_data,
+        settings: row.settings,
+        videoData: row.video_data,
+        secondVideoData: row.second_video_data,
+        landingPageHtml: row.landing_page_html,
+        videoOnlyHtml: row.video_only_html,
+        landingPageLink: row.landing_page_link,
+        videoOnlyLink: row.video_only_link,
+        websiteUrl: row.website_url,
+        companyName: row.company_name,
+        firstName: row.first_name,
+        createdAt: row.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Get repliq video error:', error);
+    res.status(500).json({ error: 'Failed to fetch video', details: error.message });
+  }
+});
+
+// Delete single repliq video
+app.delete('/api/repliq/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM repliq_videos WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    res.json({ success: true, message: 'Video deleted successfully' });
+  } catch (error) {
+    console.error('Delete repliq video error:', error);
+    res.status(500).json({ error: 'Failed to delete video', details: error.message });
+  }
+});
+
+// Delete ALL repliq videos
+app.delete('/api/repliq/videos', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM repliq_videos RETURNING id');
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.rowCount} videos`,
+      deletedCount: result.rowCount
+    });
+  } catch (error) {
+    console.error('Delete all repliq videos error:', error);
+    res.status(500).json({ error: 'Failed to delete videos', details: error.message });
+  }
 });
 
 // ==================== WEBHOOK LEADS ROUTES ====================
@@ -450,4 +650,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Webhook endpoint available at: POST /api/webhook/ghl`);
+  console.log(`RepliQ Videos API available at: /api/repliq/videos`);
 });
