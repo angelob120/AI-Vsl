@@ -258,10 +258,21 @@ function LandingPageWithBubble({
   useEffect(() => {
     // Auto-play after 2 seconds
     const timer = setTimeout(() => {
-      playVideo();
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.play().catch(() => {
+          // Autoplay blocked, keep overlay visible
+        });
+        setShowPlayOverlay(false);
+
+        // Set transition timer
+        setTimeout(() => {
+          setIsExpanded(true);
+        }, (transitionTime || 10) * 1000);
+      }
     }, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [transitionTime]);
 
   const playVideo = () => {
     if (videoRef.current) {
