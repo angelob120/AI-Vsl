@@ -851,18 +851,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                 Upload a video to see preview
               </div>
             )}
-            
-            {/* Keyboard hint */}
-            {hasMultipleLeads && (
-              <p style={{
-                fontSize: '0.7rem',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)',
-                textAlign: 'center',
-                marginTop: '12px'
-              }}>
-                💡 Use ← → arrow keys to navigate leads
-              </p>
-            )}
+          
           </section>
 
           {/* Results */}
