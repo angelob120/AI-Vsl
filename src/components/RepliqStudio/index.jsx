@@ -1,10 +1,12 @@
 // FILE: src/components/RepliqStudio/index.jsx
 // MAIN REPLIQSTUDIO COMPONENT - Single page layout with video bubble over website background
+// UPDATED: Now composes actual video files with scrolling website + overlay
 // UPDATED: Added preview navigation to cycle through all CSV leads
 // UPDATED: Added lead entries table with remove functionality
 // Saves to database only - NO localStorage
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
+import { composeVideo, blobToDataURL } from './utils/videoComposer';
 import './styles.css';
 
 // Generate unique ID
@@ -66,10 +68,10 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const [mapping, setMapping] = useState({ websiteUrl: '', firstName: '', companyName: '' });
   const csvInputRef = useRef(null);
 
-  // Lead table filter state - NEW
-  const [leadTableFilter, setLeadTableFilter] = useState('all'); // 'all' or 'invalid'
+  // Lead table filter state
+  const [leadTableFilter, setLeadTableFilter] = useState('all');
 
-  // Preview navigation state - NEW
+  // Preview navigation state
   const [previewLeadIndex, setPreviewLeadIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(null);
 
@@ -92,6 +94,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   // Creation state
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentLead, setCurrentLead] = useState(null); // Track current lead being processed
   const [createdVideos, setCreatedVideos] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [savedVideos, setSavedVideos] = useState([]);
@@ -106,48 +109,10 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     if (importedCSV && importedCSV.length > 0) {
       setCsvData(importedCSV);
       setCsvHeaders(importedCSV[0] || []);
-      
-      // Auto-detect column mapping
-      const headers = importedCSV[0] || [];
-      const newMapping = { websiteUrl: '', firstName: '', companyName: '' };
-      
-      headers.forEach((header) => {
-        const h = header.toLowerCase();
-        if (h.includes('website') || h.includes('link') || h.includes('url')) {
-          newMapping.websiteUrl = header;
-        } else if (h.includes('first') || h.includes('name') || h.includes('owner')) {
-          newMapping.firstName = header;
-        } else if (h.includes('company') || h.includes('business')) {
-          newMapping.companyName = header;
-        }
-      });
-      
-      setMapping(newMapping);
-      
-      // Process leads
-      const dataRows = importedCSV.slice(1);
-      const processedLeads = dataRows.map(row => {
-        const headerRow = importedCSV[0];
-        const lead = {};
-        headerRow.forEach((header, index) => {
-          lead[header] = row[index] || '';
-        });
-        return lead;
-      }).filter(lead => Object.values(lead).some(v => v));
-      
-      setLeads(processedLeads);
-      setPreviewLeadIndex(0); // Reset preview index
     }
   }, [importedCSV]);
 
-  // Reset preview index when leads change
-  useEffect(() => {
-    if (previewLeadIndex >= leads.length && leads.length > 0) {
-      setPreviewLeadIndex(0);
-    }
-  }, [leads, previewLeadIndex]);
-
-  // Preview navigation functions - NEW (must be defined before useEffect that uses them)
+  // Preview navigation
   const goToPreviousLead = useCallback(() => {
     if (leads.length === 0) return;
     setSlideDirection('left');
@@ -162,7 +127,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setTimeout(() => setSlideDirection(null), 300);
   }, [leads.length]);
 
-  // Keyboard navigation for preview - NEW
+  // Keyboard navigation for preview
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (leads.length <= 1) return;
@@ -228,7 +193,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
       if (parsed && parsed.length > 0) {
         setCsvData(parsed);
         setCsvHeaders(parsed[0] || []);
-        setPreviewLeadIndex(0); // Reset preview index on new upload
+        setPreviewLeadIndex(0);
       }
     };
     reader.readAsText(file);
@@ -260,26 +225,25 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setLeads(newLeads);
   }, [csvData, mapping]);
 
-  // Remove a lead from the list - NEW
+  // Remove a lead from the list
   const handleRemoveLead = (indexToRemove) => {
     setLeads(prev => prev.filter((_, index) => index !== indexToRemove));
-    // Adjust preview index if needed
     if (previewLeadIndex >= leads.length - 1 && previewLeadIndex > 0) {
       setPreviewLeadIndex(prev => prev - 1);
     }
   };
 
-  // Add a new empty lead - NEW
+  // Add a new empty lead
   const handleAddLead = () => {
     setLeads(prev => [...prev, { websiteUrl: '', firstName: '', companyName: '' }]);
   };
 
-  // Check if a lead is valid (has required fields) - NEW
+  // Check if a lead is valid
   const isLeadValid = (lead) => {
     return lead.websiteUrl && lead.companyName;
   };
 
-  // Get filtered leads based on current filter - NEW
+  // Get filtered leads based on current filter
   const getFilteredLeads = () => {
     if (leadTableFilter === 'invalid') {
       return leads.map((lead, index) => ({ lead, originalIndex: index }))
@@ -288,10 +252,12 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     return leads.map((lead, index) => ({ lead, originalIndex: index }));
   };
 
-  // Count invalid leads - NEW
+  // Count invalid leads
   const invalidLeadsCount = leads.filter(lead => !isLeadValid(lead)).length;
 
-  // Handle creation
+  // ============================================
+  // UPDATED: Handle creation with video composer
+  // ============================================
   const handleCreate = async () => {
     if (leads.length === 0) {
       alert('Please upload a CSV with leads first!');
@@ -305,29 +271,50 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setIsCreating(true);
     setProgress(0);
     setCreatedVideos([]);
+    setCurrentLead(null);
 
     const baseUrl = window.location.origin + window.location.pathname;
     const results = [];
 
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i];
-      setProgress(Math.round(((i + 1) / leads.length) * 100));
-      
-      await delay(100);
+      setCurrentLead(lead); // Show which lead is being processed
 
       const videoId = generateUniqueId();
       const landingPageLink = `${baseUrl}#landing-${videoId}`;
       const videoOnlyLink = `${baseUrl}#video-${videoId}`;
 
       try {
-        // Send data in format server expects
+        // Compose video with website background + overlay
+        const composedVideoBlob = await composeVideo({
+          websiteUrl: lead.websiteUrl,
+          introVideoData: introVideoData,
+          displayMode: settings.displayMode,
+          videoPosition: settings.videoPosition,
+          videoShape: settings.videoShape,
+          onProgress: (p) => {
+            // Update progress: overall lead progress + current composition progress
+            const leadProgress = (i + (p / 100)) / leads.length;
+            setProgress(Math.round(leadProgress * 100));
+          }
+        });
+
+        // Convert to data URL for storage
+        const composedVideoData = await blobToDataURL(composedVideoBlob);
+
+        // Save to database with composed video
         await saveRepliqVideo({
           id: videoId,
-          leadData: lead,  // Server expects "leadData" not "lead"
-          settings: settings,
-          videoData: introVideoData,  // Separate field, not inside settings
-          secondVideoData: secondVideoData || null,
-          landingPageLink: landingPageLink,  // Server expects "landingPageLink" not "link"
+          leadData: lead,
+          settings: {
+            ...settings,
+            introVideoData: null, // Don't store original - we have composed
+            secondVideoData: null
+          },
+          composedVideoData: composedVideoData, // Store the composed video
+          videoData: composedVideoData, // Also store as videoData for compatibility
+          videoType: 'composed',
+          landingPageLink: landingPageLink,
           videoOnlyLink: videoOnlyLink,
           websiteUrl: lead.websiteUrl || null,
           companyName: lead.companyName || null,
@@ -340,10 +327,12 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
           firstName: lead.firstName,
           websiteUrl: lead.websiteUrl,
           link: landingPageLink,
+          videoOnlyLink: videoOnlyLink,
           createdAt: new Date().toISOString(),
           success: true
         });
       } catch (err) {
+        console.error('Failed to create video:', err);
         results.push({
           id: videoId,
           companyName: lead.companyName,
@@ -360,6 +349,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setCreatedVideos(results);
     setShowResults(true);
     setIsCreating(false);
+    setCurrentLead(null);
     
     // Directly add successful videos to savedVideos state
     const successfulVideos = results
@@ -382,7 +372,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     }
   };
 
-  // Export results to CSV - FIXED to match handleExportAllSaved format
+  // Export results to CSV
   const handleExportResults = () => {
     if (createdVideos.length === 0) return;
     
@@ -512,32 +502,31 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
             
             {csvHeaders.length > 0 && (
               <div className={`csv-mapping ${isDarkMode ? 'dark' : 'light'}`}>
-                <h4>Map Columns:</h4>
-                <div className="mapping-row">
-                  <label>Company Name *</label>
-                  <select value={mapping.companyName} onChange={e => setMapping(prev => ({...prev, companyName: e.target.value}))}>
-                    <option value="">Select...</option>
-                    {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                <div className="mapping-field">
+                  <label>Website URL Column:</label>
+                  <select value={mapping.websiteUrl} onChange={e => setMapping(prev => ({ ...prev, websiteUrl: e.target.value }))}>
+                    <option value="">-- Select --</option>
+                    {csvHeaders.map((h, i) => <option key={i} value={h}>{h}</option>)}
                   </select>
                 </div>
-                <div className="mapping-row">
-                  <label>First Name</label>
-                  <select value={mapping.firstName} onChange={e => setMapping(prev => ({...prev, firstName: e.target.value}))}>
-                    <option value="">Select...</option>
-                    {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                <div className="mapping-field">
+                  <label>First Name Column:</label>
+                  <select value={mapping.firstName} onChange={e => setMapping(prev => ({ ...prev, firstName: e.target.value }))}>
+                    <option value="">-- Select --</option>
+                    {csvHeaders.map((h, i) => <option key={i} value={h}>{h}</option>)}
                   </select>
                 </div>
-                <div className="mapping-row">
-                  <label>Website URL (Background) *</label>
-                  <select value={mapping.websiteUrl} onChange={e => setMapping(prev => ({...prev, websiteUrl: e.target.value}))}>
-                    <option value="">Select...</option>
-                    {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                <div className="mapping-field">
+                  <label>Company Name Column:</label>
+                  <select value={mapping.companyName} onChange={e => setMapping(prev => ({ ...prev, companyName: e.target.value }))}>
+                    <option value="">-- Select --</option>
+                    {csvHeaders.map((h, i) => <option key={i} value={h}>{h}</option>)}
                   </select>
                 </div>
               </div>
             )}
 
-            {/* Lead Entries Table - NEW */}
+            {/* Lead Entries Table */}
             {leads.length > 0 && (
               <div className={`lead-entries-section ${isDarkMode ? 'dark' : 'light'}`}>
                 {/* Filter Tabs */}
@@ -678,15 +667,47 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
             disabled={isCreating || !introVideoData || leads.length === 0}
             className={`create-btn ${isDarkMode ? 'dark' : 'light'}`}
           >
-            {isCreating ? `Creating... ${progress}%` : `🚀 Create ${leads.length || 0} Video Landing Pages`}
+            {isCreating 
+              ? `⏳ Composing video ${Math.floor(progress / (100 / leads.length)) + 1}/${leads.length} (${progress}%)` 
+              : `🚀 Create ${leads.length || 0} Video Landing Pages`
+            }
           </button>
+
+          {/* Current Lead Progress Indicator */}
+          {isCreating && currentLead && (
+            <div className="creating-status" style={{
+              marginTop: '12px',
+              padding: '12px',
+              background: isDarkMode ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.05)',
+              borderRadius: '8px',
+              fontSize: '0.85rem',
+              color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'
+            }}>
+              <div>📹 Processing: {currentLead.companyName || currentLead.firstName || 'Lead'}</div>
+              <div style={{ marginTop: '4px' }}>🌐 {currentLead.websiteUrl || 'No URL'}</div>
+              <div style={{ 
+                marginTop: '8px',
+                height: '4px',
+                background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                borderRadius: '2px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progress}%`,
+                  background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                  transition: 'width 0.3s'
+                }} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN - Preview & Results */}
         <div className={`studio-column studio-preview ${isDarkMode ? 'dark' : 'light'}`}>
           {/* Preview */}
           <section className={`studio-card preview-card ${isDarkMode ? 'dark' : 'light'}`}>
-            {/* Preview Header with Navigation - NEW */}
+            {/* Preview Header with Navigation */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -695,7 +716,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
             }}>
               <h3 style={{ margin: 0 }}>Preview</h3>
               
-              {/* Lead Navigation Arrows - NEW */}
+              {/* Lead Navigation Arrows */}
               {hasMultipleLeads && (
                 <div style={{
                   display: 'flex',
@@ -756,66 +777,60 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                 </div>
               )}
             </div>
+            
+            {/* Current Lead Info */}
+            {leads.length > 0 && (
+              <div style={{
+                padding: '8px 12px',
+                background: isDarkMode ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.05)',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '0.85rem'
+              }}>
+                <div style={{ fontWeight: '600', color: '#667eea' }}>
+                  {currentPreviewLead.companyName || currentPreviewLead.firstName || 'Unnamed Lead'}
+                </div>
+                <div style={{ 
+                  color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {currentPreviewLead.websiteUrl || 'No website URL'}
+                </div>
+              </div>
+            )}
 
             {introVideoUrl ? (
               <div className="preview-frame" style={{
-                background: settings.darkMode ? '#1a1a2e' : '#f5f5f5',
                 position: 'relative',
-                minHeight: '400px',
+                width: '100%',
+                height: '400px',
+                background: settings.darkMode ? '#1a1a2e' : '#f5f5f5',
                 borderRadius: '12px',
                 overflow: 'hidden'
               }}>
-                {/* Simulated website background */}
+                {/* Website URL placeholder */}
                 <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: `linear-gradient(135deg, ${settings.darkMode ? '#1a1a2e' : '#f5f5f5'} 0%, ${settings.darkMode ? '#16213e' : '#e2e8f0'} 100%)`,
+                  width: '100%',
+                  height: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  color: isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+                  fontSize: '0.85rem'
                 }}>
-                  <div 
-                    style={{
-                      textAlign: 'center', 
-                      color: settings.darkMode ? '#fff' : '#1a1a2e',
-                      transition: 'all 0.3s ease',
-                      animation: slideDirection ? `slideIn${slideDirection === 'right' ? 'Right' : 'Left'} 0.3s ease-out` : 'none'
-                    }}
-                    key={previewLeadIndex} // Force re-render on index change
-                  >
-                    <h2 style={{fontSize: '1.5rem', marginBottom: '8px'}}>
-                      Hi <span style={{color: settings.backgroundColor}}>
-                        {currentPreviewLead.companyName || 'Company'}
-                      </span> 👋
-                    </h2>
-                    <p style={{opacity: 0.7}}>{settings.videoTitle}</p>
-                    
-                    {/* Show current lead details - NEW */}
-                    {currentPreviewLead.firstName && (
-                      <p style={{fontSize: '0.85rem', marginTop: '12px', opacity: 0.6}}>
-                        Contact: {currentPreviewLead.firstName}
-                      </p>
-                    )}
-                    {currentPreviewLead.websiteUrl && (
-                      <p style={{
-                        fontSize: '0.7rem', 
-                        marginTop: '8px', 
-                        opacity: 0.4,
-                        maxWidth: '280px',
-                        margin: '8px auto 0',
-                        wordBreak: 'break-all'
-                      }}>
-                        {currentPreviewLead.websiteUrl}
-                      </p>
-                    )}
-                    
-                    <p style={{fontSize: '0.8rem', marginTop: '20px', opacity: 0.5}}>
-                      Website URL will appear as background
-                    </p>
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🌐</div>
+                  <div>{currentPreviewLead.websiteUrl || 'Website will appear here'}</div>
+                  <div style={{ fontSize: '0.7rem', marginTop: '8px', opacity: 0.6 }}>
+                    (Scrolling website background)
                   </div>
                 </div>
                 
-                {/* Video bubble preview */}
+                {/* Video overlay preview */}
                 <div style={{
                   position: 'absolute',
                   [settings.videoPosition.includes('bottom') ? 'bottom' : 'top']: '20px',
@@ -841,7 +856,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
               </div>
             )}
             
-            {/* Keyboard hint - NEW */}
+            {/* Keyboard hint */}
             {hasMultipleLeads && (
               <p style={{
                 fontSize: '0.7rem',
@@ -883,85 +898,56 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                 onClick={() => setShowResults(false)}
                 className={`close-results-btn ${isDarkMode ? 'dark' : 'light'}`}
               >
-                Close Results
+                Close
               </button>
             </section>
           )}
 
           {/* Saved Videos */}
-          {savedVideos.length > 0 && (
-            <section className={`studio-card ${isDarkMode ? 'dark' : 'light'}`}>
-              <div className="saved-header">
-                <h3>📁 Saved Videos ({savedVideos.length})</h3>
-                <div className="saved-header-actions">
-                  <button onClick={handleExportAllSaved} className={`export-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
-                    Export All
+          <section className={`studio-card ${isDarkMode ? 'dark' : 'light'}`}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0 }}>📁 Saved Videos ({savedVideos.length})</h3>
+              {savedVideos.length > 0 && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={handleExportAllSaved} className={`small-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                    📥 Export
                   </button>
-                  <button onClick={handleDeleteAllVideos} className={`delete-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
-                    Delete All
+                  <button onClick={handleDeleteAllVideos} className={`small-btn danger ${isDarkMode ? 'dark' : 'light'}`}>
+                    🗑️ Delete All
                   </button>
                 </div>
-              </div>
-              
-              <div className="saved-list">
-                {savedVideos.slice(0, 10).map(video => (
-                  <div key={video.id} className={`saved-item ${isDarkMode ? 'dark' : 'light'}`}>
-                    <div className="saved-info">
-                      <span className="saved-name">{video.companyName || video.lead?.companyName || video.firstName || video.lead?.firstName || 'Unnamed'}</span>
-                      <span className="saved-date">{new Date(video.createdAt).toLocaleDateString()}</span>
+              )}
+            </div>
+            
+            {savedVideos.length === 0 ? (
+              <p style={{ color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontSize: '0.9rem' }}>
+                No saved videos yet
+              </p>
+            ) : (
+              <div className="saved-videos-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {savedVideos.slice(0, 20).map(video => (
+                  <div key={video.id} className={`saved-video-item ${isDarkMode ? 'dark' : 'light'}`}>
+                    <div className="video-info">
+                      <span className="video-name">{video.companyName || video.firstName || 'Unnamed'}</span>
+                      <span className="video-date">{new Date(video.createdAt).toLocaleDateString()}</span>
                     </div>
-                    <div className="saved-actions">
-                      <a href={video.link || video.landingPageLink} target="_blank" rel="noopener noreferrer" title="View">👁️</a>
-                      <button onClick={() => copyLink(video.link || video.landingPageLink)} title="Copy Link">📋</button>
-                      <button onClick={() => handleDeleteVideo(video.id)} title="Delete">🗑️</button>
+                    <div className="video-actions">
+                      <a href={video.link || video.landingPageLink} target="_blank" rel="noopener noreferrer">👁️</a>
+                      <button onClick={() => copyLink(video.link || video.landingPageLink)}>📋</button>
+                      <button onClick={() => handleDeleteVideo(video.id)} className="delete-btn">🗑️</button>
                     </div>
                   </div>
                 ))}
-                {savedVideos.length > 10 && (
-                  <p style={{
-                    textAlign: 'center',
-                    fontSize: '0.8rem',
-                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-                    marginTop: '12px'
-                  }}>
-                    Showing 10 of {savedVideos.length} videos
+                {savedVideos.length > 20 && (
+                  <p style={{ textAlign: 'center', fontSize: '0.8rem', opacity: 0.6 }}>
+                    Showing first 20 of {savedVideos.length} videos
                   </p>
                 )}
               </div>
-            </section>
-          )}
+            )}
+          </section>
         </div>
       </div>
-
-      {/* CSS for slide animations */}
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        .studio-column.studio-preview button:hover {
-          transform: scale(1.05);
-          background: ${isDarkMode ? 'rgba(102, 126, 234, 0.4)' : 'rgba(102, 126, 234, 0.15)'} !important;
-        }
-      `}</style>
     </div>
   );
 }
