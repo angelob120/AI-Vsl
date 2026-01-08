@@ -1,8 +1,8 @@
 # nixpacks.toml - Railway build configuration
-# Installs FFmpeg for server-side video processing
+# Installs Node.js AND FFmpeg for server-side video processing
 
 [phases.setup]
-nixPkgs = ["ffmpeg-full"]
+nixPkgs = ["nodejs_18", "ffmpeg-full"]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps"]
