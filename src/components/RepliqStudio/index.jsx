@@ -1,6 +1,7 @@
 // FILE: src/components/RepliqStudio/index.jsx
 // MAIN REPLIQSTUDIO COMPONENT - Single page layout with video bubble over website background
 // UPDATED: Added preview navigation to cycle through all CSV leads
+// UPDATED: Added lead entries table with remove functionality
 // Saves to database only - NO localStorage
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
@@ -64,6 +65,9 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const [leads, setLeads] = useState([]);
   const [mapping, setMapping] = useState({ websiteUrl: '', firstName: '', companyName: '' });
   const csvInputRef = useRef(null);
+
+  // Lead table filter state - NEW
+  const [leadTableFilter, setLeadTableFilter] = useState('all'); // 'all' or 'invalid'
 
   // Preview navigation state - NEW
   const [previewLeadIndex, setPreviewLeadIndex] = useState(0);
@@ -255,6 +259,37 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     
     setLeads(newLeads);
   }, [csvData, mapping]);
+
+  // Remove a lead from the list - NEW
+  const handleRemoveLead = (indexToRemove) => {
+    setLeads(prev => prev.filter((_, index) => index !== indexToRemove));
+    // Adjust preview index if needed
+    if (previewLeadIndex >= leads.length - 1 && previewLeadIndex > 0) {
+      setPreviewLeadIndex(prev => prev - 1);
+    }
+  };
+
+  // Add a new empty lead - NEW
+  const handleAddLead = () => {
+    setLeads(prev => [...prev, { websiteUrl: '', firstName: '', companyName: '' }]);
+  };
+
+  // Check if a lead is valid (has required fields) - NEW
+  const isLeadValid = (lead) => {
+    return lead.websiteUrl && lead.companyName;
+  };
+
+  // Get filtered leads based on current filter - NEW
+  const getFilteredLeads = () => {
+    if (leadTableFilter === 'invalid') {
+      return leads.map((lead, index) => ({ lead, originalIndex: index }))
+        .filter(({ lead }) => !isLeadValid(lead));
+    }
+    return leads.map((lead, index) => ({ lead, originalIndex: index }));
+  };
+
+  // Count invalid leads - NEW
+  const invalidLeadsCount = leads.filter(lead => !isLeadValid(lead)).length;
 
   // Handle creation
   const handleCreate = async () => {
@@ -498,6 +533,71 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                     <option value="">Select...</option>
                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
+                </div>
+              </div>
+            )}
+
+            {/* Lead Entries Table - NEW */}
+            {leads.length > 0 && (
+              <div className={`lead-entries-section ${isDarkMode ? 'dark' : 'light'}`}>
+                {/* Filter Tabs */}
+                <div className="lead-entries-tabs">
+                  <button 
+                    className={`lead-tab ${leadTableFilter === 'all' ? 'active' : ''} ${isDarkMode ? 'dark' : 'light'}`}
+                    onClick={() => setLeadTableFilter('all')}
+                  >
+                    All <span className="tab-count">{leads.length}</span>
+                  </button>
+                  <button 
+                    className={`lead-tab ${leadTableFilter === 'invalid' ? 'active' : ''} ${isDarkMode ? 'dark' : 'light'}`}
+                    onClick={() => setLeadTableFilter('invalid')}
+                  >
+                    <span className="invalid-text">Invalid</span> <span className="tab-count invalid">{invalidLeadsCount}</span>
+                  </button>
+                </div>
+
+                {/* Lead Entries Table */}
+                <div className="lead-entries-table-wrapper">
+                  <table className={`lead-entries-table ${isDarkMode ? 'dark' : 'light'}`}>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Websites Urls</th>
+                        <th>First name</th>
+                        <th>Last name or<br/>company name</th>
+                        <th>Remove</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getFilteredLeads().map(({ lead, originalIndex }) => (
+                        <tr key={originalIndex} className={!isLeadValid(lead) ? 'invalid-row' : ''}>
+                          <td>{originalIndex + 1}</td>
+                          <td className="url-cell">{lead.websiteUrl || ''}</td>
+                          <td>{lead.firstName || ''}</td>
+                          <td>{lead.companyName || ''}</td>
+                          <td>
+                            <button 
+                              className="remove-lead-btn"
+                              onClick={() => handleRemoveLead(originalIndex)}
+                              title="Remove this lead"
+                            >
+                              X
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Add Button */}
+                <div className="lead-entries-footer">
+                  <button 
+                    className={`add-lead-btn ${isDarkMode ? 'dark' : 'light'}`}
+                    onClick={handleAddLead}
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
             )}
