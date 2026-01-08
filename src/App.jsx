@@ -14,12 +14,18 @@ export default function App() {
   const [exportedCSV, setExportedCSV] = useState(null);
   const [isSitePreview, setIsSitePreview] = useState(false);
   const [isLandingPage, setIsLandingPage] = useState(false);
+  const [isEmbedMode, setIsEmbedMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Check URL hash on mount for direct links
   useEffect(() => {
     const checkHash = () => {
       const hash = window.location.hash;
+      const urlParams = new URLSearchParams(window.location.search);
+      const embedParam = urlParams.get('embed') === 'true';
+      
+      // Set embed mode from URL parameter
+      setIsEmbedMode(embedParam);
       
       // CRITICAL: Check if this is a landing page or video-only link FIRST
       if (hash.startsWith('#landing-') || hash.startsWith('#video-')) {
@@ -92,9 +98,9 @@ export default function App() {
   }
 
   // =====================================================
-  // SITE PREVIEW VIEW - No menu, just the website preview
+  // SITE PREVIEW VIEW (standalone or embedded) - No menu
   // =====================================================
-  if (isSitePreview) {
+  if (isSitePreview || isEmbedMode) {
     return (
       <ContractorBuilder 
         onNavigateToRepliq={handleGoToRepliQ}

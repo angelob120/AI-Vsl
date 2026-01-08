@@ -255,6 +255,23 @@ function LandingPageWithBubble({
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
   const [iframeError, setIframeError] = useState(false);
 
+  // Process websiteUrl to add embed parameter for internal site previews
+  const getEmbedUrl = (url) => {
+    if (!url) return null;
+    
+    // Check if this is an internal site preview URL (contains #site-)
+    if (url.includes('#site-')) {
+      // Add ?embed=true before the hash to signal standalone mode
+      const [baseUrl, hash] = url.split('#');
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}embed=true#${hash}`;
+    }
+    
+    return url;
+  };
+
+  const embedUrl = getEmbedUrl(websiteUrl);
+
   useEffect(() => {
     // Auto-play after 2 seconds
     const timer = setTimeout(() => {
@@ -365,9 +382,9 @@ function LandingPageWithBubble({
       `}</style>
 
       {/* Website Background (iframe) or Fallback */}
-      {websiteUrl && !iframeError ? (
+      {embedUrl && !iframeError ? (
         <iframe
-          src={websiteUrl}
+          src={embedUrl}
           style={{
             position: 'fixed',
             top: 0,
