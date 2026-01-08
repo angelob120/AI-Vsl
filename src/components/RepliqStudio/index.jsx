@@ -1,5 +1,6 @@
 // FILE: src/components/RepliqStudio/index.jsx
 // MAIN REPLIQSTUDIO COMPONENT - Single page layout with video bubble over website background
+// UPDATED: Saves to database only - NO localStorage
 import React, { useState, useRef, useEffect } from 'react';
 import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
 import './styles.css';
@@ -115,7 +116,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
       const headers = importedCSV[0] || [];
       const newMapping = { websiteUrl: '', firstName: '', companyName: '' };
       
-      headers.forEach((header) => {
+      headers.forEach((header, index) => {
         const h = header.toLowerCase();
         if (h.includes('website') || h.includes('link') || h.includes('url')) {
           newMapping.websiteUrl = header;
@@ -231,7 +232,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     }
   }, [csvData, mapping]);
 
-  // Create videos
+  // Create videos - UPDATED: Database only, NO localStorage
   const handleCreate = async () => {
     if (!introVideoData) {
       alert('Please upload an intro video first!');
@@ -258,29 +259,36 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
 
       const videoId = generateUniqueId();
       
-      // Create storage data
-      const storageData = {
-        id: videoId,
-        lead,
-        settings: {
-          ...settings,
-          introVideoData,
-          secondVideoData: settings.useSecondVideo ? secondVideoData : null
-        },
-        createdAt: new Date().toISOString()
-      };
-
-      // Save to localStorage
-      let success = false;
-      try {
-        localStorage.setItem(`landing-page-${videoId}`, JSON.stringify(storageData));
-        success = true;
-      } catch (e) {
-        console.warn('localStorage save failed:', e);
-      }
-
       const landingPageLink = `${baseUrl}#landing-${videoId}`;
       const videoOnlyLink = `${baseUrl}#video-${videoId}`;
+
+      // Prepare full data for database storage
+      const dbData = {
+        id: videoId,
+        leadData: lead,
+        settings: {
+          ...settings,
+          // Don't duplicate video data in settings - it's stored separately
+          introVideoData: null,
+          secondVideoData: null
+        },
+        videoData: introVideoData,
+        secondVideoData: settings.useSecondVideo ? secondVideoData : null,
+        landingPageLink,
+        videoOnlyLink,
+        websiteUrl: lead.websiteUrl,
+        companyName: lead.companyName,
+        firstName: lead.firstName
+      };
+
+      // Save directly to database (NO localStorage)
+      let success = false;
+      try {
+        await saveRepliqVideo(dbData);
+        success = true;
+      } catch (e) {
+        console.warn('Database save failed:', e);
+      }
 
       const videoInfo = {
         id: videoId,
@@ -294,15 +302,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
       };
 
       generatedVideos.push(videoInfo);
-
-      // Save to database
-      if (success) {
-        try {
-          await saveRepliqVideo(videoInfo);
-        } catch (e) {
-          console.warn('Database save failed:', e);
-        }
-      }
     }
 
     setProgress(100);
@@ -339,13 +338,13 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
     a.click();
   };
 
-  // Delete a video
+  // Delete a video - UPDATED: Database only, NO localStorage
   const handleDeleteVideo = async (videoId) => {
     if (window.confirm('Delete this video?')) {
       try {
         await deleteRepliqVideo(videoId);
         setSavedVideos(prev => prev.filter(v => v.id !== videoId));
-        localStorage.removeItem(`landing-page-${videoId}`);
+        // REMOVED: localStorage.removeItem(`landing-page-${videoId}`);
       } catch (error) {
         console.error('Failed to delete video:', error);
         alert('Failed to delete video.');
@@ -480,23 +479,29 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
                   className={`mode-btn ${settings.displayMode === mode.id ? 'active' : ''} ${isDarkMode ? 'dark' : 'light'}`}
                   onClick={() => update('displayMode', mode.id)}
                 >
-                  <div className="mode-icon">{mode.icon}</div>
-                  <div className="mode-label">{mode.label}</div>
+                  <span className="mode-icon">{mode.icon}</span>
+                  <span>{mode.label}</span>
                 </button>
               ))}
             </div>
             
-            <div className={`settings-grid ${isDarkMode ? 'dark' : 'light'}`} style={{marginTop: '16px'}}>
+            {/* Position & Shape */}
+            <div className="position-shape-row">
               <div className="setting-field">
-                <label>Video Position</label>
+                <label>Position</label>
                 <select value={settings.videoPosition} onChange={e => update('videoPosition', e.target.value)}>
-                  {['bottom-left','bottom-right','top-left','top-right'].map(p => <option key={p} value={p}>{p.replace('-', ' ')}</option>)}
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="top-left">Top Left</option>
                 </select>
               </div>
               <div className="setting-field">
-                <label>Video Shape</label>
+                <label>Shape</label>
                 <select value={settings.videoShape} onChange={e => update('videoShape', e.target.value)}>
-                  {['circle','square','rounded'].map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="circle">Circle</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="square">Square</option>
                 </select>
               </div>
             </div>
