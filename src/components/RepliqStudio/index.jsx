@@ -6,7 +6,7 @@
 // Saves to database only - NO localStorage
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
-import { composeVideo, blobToDataURL } from './utils/videoComposer';
+import { composeVideoOnServer } from '../../api/videoComposer';
 import './styles.css';
 
 // Generate unique ID
@@ -57,7 +57,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const [introVideoUrl, setIntroVideoUrl] = useState(null);
   const [introVideoData, setIntroVideoData] = useState(null);
   const [secondVideoUrl, setSecondVideoUrl] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [secondVideoData, setSecondVideoData] = useState(null);
   const introInputRef = useRef(null);
   const secondInputRef = useRef(null);
@@ -252,7 +251,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const invalidLeadsCount = leads.filter(lead => !isLeadValid(lead)).length;
 
   // ============================================
-  // UPDATED: Handle creation with video composer
+  // Handle creation - composes video on SERVER using FFmpeg
   // ============================================
   const handleCreate = async () => {
     if (leads.length === 0) {
@@ -274,42 +273,33 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
 
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i];
-      setCurrentLead(lead); // Show which lead is being processed
+      setCurrentLead(lead);
 
       const videoId = generateUniqueId();
       const landingPageLink = `${baseUrl}#landing-${videoId}`;
       const videoOnlyLink = `${baseUrl}#video-${videoId}`;
 
       try {
-        // Compose video with website background + overlay
-        const composedVideoBlob = await composeVideo({
-          websiteUrl: lead.websiteUrl,
+        // Compose video on server using FFmpeg
+        const composedVideoData = await composeVideoOnServer({
           introVideoData: introVideoData,
+          websiteUrl: lead.websiteUrl,
           displayMode: settings.displayMode,
           videoPosition: settings.videoPosition,
           videoShape: settings.videoShape,
           onProgress: (p) => {
-            // Update progress: overall lead progress + current composition progress
             const leadProgress = (i + (p / 100)) / leads.length;
             setProgress(Math.round(leadProgress * 100));
           }
         });
 
-        // Convert to data URL for storage
-        const composedVideoData = await blobToDataURL(composedVideoBlob);
-
         // Save to database with composed video
         await saveRepliqVideo({
           id: videoId,
           leadData: lead,
-          settings: {
-            ...settings,
-            introVideoData: null, // Don't store original - we have composed
-            secondVideoData: null
-          },
-          composedVideoData: composedVideoData, // Store the composed video
-          videoData: composedVideoData, // Also store as videoData for compatibility
-          videoType: 'composed',
+          settings: settings,
+          videoData: composedVideoData, // The composed video
+          secondVideoData: null,
           landingPageLink: landingPageLink,
           videoOnlyLink: videoOnlyLink,
           websiteUrl: lead.websiteUrl || null,
@@ -347,7 +337,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setIsCreating(false);
     setCurrentLead(null);
     
-    // Directly add successful videos to savedVideos state
+    // Add successful videos to state
     const successfulVideos = results
       .filter(r => r.success)
       .map(r => ({
@@ -359,7 +349,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     
     setSavedVideos(prev => [...successfulVideos, ...prev]);
     
-    // Also try to refresh from database
+    // Refresh from database
     try {
       await delay(500);
       await loadSavedVideos();
@@ -664,7 +654,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
             className={`create-btn ${isDarkMode ? 'dark' : 'light'}`}
           >
             {isCreating 
-              ? `⏳ Composing video ${Math.floor(progress / (100 / leads.length)) + 1}/${leads.length} (${progress}%)` 
+              ? `⏳ Composing ${Math.floor(progress / (100 / Math.max(leads.length, 1))) + 1}/${leads.length} (${progress}%)` 
               : `🚀 Create ${leads.length || 0} Video Landing Pages`
             }
           </button>
@@ -851,7 +841,18 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                 Upload a video to see preview
               </div>
             )}
-          
+            
+            {/* Keyboard hint */}
+            {hasMultipleLeads && (
+              <p style={{
+                fontSize: '0.7rem',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)',
+                textAlign: 'center',
+                marginTop: '12px'
+              }}>
+                💡 Use ← → arrow keys to navigate leads
+              </p>
+            )}
           </section>
 
           {/* Results */}

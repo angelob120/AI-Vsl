@@ -1,7 +1,6 @@
 // FILE: src/components/RepliqStudio/LandingPageViewer.jsx
-// UPDATED: Simplified to play composed video (website scroll + overlay already baked in)
+// Renders landing pages - plays the pre-composed video (website bg + overlay already baked in)
 import React, { useState, useEffect, useRef } from 'react';
-import { getFromIndexedDB, LANDING_PAGE_PREFIX } from './utils/storage';
 import { getRepliqVideoById } from '../../api/repliqVideos';
 
 export default function LandingPageViewer() {
@@ -13,85 +12,38 @@ export default function LandingPageViewer() {
 
   useEffect(() => {
     const loadLandingPage = async () => {
+      const hash = window.location.hash;
+      
+      if (!hash.startsWith('#landing-') && !hash.startsWith('#video-')) {
+        setError('Invalid URL');
+        setLoading(false);
+        return;
+      }
+
+      const videoId = hash.replace('#landing-', '').replace('#video-', '');
+      const isVideoOnly = hash.startsWith('#video-');
+      
       try {
-        const hash = window.location.hash;
+        const data = await getRepliqVideoById(videoId);
         
-        // Check if this is a landing page or video-only view
-        const isVideoOnly = hash.startsWith('#video-');
-        const videoId = hash.replace('#landing-', '').replace('#video-', '');
-
-        if (!videoId) {
-          setError('No video ID provided');
+        if (data) {
+          setPageData({ ...data, isVideoOnly });
           setLoading(false);
           return;
         }
 
-        let data = null;
-
-        // Try to load from API first (database)
-        try {
-          const apiData = await getRepliqVideoById(videoId);
-          if (apiData) {
-            data = {
-              lead: apiData.leadData,
-              settings: apiData.settings,
-              composedVideoData: apiData.composedVideoData || apiData.videoData,
-              videoType: apiData.videoType
-            };
-          }
-        } catch (e) {
-          console.log('API fetch failed, trying local storage:', e);
-        }
-
-        // Fallback to IndexedDB
-        if (!data) {
-          data = await getFromIndexedDB('landingPages', videoId);
-        }
-
-        // Fallback to localStorage
-        if (!data) {
-          const stored = localStorage.getItem(LANDING_PAGE_PREFIX + videoId);
-          if (stored) {
-            data = JSON.parse(stored);
-            
-            // If video data is in IndexedDB, try to fetch it
-            if (data.composedVideoData === '[[STORED_IN_INDEXEDDB]]') {
-              const fullData = await getFromIndexedDB('landingPages', videoId);
-              if (fullData) {
-                data = fullData;
-              }
-            }
-          }
-        }
-
-        if (!data) {
-          setError('Video not found. The link may be expired or invalid.');
-          setLoading(false);
-          return;
-        }
-
-        setPageData({
-          ...data,
-          isVideoOnly
-        });
+        setError('Landing page not found. The link may be expired or invalid.');
         setLoading(false);
 
       } catch (e) {
         console.error('Error loading landing page:', e);
-        setError('Failed to load video. Please try again later.');
+        setError('Failed to load landing page. Please try again later.');
         setLoading(false);
       }
     };
 
     loadLandingPage();
   }, []);
-
-  const handlePlay = () => {
-    if (videoRef.current) {
-      videoRef.current.play();
-      setShowPlayOverlay(false);
-    }
-  };
 
   const handleVideoClick = () => {
     if (videoRef.current) {
@@ -178,22 +130,19 @@ export default function LandingPageViewer() {
     return null;
   }
 
-  const { lead, settings, composedVideoData, isVideoOnly } = pageData;
+  const { leadData, settings, videoData, isVideoOnly } = pageData;
   const {
     videoTitle,
     buttonText,
     buttonLink,
     darkMode,
-    backgroundColor,
-    textColor,
-    accentColor
+    accentColor = '#667eea'
   } = settings || {};
 
-  // Determine the greeting name
-  const greetingName = lead?.companyName || lead?.firstName || 'there';
+  const greetingName = leadData?.companyName || leadData?.firstName || 'there';
 
-  // Check if we have video data
-  if (!composedVideoData || composedVideoData === '[[STORED_IN_INDEXEDDB]]') {
+  // No video data
+  if (!videoData) {
     return (
       <div style={{
         display: 'flex',
@@ -218,7 +167,7 @@ export default function LandingPageViewer() {
     );
   }
 
-  // Video-only view - just the video, nothing else
+  // Video-only view
   if (isVideoOnly) {
     return (
       <div style={{
@@ -238,25 +187,21 @@ export default function LandingPageViewer() {
             maxHeight: '100vh'
           }}
         >
-          <source src={composedVideoData} type="video/webm" />
+          <source src={videoData} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
     );
   }
 
-  // Full landing page view
-  const bgColor = backgroundColor || (darkMode ? '#1a1a2e' : '#f5f7fa');
-  const txtColor = textColor || (darkMode ? '#ffffff' : '#1a1a2e');
-  const accent = accentColor || '#667eea';
-
+  // Full landing page view with the pre-composed video
   return (
     <div style={{
       minHeight: '100vh',
       background: darkMode 
-        ? `linear-gradient(135deg, ${bgColor} 0%, #16213e 50%, #0f3460 100%)`
-        : `linear-gradient(135deg, ${bgColor} 0%, #e8ecf1 100%)`,
-      color: txtColor,
+        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+        : 'linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%)',
+      color: darkMode ? '#fff' : '#1a1a2e',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       display: 'flex',
       flexDirection: 'column',
@@ -270,7 +215,7 @@ export default function LandingPageViewer() {
         marginBottom: '12px',
         textAlign: 'center'
       }}>
-        Hi <span style={{ color: accent }}>{greetingName}</span> 👋
+        Hi <span style={{ color: accentColor }}>{greetingName}</span> 👋
       </h1>
       
       {/* Subtitle */}
@@ -284,18 +229,20 @@ export default function LandingPageViewer() {
       </p>
 
       {/* Video Container */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: '900px',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
-        cursor: 'pointer'
-      }}>
+      <div 
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '900px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+          cursor: 'pointer'
+        }}
+        onClick={handleVideoClick}
+      >
         <video
           ref={videoRef}
-          onClick={handleVideoClick}
           onEnded={handleVideoEnded}
           playsInline
           style={{
@@ -303,37 +250,33 @@ export default function LandingPageViewer() {
             display: 'block'
           }}
         >
-          <source src={composedVideoData} type="video/webm" />
+          <source src={videoData} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
 
         {/* Play Overlay */}
         {showPlayOverlay && (
-          <div 
-            onClick={handlePlay}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0,0,0,0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'opacity 0.3s'
-            }}
-          >
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'opacity 0.3s'
+          }}>
             <div style={{
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              background: accent,
+              background: accentColor,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              transition: 'transform 0.2s'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
             }}>
               <div style={{
                 width: 0,
@@ -357,29 +300,28 @@ export default function LandingPageViewer() {
           style={{
             marginTop: '30px',
             padding: '16px 48px',
-            background: `linear-gradient(135deg, ${accent} 0%, #764ba2 100%)`,
+            background: `linear-gradient(135deg, ${accentColor} 0%, #764ba2 100%)`,
             color: 'white',
             textDecoration: 'none',
             borderRadius: '50px',
             fontWeight: '600',
             fontSize: '1.1rem',
             boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-            transition: 'transform 0.2s, box-shadow 0.2s'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+            transition: 'transform 0.2s'
           }}
         >
           {buttonText || 'Book a Call'}
         </a>
       )}
 
-      
+      {/* Powered By */}
+      <p style={{
+        marginTop: '40px',
+        fontSize: '0.85rem',
+        opacity: 0.5
+      }}>
+        Powered by <span style={{ color: accentColor, fontWeight: 600 }}>°RepliQ</span>
+      </p>
     </div>
   );
 }
