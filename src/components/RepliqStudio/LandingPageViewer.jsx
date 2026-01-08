@@ -8,7 +8,6 @@ export default function LandingPageViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pageData, setPageData] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
   const videoRef = useRef(null);
 
@@ -90,7 +89,6 @@ export default function LandingPageViewer() {
   const handlePlay = () => {
     if (videoRef.current) {
       videoRef.current.play();
-      setIsPlaying(true);
       setShowPlayOverlay(false);
     }
   };
@@ -99,18 +97,15 @@ export default function LandingPageViewer() {
     if (videoRef.current) {
       if (videoRef.current.paused) {
         videoRef.current.play();
-        setIsPlaying(true);
         setShowPlayOverlay(false);
       } else {
         videoRef.current.pause();
-        setIsPlaying(false);
         setShowPlayOverlay(true);
       }
     }
   };
 
   const handleVideoEnded = () => {
-    setIsPlaying(false);
     setShowPlayOverlay(true);
   };
 

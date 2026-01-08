@@ -57,6 +57,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const [introVideoUrl, setIntroVideoUrl] = useState(null);
   const [introVideoData, setIntroVideoData] = useState(null);
   const [secondVideoUrl, setSecondVideoUrl] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [secondVideoData, setSecondVideoData] = useState(null);
   const introInputRef = useRef(null);
   const secondInputRef = useRef(null);
@@ -73,7 +74,6 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
 
   // Preview navigation state
   const [previewLeadIndex, setPreviewLeadIndex] = useState(0);
-  const [slideDirection, setSlideDirection] = useState(null);
 
   // Settings
   const [settings, setSettings] = useState({
@@ -115,16 +115,12 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   // Preview navigation
   const goToPreviousLead = useCallback(() => {
     if (leads.length === 0) return;
-    setSlideDirection('left');
     setPreviewLeadIndex(prev => prev === 0 ? leads.length - 1 : prev - 1);
-    setTimeout(() => setSlideDirection(null), 300);
   }, [leads.length]);
 
   const goToNextLead = useCallback(() => {
     if (leads.length === 0) return;
-    setSlideDirection('right');
     setPreviewLeadIndex(prev => prev === leads.length - 1 ? 0 : prev + 1);
-    setTimeout(() => setSlideDirection(null), 300);
   }, [leads.length]);
 
   // Keyboard navigation for preview
