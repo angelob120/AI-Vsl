@@ -141,10 +141,10 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
         <p>Create personalized video landing pages at scale</p>
       </header>
 
-      {/* Three Column Layout */}
+      {/* Two Column Layout - 50/50 */}
       <div className="studio-grid">
-        {/* LEFT COLUMN - Uploads */}
-        <div className="studio-column">
+        {/* LEFT COLUMN - All Controls (50%) */}
+        <div className="studio-column studio-controls">
           {/* Video Upload */}
           <section className="studio-card">
             <h3>📹 Video Upload</h3>
@@ -203,10 +203,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
               </div>
             )}
           </section>
-        </div>
 
-        {/* CENTER COLUMN - Settings */}
-        <div className="studio-column">
           {/* Display Mode */}
           <section className="studio-card">
             <h3>🎬 Video Display</h3>
@@ -285,19 +282,10 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
               </div>
             </div>
           </section>
-
-          {/* Create Button */}
-          <button
-            onClick={handleCreate}
-            disabled={isCreating || !introVideo.videoData || csvData.leads.length === 0}
-            className="create-btn"
-          >
-            {isCreating ? `Creating... ${createdCount}/${csvData.leads.length}` : `🚀 Create ${csvData.leads.length || 0} Landing Pages`}
-          </button>
         </div>
 
-        {/* RIGHT COLUMN - Preview */}
-        <div className="studio-column">
+        {/* RIGHT COLUMN - Preview (50%) */}
+        <div className="studio-column studio-preview">
           <section className="studio-card preview-card">
             <h3>Preview</h3>
             {introVideo.videoUrl ? (
@@ -319,6 +307,15 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
               </div>
             )}
           </section>
+
+          {/* Create Button */}
+          <button
+            onClick={handleCreate}
+            disabled={isCreating || !introVideo.videoData || csvData.leads.length === 0}
+            className="create-btn"
+          >
+            {isCreating ? `Creating... ${createdCount}/${csvData.leads.length}` : `🚀 Create ${csvData.leads.length || 0} Landing Pages`}
+          </button>
         </div>
       </div>
     </div>

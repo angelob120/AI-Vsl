@@ -50,10 +50,10 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Three Column Grid */
+/* Two Column Grid - 50/50 Split */
 .studio-grid {
   display: grid;
-  grid-template-columns: 380px 1fr 400px;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
   padding: 24px;
   max-width: 1800px;
@@ -68,6 +68,16 @@
   gap: 16px;
   overflow-y: auto;
   padding-right: 8px;
+}
+
+/* Left column - Controls */
+.studio-controls {
+  /* All controls in left column */
+}
+
+/* Right column - Preview */
+.studio-preview {
+  /* Preview takes up right column */
 }
 
 /* Scrollbar */
@@ -403,13 +413,7 @@
 }
 
 /* Responsive */
-@media (max-width: 1400px) {
-  .studio-grid {
-    grid-template-columns: 340px 1fr 360px;
-  }
-}
-
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .studio-grid {
     grid-template-columns: 1fr;
     height: auto;
@@ -417,5 +421,9 @@
   
   .studio-column {
     overflow-y: visible;
+  }
+  
+  .studio-preview {
+    min-height: 500px;
   }
 }
