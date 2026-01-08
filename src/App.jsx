@@ -14,7 +14,7 @@ export default function App() {
   const [exportedCSV, setExportedCSV] = useState(null);
   const [isSitePreview, setIsSitePreview] = useState(false);
   const [isLandingPage, setIsLandingPage] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state - DEFAULT TO TRUE
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Check URL hash on mount for direct links
   useEffect(() => {
@@ -45,22 +45,16 @@ export default function App() {
 
     checkHash();
 
-    // Listen for hash changes
-    const handleHashChange = () => {
-      checkHash();
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
-  // Load dark mode preference from localStorage (only if explicitly set)
+  // Load dark mode preference from localStorage
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode !== null) {
       setIsDarkMode(JSON.parse(savedDarkMode));
     }
-    // If no saved preference, keep the default (true = dark mode)
   }, []);
 
   // Save dark mode preference
@@ -90,12 +84,16 @@ export default function App() {
     setIsDarkMode(prev => !prev);
   };
 
-  // CRITICAL: If this is a landing page URL, ONLY render LandingPageViewer
+  // =====================================================
+  // LANDING PAGE VIEW - No menu, just the landing page
+  // =====================================================
   if (isLandingPage) {
     return <LandingPageViewer />;
   }
 
-  // If viewing a site preview, render ONLY the ContractorBuilder without any app UI
+  // =====================================================
+  // SITE PREVIEW VIEW - No menu, just the website preview
+  // =====================================================
   if (isSitePreview) {
     return (
       <ContractorBuilder 
@@ -106,9 +104,12 @@ export default function App() {
     );
   }
 
+  // =====================================================
+  // NORMAL APP VIEW - With navigation menu
+  // =====================================================
   return (
     <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
-      {/* Navigation Header */}
+      {/* Navigation Header - Only shows in builder/repliq mode */}
       <nav className={`app-nav ${isDarkMode ? 'dark' : ''}`}>
         <div className="app-nav-brand">
           <span className="app-nav-icon">⚡</span>
@@ -133,7 +134,6 @@ export default function App() {
         </div>
 
         <div className="app-nav-actions">
-          {/* Dark Mode Toggle */}
           <button 
             className={`dark-mode-toggle ${isDarkMode ? 'active' : ''}`}
             onClick={toggleDarkMode}
@@ -142,7 +142,6 @@ export default function App() {
             <span className="toggle-icon">{isDarkMode ? '☀️' : '🌙'}</span>
             <span className="toggle-text">{isDarkMode ? 'Light' : 'Dark'}</span>
           </button>
-        
         </div>
       </nav>
 
@@ -242,7 +241,6 @@ export default function App() {
           align-items: center;
         }
 
-        /* Dark Mode Toggle Button */
         .dark-mode-toggle {
           display: flex;
           align-items: center;
@@ -276,23 +274,6 @@ export default function App() {
         .toggle-text {
           font-size: 12px;
           font-weight: 600;
-        }
-
-        .app-nav-cta {
-          padding: 10px 20px;
-          background: linear-gradient(135deg, #04CFAF 0%, #00a896 100%);
-          color: #000;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .app-nav-cta:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(4, 207, 175, 0.3);
         }
 
         .app-main {
