@@ -734,3 +734,441 @@ app.post('/api/repliq/compose-video', async (req, res) => {
 // 
 // This allows larger video uploads
 // ============================================================
+
+
+
+
+
+
+
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { Pool } = require('pg');
+const fs = require('fs');
+
+// Import video composer functions
+const { composeVideo, saveBase64ToFile, fileToBase64DataUrl } = require('./videoComposer');
+
+
+// Middleware - IMPORTANT: Increase limit for video uploads
+app.use(cors());
+app.use(express.json({ limit: '100mb' }));
+
+
+
+initDatabase();
+
+// ==================== HEALTH CHECK ====================
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ==================== VIDEO COMPOSITION ENDPOINT ====================
+// This is the main endpoint that handles server-side video processing
+
+app.post('/api/repliq/compose-video', async (req, res) => {
+  console.log('📹 Received compose-video request');
+  
+  try {
+    const { 
+      introVideoData,  // base64 encoded video from client
+      websiteUrl,
+      displayMode,
+      videoPosition,
+      videoShape
+    } = req.body;
+
+    if (!introVideoData) {
+      return res.status(400).json({ error: 'Missing introVideoData' });
+    }
+
+    console.log('🎬 Composing video for:', websiteUrl);
+    console.log('⚙️ Settings:', { displayMode, videoPosition, videoShape });
+
+    // Step 1: Save the base64 video to a temp file
+    const introVideoPath = saveBase64ToFile(introVideoData);
+    console.log('💾 Saved intro video to:', introVideoPath);
+
+    // Step 2: Compose the video using FFmpeg
+    const outputPath = await composeVideo({
+      introVideoPath,
+      websiteUrl,
+      displayMode,
+      videoPosition,
+      videoShape
+    });
+    console.log('✅ Composed video saved to:', outputPath);
+
+    // Step 3: Read the composed video as base64
+    const composedVideoData = fileToBase64DataUrl(outputPath);
+
+    // Step 4: Clean up temp files
+    try {
+      fs.unlinkSync(introVideoPath);
+      fs.unlinkSync(outputPath);
+      console.log('🧹 Cleaned up temp files');
+    } catch (e) {
+      console.log('⚠️ Cleanup warning:', e.message);
+    }
+
+    // Return the composed video to the client
+    res.json({
+      success: true,
+      composedVideoData
+    });
+
+  } catch (error) {
+    console.error('❌ Video composition error:', error);
+    res.status(500).json({ 
+      error: 'Failed to compose video', 
+      details: error.message 
+    });
+  }
+});
+
+// ==================== REPLIQ VIDEOS ROUTES ====================
+
+// Save a generated video landing page to database
+app.post('/api/repliq/videos', async (req, res) => {
+  try {
+    const { 
+      id, 
+      leadData, 
+      settings, 
+      videoData,
+      secondVideoData,
+      landingPageHtml, 
+      videoOnlyHtml, 
+      landingPageLink, 
+      videoOnlyLink,
+      websiteUrl,
+      companyName,
+      firstName
+    } = req.body;
+
+    if (!id || !leadData || !settings) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const query = `
+      INSERT INTO repliq_videos (
+        id, lead_data, settings, video_data, second_video_data,
+        landing_page_html, video_only_html, landing_page_link, video_only_link,
+        website_url, company_name, first_name, created_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        lead_data = $2,
+        settings = $3,
+        video_data = $4,
+        second_video_data = $5,
+        landing_page_html = $6,
+        video_only_html = $7,
+        landing_page_link = $8,
+        video_only_link = $9,
+        website_url = $10,
+        company_name = $11,
+        first_name = $12
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      id,
+      JSON.stringify(leadData),
+      JSON.stringify(settings),
+      videoData || null,
+      secondVideoData || null,
+      landingPageHtml || null,
+      videoOnlyHtml || null,
+      landingPageLink || null,
+      videoOnlyLink || null,
+      websiteUrl || null,
+      companyName || null,
+      firstName || null
+    ]);
+
+    console.log('✅ Saved video to database:', id);
+
+    res.json({
+      success: true,
+      video: {
+        id: result.rows[0].id,
+        leadData: result.rows[0].lead_data,
+        settings: result.rows[0].settings,
+        landingPageLink: result.rows[0].landing_page_link,
+        videoOnlyLink: result.rows[0].video_only_link,
+        websiteUrl: result.rows[0].website_url,
+        companyName: result.rows[0].company_name,
+        firstName: result.rows[0].first_name,
+        createdAt: result.rows[0].created_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Save repliq video error:', error);
+    res.status(500).json({ error: 'Failed to save video', details: error.message });
+  }
+});
+
+// Get all repliq videos (list view - no video data to keep response small)
+app.get('/api/repliq/videos', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, lead_data, settings, landing_page_link, video_only_link, website_url, company_name, first_name, created_at FROM repliq_videos ORDER BY created_at DESC'
+    );
+
+    const videos = result.rows.map(row => ({
+      id: row.id,
+      leadData: row.lead_data,
+      settings: row.settings,
+      landingPageLink: row.landing_page_link,
+      videoOnlyLink: row.video_only_link,
+      websiteUrl: row.website_url,
+      companyName: row.company_name,
+      firstName: row.first_name,
+      createdAt: row.created_at
+    }));
+
+    res.json({ success: true, videos });
+  } catch (error) {
+    console.error('❌ Get repliq videos error:', error);
+    res.status(500).json({ error: 'Failed to fetch videos', details: error.message });
+  }
+});
+
+// Get single repliq video by ID (includes full video data for playback)
+app.get('/api/repliq/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM repliq_videos WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      video: {
+        id: row.id,
+        leadData: row.lead_data,
+        settings: row.settings,
+        videoData: row.video_data,
+        secondVideoData: row.second_video_data,
+        landingPageHtml: row.landing_page_html,
+        videoOnlyHtml: row.video_only_html,
+        landingPageLink: row.landing_page_link,
+        videoOnlyLink: row.video_only_link,
+        websiteUrl: row.website_url,
+        companyName: row.company_name,
+        firstName: row.first_name,
+        createdAt: row.created_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get repliq video error:', error);
+    res.status(500).json({ error: 'Failed to fetch video', details: error.message });
+  }
+});
+
+// Delete single repliq video
+app.delete('/api/repliq/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM repliq_videos WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    res.json({ success: true, message: 'Video deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete repliq video error:', error);
+    res.status(500).json({ error: 'Failed to delete video', details: error.message });
+  }
+});
+
+// Delete ALL repliq videos
+app.delete('/api/repliq/videos', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM repliq_videos RETURNING id');
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.rowCount} videos`,
+      deletedCount: result.rowCount
+    });
+  } catch (error) {
+    console.error('❌ Delete all repliq videos error:', error);
+    res.status(500).json({ error: 'Failed to delete videos', details: error.message });
+  }
+});
+
+// ==================== WEBHOOK ROUTES ====================
+
+// Inbound webhook endpoint for GHL (GoHighLevel)
+app.post('/api/webhook/ghl', async (req, res) => {
+  try {
+    const data = req.body;
+    
+    const id = data.id || data.contact_id || data.contactId || 
+               Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    
+    const lead = {
+      id,
+      company_name: data.companyName || data.company_name || data.company || null,
+      owner_name: data.ownerName || data.owner_name || data.owner || null,
+      first_name: data.firstName || data.first_name || null,
+      last_name: data.lastName || data.last_name || null,
+      phone: data.phone || data.phoneNumber || null,
+      email: data.email || null,
+      address: data.address || null,
+      city: data.city || null,
+      state: data.state || null,
+      postal_code: data.postalCode || data.postal_code || data.zip || null,
+      country: data.country || null,
+      website: data.website || data.websiteUrl || null,
+      tagline: data.tagline || null,
+      years_experience: data.yearsExperience || data.years_experience || null,
+      services: data.services || null,
+      raw_data: data
+    };
+
+    const query = `
+      INSERT INTO webhook_leads (
+        id, company_name, owner_name, first_name, last_name, phone, email,
+        address, city, state, postal_code, country, website, tagline,
+        years_experience, services, raw_data, created_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        company_name = COALESCE($2, webhook_leads.company_name),
+        raw_data = $17
+      RETURNING *
+    `;
+
+    await pool.query(query, [
+      lead.id, lead.company_name, lead.owner_name, lead.first_name, lead.last_name,
+      lead.phone, lead.email, lead.address, lead.city, lead.state, lead.postal_code,
+      lead.country, lead.website, lead.tagline, lead.years_experience,
+      JSON.stringify(lead.services), JSON.stringify(lead.raw_data)
+    ]);
+
+    console.log('✅ Webhook lead saved:', lead.id);
+    res.json({ success: true, id: lead.id });
+  } catch (error) {
+    console.error('❌ Webhook error:', error);
+    res.status(500).json({ error: 'Failed to process webhook', details: error.message });
+  }
+});
+
+// Get all webhook leads
+app.get('/api/webhook/leads', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM webhook_leads ORDER BY created_at DESC'
+    );
+    res.json({ success: true, leads: result.rows });
+  } catch (error) {
+    console.error('❌ Get leads error:', error);
+    res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
+  }
+});
+
+// ==================== WEBSITES ROUTES ====================
+
+app.post('/api/websites', async (req, res) => {
+  try {
+    const { id, formData, images, template, link } = req.body;
+
+    if (!id || !formData || !images || !link) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const websiteTemplate = template || 'general';
+
+    const query = `
+      INSERT INTO contractor_websites (id, form_data, images, template, link, created_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        form_data = $2,
+        images = $3,
+        template = $4,
+        link = $5
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      id,
+      JSON.stringify(formData),
+      JSON.stringify(images),
+      websiteTemplate,
+      link
+    ]);
+
+    res.json({ success: true, website: result.rows[0] });
+  } catch (error) {
+    console.error('❌ Save website error:', error);
+    res.status(500).json({ error: 'Failed to save website', details: error.message });
+  }
+});
+
+app.get('/api/websites/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM contractor_websites WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Website not found' });
+    }
+
+    res.json({ success: true, website: result.rows[0] });
+  } catch (error) {
+    console.error('❌ Get website error:', error);
+    res.status(500).json({ error: 'Failed to fetch website', details: error.message });
+  }
+});
+
+app.get('/api/websites', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, form_data, template, link, created_at FROM contractor_websites ORDER BY created_at DESC'
+    );
+    res.json({ success: true, websites: result.rows });
+  } catch (error) {
+    console.error('❌ Get websites error:', error);
+    res.status(500).json({ error: 'Failed to fetch websites', details: error.message });
+  }
+});
+
+// ==================== STATIC FILE SERVING ====================
+
+// Serve static files from the build directory
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Handle React routing - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+// ==================== START SERVER ====================
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📹 Video composition endpoint: POST /api/repliq/compose-video`);
+  console.log(`📊 RepliQ Videos API: /api/repliq/videos`);
+  console.log(`🔗 Webhook endpoint: POST /api/webhook/ghl`);
+});

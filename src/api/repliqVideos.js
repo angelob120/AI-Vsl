@@ -1,5 +1,6 @@
 /**
- * API client for RepliQ video landing pages
+ * FILE: src/api/repliqVideos.js
+ * API client for RepliQ video landing pages - database operations
  */
 
 // Use same origin - API is served from the same server as the frontend
@@ -7,6 +8,7 @@ const API_BASE_URL = '';
 
 /**
  * Save a generated video landing page to the database
+ * This is called AFTER video composition to persist the composed video
  */
 export const saveRepliqVideo = async (videoData) => {
   try {
@@ -23,15 +25,16 @@ export const saveRepliqVideo = async (videoData) => {
     }
 
     const data = await response.json();
+    console.log('✅ Video saved to database:', data.video?.id);
     return data;
   } catch (error) {
-    console.error('Error saving repliq video:', error);
+    console.error('❌ Error saving repliq video:', error);
     throw error;
   }
 };
 
 /**
- * Get all repliq videos from the database
+ * Get all repliq videos from the database (list view - no video data)
  */
 export const getAllRepliqVideos = async () => {
   try {
@@ -44,13 +47,13 @@ export const getAllRepliqVideos = async () => {
     const data = await response.json();
     return data.videos || [];
   } catch (error) {
-    console.error('Error fetching repliq videos:', error);
+    console.error('❌ Error fetching repliq videos:', error);
     return [];
   }
 };
 
 /**
- * Get a single repliq video by ID (includes full video data)
+ * Get a single repliq video by ID (includes full video data for playback)
  */
 export const getRepliqVideoById = async (id) => {
   try {
@@ -66,7 +69,7 @@ export const getRepliqVideoById = async (id) => {
     const data = await response.json();
     return data.video;
   } catch (error) {
-    console.error('Error fetching repliq video:', error);
+    console.error('❌ Error fetching repliq video:', error);
     return null;
   }
 };
@@ -85,9 +88,10 @@ export const deleteRepliqVideo = async (id) => {
     }
 
     const data = await response.json();
+    console.log('✅ Video deleted:', id);
     return data.success;
   } catch (error) {
-    console.error('Error deleting repliq video:', error);
+    console.error('❌ Error deleting repliq video:', error);
     throw error;
   }
 };
@@ -106,9 +110,10 @@ export const deleteAllRepliqVideos = async () => {
     }
 
     const data = await response.json();
+    console.log('✅ All videos deleted:', data.deletedCount);
     return data;
   } catch (error) {
-    console.error('Error deleting all repliq videos:', error);
+    console.error('❌ Error deleting all repliq videos:', error);
     throw error;
   }
 };

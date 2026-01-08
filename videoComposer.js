@@ -126,9 +126,11 @@ const composeVideo = async (options) => {
 
   // Get video duration
   const duration = await getVideoDuration(introVideoPath);
+  console.log(`📏 Video duration: ${duration} seconds`);
 
   // Create background image
   const bgImagePath = await createBackgroundImage(websiteUrl);
+  console.log(`🖼️ Created background image: ${bgImagePath}`);
 
   // Calculate overlay position and size
   const canvasWidth = 1280;
@@ -204,7 +206,7 @@ const composeVideo = async (options) => {
       outputFile
     ];
 
-    console.log('FFmpeg args:', args.join(' '));
+    console.log('🎬 Running FFmpeg with filter:', filterComplex);
 
     const ffmpeg = spawn('ffmpeg', args);
     
@@ -214,7 +216,7 @@ const composeVideo = async (options) => {
       // Log progress
       const match = stderr.match(/time=(\d+:\d+:\d+\.\d+)/);
       if (match) {
-        console.log('FFmpeg progress:', match[1]);
+        console.log('⏱️ FFmpeg progress:', match[1]);
       }
     });
 
@@ -225,8 +227,10 @@ const composeVideo = async (options) => {
       } catch (e) {}
 
       if (code === 0) {
+        console.log('✅ FFmpeg composition complete');
         resolve(outputFile);
       } else {
+        console.error('❌ FFmpeg failed:', stderr);
         reject(new Error(`FFmpeg failed with code ${code}: ${stderr}`));
       }
     });
@@ -248,6 +252,7 @@ const saveBase64ToFile = (base64Data, extension = 'mp4') => {
   const base64 = base64Data.replace(/^data:video\/\w+;base64,/, '');
   
   fs.writeFileSync(filePath, Buffer.from(base64, 'base64'));
+  console.log(`💾 Saved base64 to file: ${filePath}`);
   return filePath;
 };
 
