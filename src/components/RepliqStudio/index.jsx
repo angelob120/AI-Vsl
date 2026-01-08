@@ -3,7 +3,7 @@
 // UPDATED: Added preview navigation to cycle through all CSV leads
 // Saves to database only - NO localStorage
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { saveRepliqVideo, getAllRepliqVideos } from '../../api/repliqVideos';
+import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
 import './styles.css';
 
 // Generate unique ID
@@ -90,6 +90,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   const [progress, setProgress] = useState(0);
   const [createdVideos, setCreatedVideos] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [savedVideos, setSavedVideos] = useState([]);
 
   // Load saved videos on mount
   useEffect(() => {
@@ -177,7 +178,8 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
 
   const loadSavedVideos = async () => {
     try {
-      await getAllRepliqVideos();
+      const videos = await getAllRepliqVideos();
+      setSavedVideos(videos || []);
     } catch (error) {
       console.error('Failed to load saved videos:', error);
     }
@@ -310,6 +312,89 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setShowResults(true);
     setIsCreating(false);
     loadSavedVideos();
+  };
+
+  // Export results to CSV
+  const handleExportResults = () => {
+    if (createdVideos.length === 0) return;
+    
+    const csvContent = [
+      ['Company Name', 'First Name', 'Website URL', 'Landing Page Link', 'Success', 'Created At'],
+      ...createdVideos.map(v => [
+        v.companyName || '',
+        v.firstName || '',
+        v.websiteUrl || '',
+        v.link || '',
+        v.success ? 'YES' : 'NO',
+        new Date().toISOString()
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `repliq-videos-${Date.now()}.csv`;
+    a.click();
+  };
+
+  // Export ALL saved videos to CSV
+  const handleExportAllSaved = () => {
+    if (savedVideos.length === 0) return;
+    
+    const csvContent = [
+      ['Company Name', 'First Name', 'Website URL', 'Landing Page Link', 'Created At'],
+      ...savedVideos.map(v => [
+        v.companyName || v.lead?.companyName || '',
+        v.firstName || v.lead?.firstName || '',
+        v.websiteUrl || v.lead?.websiteUrl || '',
+        v.link || v.landingPageLink || '',
+        v.createdAt || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `repliq-all-saved-videos-${Date.now()}.csv`;
+    a.click();
+  };
+
+  // Delete a video
+  const handleDeleteVideo = async (videoId) => {
+    if (window.confirm('Delete this video?')) {
+      try {
+        await deleteRepliqVideo(videoId);
+        setSavedVideos(prev => prev.filter(v => v.id !== videoId));
+      } catch (error) {
+        console.error('Failed to delete video:', error);
+        alert('Failed to delete video.');
+      }
+    }
+  };
+
+  // Delete all videos
+  const handleDeleteAllVideos = async () => {
+    if (savedVideos.length === 0) {
+      alert('No videos to delete.');
+      return;
+    }
+    
+    if (window.confirm(`Delete ALL ${savedVideos.length} videos? This cannot be undone!`)) {
+      try {
+        await deleteAllRepliqVideos();
+        setSavedVideos([]);
+      } catch (error) {
+        console.error('Failed to delete all videos:', error);
+        alert('Failed to delete videos.');
+      }
+    }
+  };
+
+  // Copy link to clipboard
+  const copyLink = (link) => {
+    navigator.clipboard.writeText(link);
   };
 
   // Get current preview lead
@@ -658,30 +743,66 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
                     <div className="result-actions">
                       {video.success && (
                         <>
-                          <a href={video.link} target="_blank" rel="noopener noreferrer">View</a>
-                          <button onClick={() => navigator.clipboard.writeText(video.link)}>Copy</button>
+                          <a href={video.link} target="_blank" rel="noopener noreferrer">👁️</a>
+                          <button onClick={() => copyLink(video.link)}>📋</button>
                         </>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
+              <button onClick={handleExportResults} className={`export-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                📥 Export All Links (CSV)
+              </button>
               <button 
                 onClick={() => setShowResults(false)}
                 className={`close-results-btn ${isDarkMode ? 'dark' : 'light'}`}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  marginTop: '12px',
-                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: isDarkMode ? '#fff' : '#1a1a2e',
-                  cursor: 'pointer'
-                }}
               >
                 Close Results
               </button>
+            </section>
+          )}
+
+          {/* Saved Videos */}
+          {savedVideos.length > 0 && (
+            <section className={`studio-card ${isDarkMode ? 'dark' : 'light'}`}>
+              <div className="saved-header">
+                <h3>📁 Saved Videos ({savedVideos.length})</h3>
+                <div className="saved-header-actions">
+                  <button onClick={handleExportAllSaved} className={`export-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                    Export All
+                  </button>
+                  <button onClick={handleDeleteAllVideos} className={`delete-all-btn ${isDarkMode ? 'dark' : 'light'}`}>
+                    Delete All
+                  </button>
+                </div>
+              </div>
+              
+              <div className="saved-list">
+                {savedVideos.slice(0, 10).map(video => (
+                  <div key={video.id} className={`saved-item ${isDarkMode ? 'dark' : 'light'}`}>
+                    <div className="saved-info">
+                      <span className="saved-name">{video.companyName || video.lead?.companyName || video.firstName || video.lead?.firstName || 'Unnamed'}</span>
+                      <span className="saved-date">{new Date(video.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="saved-actions">
+                      <a href={video.link || video.landingPageLink} target="_blank" rel="noopener noreferrer" title="View">👁️</a>
+                      <button onClick={() => copyLink(video.link || video.landingPageLink)} title="Copy Link">📋</button>
+                      <button onClick={() => handleDeleteVideo(video.id)} title="Delete">🗑️</button>
+                    </div>
+                  </div>
+                ))}
+                {savedVideos.length > 10 && (
+                  <p style={{
+                    textAlign: 'center',
+                    fontSize: '0.8rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                    marginTop: '12px'
+                  }}>
+                    Showing 10 of {savedVideos.length} videos
+                  </p>
+                )}
+              </div>
             </section>
           )}
         </div>
