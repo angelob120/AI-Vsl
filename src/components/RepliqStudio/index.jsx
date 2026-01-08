@@ -48,22 +48,8 @@ const parseCSV = (text) => {
   }).filter(row => row.some(cell => cell));
 };
 
-export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
-  // Theme state - Light/Dark mode
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('repliqStudioDarkMode');
-    return saved !== null ? JSON.parse(saved) : true; // Default to dark mode
-  });
-
-  // Save theme preference
-  useEffect(() => {
-    localStorage.setItem('repliqStudioDarkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
-
-  // Toggle theme
-  const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
-  };
+export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkMode = true }) {
+  // REMOVED: Local theme state - now using isDarkMode prop from App.jsx
 
   // Video upload state
   const [introVideoUrl, setIntroVideoUrl] = useState(null);
@@ -379,20 +365,13 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
 
   return (
     <div className={`repliq-studio ${isDarkMode ? 'dark' : 'light'}`}>
-      {/* Header */}
+      {/* Header - REMOVED theme toggle button */}
       <header className={`studio-header ${isDarkMode ? 'dark' : 'light'}`}>
         <button onClick={onNavigateToBuilder} className={`back-button ${isDarkMode ? 'dark' : 'light'}`}>← Back to Builder</button>
         <h1>°RepliQ Studio</h1>
         <p>Create personalized video landing pages with website backgrounds</p>
         
-        {/* Theme Toggle Button */}
-        <button 
-          onClick={toggleTheme} 
-          className={`theme-toggle ${isDarkMode ? 'dark' : 'light'}`}
-          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {isDarkMode ? '☀️' : '🌙'}
-        </button>
+        {/* REMOVED: Theme Toggle Button - now controlled by navbar in App.jsx */}
       </header>
 
       {/* Two Column Layout */}

@@ -158,6 +158,7 @@ export default function App() {
           <RepliqStudio 
             importedCSV={exportedCSV}
             onNavigateToBuilder={handleGoToBuilder}
+            isDarkMode={isDarkMode}
           />
         )}
       </main>
