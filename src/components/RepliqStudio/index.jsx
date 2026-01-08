@@ -2,7 +2,6 @@
 // MAIN REPLIQSTUDIO COMPONENT - Single page layout with video bubble over website background
 import React, { useState, useRef, useEffect } from 'react';
 import { saveRepliqVideo, getAllRepliqVideos, deleteRepliqVideo, deleteAllRepliqVideos } from '../../api/repliqVideos';
-import { exportVideosCSV } from '../../utils/csv';
 import './styles.css';
 
 // Generate unique ID
@@ -116,7 +115,7 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV }) {
       const headers = importedCSV[0] || [];
       const newMapping = { websiteUrl: '', firstName: '', companyName: '' };
       
-      headers.forEach((header, index) => {
+      headers.forEach((header) => {
         const h = header.toLowerCase();
         if (h.includes('website') || h.includes('link') || h.includes('url')) {
           newMapping.websiteUrl = header;
