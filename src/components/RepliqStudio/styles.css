@@ -1036,3 +1036,152 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+/* ==========================================
+   PREVIEW NAVIGATION STYLES
+   Add these styles to src/components/RepliqStudio/styles.css
+   ========================================== */
+
+/* Preview Header with Navigation */
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.preview-header h3 {
+  margin: 0;
+}
+
+/* Lead Navigation Container */
+.lead-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Navigation Arrow Buttons */
+.nav-arrow-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-arrow-btn:hover {
+  background: rgba(102, 126, 234, 0.5);
+  transform: scale(1.05);
+}
+
+.nav-arrow-btn:active {
+  transform: scale(0.95);
+}
+
+/* Light mode arrow buttons */
+.nav-arrow-btn.light {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1a1a2e;
+}
+
+.nav-arrow-btn.light:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+/* Lead Counter */
+.lead-counter {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 60px;
+  text-align: center;
+  font-weight: 500;
+  user-select: none;
+}
+
+.lead-counter.light {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Preview Lead Info */
+.preview-lead-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-lead-info.light {
+  border-top-color: rgba(0, 0, 0, 0.1);
+}
+
+.preview-lead-info p {
+  margin: 4px 0;
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.preview-lead-info .lead-contact {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.preview-lead-info .lead-url {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  word-break: break-all;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keyboard Shortcuts Hint */
+.keyboard-hint {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 8px;
+  text-align: center;
+}
+
+.keyboard-hint.light {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* Animation for lead transition */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.preview-greeting.slide-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.preview-greeting.slide-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
