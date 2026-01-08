@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
+import { exportWebsitesCSV } from '../../utils/csv';
 import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
 import { getAllWebhookLeads, deleteWebhookLead, deleteAllWebhookLeads, mapLeadToFormData } from '../../api/webhookLeads';
 import { 
@@ -14,7 +15,7 @@ import './styles.css';
 import './webhook-leads-styles.css';
 import './templates/template-styles.css';
 
-// Generate unique ID
+// Generate unique ID (moved here since we're not importing from storage)
 const generateUniqueId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 };
@@ -40,7 +41,9 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     gallery: []
   });
 
+  // Template state - default to 'general'
   const [selectedTemplate, setSelectedTemplate] = useState('general');
+
   const [savedWebsites, setSavedWebsites] = useState([]);
   const [generatedLink, setGeneratedLink] = useState(null);
   const [viewMode, setViewMode] = useState('builder');
@@ -55,26 +58,91 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const [isLoadingLeads, setIsLoadingLeads] = useState(false);
   const [showDeleteAllWarning, setShowDeleteAllWarning] = useState(false);
 
-  // Load saved websites
+  useEffect(() => {
+    loadSavedWebsites();
+    loadWebhookLeads();
+    
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#site-')) {
+      const siteId = hash.substring(6);
+      loadWebsiteById(siteId);
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Load all saved websites from database
   const loadSavedWebsites = async () => {
     try {
       const websites = await getAllWebsites();
-      setSavedWebsites(websites || []);
+      setSavedWebsites(websites);
     } catch (error) {
       console.error('Failed to load websites:', error);
     }
   };
 
-  // Load webhook leads
+  // Load all webhook leads from database
   const loadWebhookLeads = async () => {
     setIsLoadingLeads(true);
     try {
       const leads = await getAllWebhookLeads();
-      setWebhookLeads(leads || []);
+      setWebhookLeads(leads);
     } catch (error) {
       console.error('Failed to load webhook leads:', error);
     }
     setIsLoadingLeads(false);
+  };
+
+  // Load a specific lead into the form
+  const handleSelectLead = (lead) => {
+    const mappedData = mapLeadToFormData(lead);
+    
+    // Merge with existing form data, keeping colors and services if not in lead
+    setFormData(prev => ({
+      ...prev,
+      ...mappedData,
+      // Keep existing colors
+      primaryColor: prev.primaryColor,
+      accentColor: prev.accentColor,
+      // Keep existing services if lead has none
+      services: mappedData.services.length > 0 ? mappedData.services : prev.services
+    }));
+    
+    setSelectedLeadId(lead.id);
+    setGeneratedLink(null); // Clear any existing generated link
+  };
+
+  // Delete a single lead
+  const handleDeleteLead = async (leadId, e) => {
+    e.stopPropagation(); // Prevent selecting the lead when clicking delete
+    
+    try {
+      await deleteWebhookLead(leadId);
+      setWebhookLeads(prev => prev.filter(lead => lead.id !== leadId));
+      
+      // If this was the selected lead, clear the selection
+      if (selectedLeadId === leadId) {
+        setSelectedLeadId(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete lead:', error);
+      alert('Failed to delete lead. Please try again.');
+    }
+  };
+
+  // Delete all leads with single warning
+  const handleDeleteAllLeads = async () => {
+    try {
+      const result = await deleteAllWebhookLeads();
+      if (result.success) {
+        setWebhookLeads([]);
+        setSelectedLeadId(null);
+        setShowDeleteAllWarning(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete all leads:', error);
+      alert('Failed to delete leads. Please try again.');
+    }
   };
 
   // Load website by ID for preview
@@ -94,21 +162,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
     setIsLoading(false);
   };
-
-  useEffect(() => {
-    const hash = window.location.hash;
-    
-    // Check if this is a site preview link
-    if (hash.startsWith('#site-')) {
-      const siteId = hash.replace('#site-', '');
-      loadWebsiteById(siteId);
-    } else {
-      // Normal builder mode - load saved data
-      loadSavedWebsites();
-      loadWebhookLeads();
-      setIsLoading(false);
-    }
-  }, []);
 
   const backToBuilder = () => {
     setViewMode('builder');
@@ -163,6 +216,34 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
   };
 
+  const handleContextPaste = async (type) => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        for (const mimeType of item.types) {
+          if (mimeType.startsWith('image/')) {
+            const blob = await item.getType(mimeType);
+            const dataUrl = await readFileAsDataURL(blob);
+            if (type === 'gallery') {
+              setImages(prev => ({
+                ...prev,
+                gallery: [...prev.gallery, dataUrl]
+              }));
+            } else {
+              setImages(prev => ({
+                ...prev,
+                [type]: dataUrl
+              }));
+            }
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.log('Clipboard access denied or no image found');
+    }
+  };
+
   const removeGalleryImage = (index) => {
     setImages(prev => ({
       ...prev,
@@ -170,15 +251,46 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }));
   };
 
+  const removeImage = (type) => {
+    setImages(prev => ({
+      ...prev,
+      [type]: null
+    }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const addService = () => {
+    if (newService.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        services: [...prev.services, newService.trim()]
+      }));
+      setNewService('');
+    }
+  };
+
+  const removeService = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleCopyLink = async (link) => {
     await copyToClipboard(link);
   };
 
+  // Get the currently selected template component
   const getCurrentTemplate = () => {
     const template = getTemplateById(selectedTemplate);
     return template.component;
   };
 
+  // Render the preview with the selected template
   const renderPreview = (data, imgs, templateId) => {
     const template = getTemplateById(templateId || selectedTemplate);
     const TemplateComponent = template.component;
@@ -220,6 +332,8 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         }
         
         setSavedWebsites(prev => [savedSite, ...prev]);
+        
+        // Clear lead selection after generating website
         setSelectedLeadId(null);
       } else {
         alert('Failed to save website. Please try again.');
@@ -232,19 +346,33 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     setIsSaving(false);
   };
 
+  const handleDownloadCSV = () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites saved yet. Generate some links first!');
+      return;
+    }
+    exportWebsitesCSV(savedWebsites);
+  };
+
+  // ============================================
+  // NEW: Export to RepliQ Studio function
+  // ============================================
   const handleExportToRepliQ = async () => {
     if (savedWebsites.length === 0) {
       alert('No websites saved yet. Generate some links first!');
       return;
     }
 
+    // Single confirmation alert
     const confirmed = window.confirm(
       `⚠️ Export ${savedWebsites.length} website(s) to RepliQ Studio?\n\nThis will:\n• Send all saved websites to RepliQ as leads\n• Delete all saved websites from this list\n\nThis action cannot be undone!`
     );
 
     if (confirmed) {
+      // Create CSV data in the format RepliQ expects
+      // Headers: Website URL, First Name (Owner Name), Company Name
       const csvData = [
-        ['Website Link', 'First Name', 'Company Name'],
+        ['Website Link', 'First Name', 'Company Name'], // Header row
         ...savedWebsites.map(site => [
           site.link,
           site.formData?.ownerName || site.formData?.companyName || '',
@@ -252,6 +380,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         ])
       ];
 
+      // Delete all saved websites
       try {
         const success = await deleteAllWebsites();
         if (success) {
@@ -259,8 +388,10 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         }
       } catch (error) {
         console.error('Delete all error:', error);
+        // Continue anyway - data is being exported
       }
 
+      // Navigate to RepliQ with the CSV data
       if (onNavigateToRepliq) {
         onNavigateToRepliq(csvData);
       }
@@ -363,63 +494,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
   };
 
-  // Select a lead and populate form
-  const handleSelectLead = (lead) => {
-    if (selectedLeadId === lead.id) {
-      setSelectedLeadId(null);
-      return;
-    }
-    
-    setSelectedLeadId(lead.id);
-    const mappedData = mapLeadToFormData(lead);
-    setFormData(prev => ({ ...prev, ...mappedData }));
-  };
-
-  // Delete a single lead
-  const handleDeleteLead = async (leadId, e) => {
-    e.stopPropagation();
-    if (window.confirm('Delete this lead?')) {
-      try {
-        const result = await deleteWebhookLead(leadId);
-        if (result.success) {
-          setWebhookLeads(prev => prev.filter(l => l.id !== leadId));
-          if (selectedLeadId === leadId) {
-            setSelectedLeadId(null);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to delete lead:', error);
-        alert('Failed to delete lead. Please try again.');
-      }
-    }
-  };
-
-  // Delete all leads
-  const handleDeleteAllLeads = async () => {
-    try {
-      const result = await deleteAllWebhookLeads();
-      if (result.success) {
-        setWebhookLeads([]);
-        setSelectedLeadId(null);
-        setShowDeleteAllWarning(false);
-      }
-    } catch (error) {
-      console.error('Failed to delete all leads:', error);
-      alert('Failed to delete leads. Please try again.');
-    }
-  };
-
-  // Get display name for a lead
-  const getLeadDisplayName = (lead) => {
-    if (lead.companyName) return lead.companyName;
-    if (lead.firstName || lead.lastName) return `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
-    if (lead.email) return lead.email;
-    return `Lead ${lead.id.substring(0, 8)}`;
-  };
-
-  // ============================================
-  // LOADING SCREEN
-  // ============================================
+  // Loading screen
   if (isLoading) {
     return (
       <div className={`loading-screen ${isDarkMode ? 'dark' : ''}`}>
@@ -430,8 +505,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   }
 
   // ============================================
-  // STANDALONE SITE PREVIEW MODE - WEBSITE ONLY, NO MENU
-  // This is for shared/generated links (#site-xxx)
+  // STANDALONE SITE PREVIEW MODE (Generated Link View)
   // ============================================
   if (isStandaloneSitePreview && viewMode === 'preview' && previewData) {
     return (
@@ -457,32 +531,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     );
   }
 
-  // ============================================
-  // STANDALONE MODE BUT STILL LOADING/NO DATA
-  // Show loading or error, NOT the builder
-  // ============================================
-  if (isStandaloneSitePreview) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: '#f8f9fa',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>😕</div>
-          <h1 style={{ marginBottom: '12px', fontSize: '1.5rem', color: '#1a1a2e' }}>Website Not Found</h1>
-          <p style={{ color: '#6b7280' }}>This link may be expired or invalid.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // REGULAR PREVIEW MODE (in-builder preview with Back button)
-  // ============================================
+  // Regular preview mode (in-builder preview with Back button)
   if (viewMode === 'preview' && previewData) {
     return (
       <div style={{ background: isDarkMode ? '#1a1a2e' : '#e5e7eb', minHeight: '100vh' }}>
@@ -496,10 +545,15 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     );
   }
 
-  // ============================================
-  // NORMAL BUILDER MODE - WITH FORM PANEL
-  // ============================================
   const SelectedTemplateComponent = getCurrentTemplate();
+
+  // Get display name for a lead
+  const getLeadDisplayName = (lead) => {
+    if (lead.companyName) return lead.companyName;
+    if (lead.firstName || lead.lastName) return `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
+    if (lead.email) return lead.email;
+    return `Lead ${lead.id.substring(0, 8)}`;
+  };
 
   return (
     <div className={`contractor-builder ${isDarkMode ? 'dark' : ''}`}>
@@ -561,48 +615,61 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               No leads received yet. Send data to the webhook endpoint to see leads here.
             </p>
           ) : (
-            <div className="webhook-leads-list">
-              {webhookLeads.map(lead => (
-                <div 
-                  key={lead.id}
-                  className={`webhook-lead-item ${selectedLeadId === lead.id ? 'selected' : ''} ${isDarkMode ? 'dark' : ''}`}
-                  onClick={() => handleSelectLead(lead)}
-                >
-                  <div className="lead-info">
-                    <span className="lead-name">{getLeadDisplayName(lead)}</span>
-                    {lead.phone && <span className="lead-detail">{lead.phone}</span>}
-                  </div>
-                  <button 
-                    className="lead-delete-btn"
-                    onClick={(e) => handleDeleteLead(lead.id, e)}
-                    title="Delete lead"
+            <>
+              <div className="webhook-leads-list">
+                {webhookLeads.map((lead) => (
+                  <div 
+                    key={lead.id} 
+                    className={`webhook-lead-item ${isDarkMode ? 'dark' : ''} ${selectedLeadId === lead.id ? 'selected' : ''}`}
+                    onClick={() => handleSelectLead(lead)}
                   >
-                    🗑️
-                  </button>
-                </div>
-              ))}
-              
-              {webhookLeads.length > 1 && (
-                <button 
-                  className={`delete-all-leads-btn ${isDarkMode ? 'dark' : ''}`}
-                  onClick={() => setShowDeleteAllWarning(true)}
-                >
-                  🗑️ Delete All Leads
-                </button>
-              )}
-            </div>
-          )}
-          
-          {showDeleteAllWarning && (
-            <div className="delete-warning-modal">
-              <div className="delete-warning-content">
-                <p>Delete all {webhookLeads.length} leads?</p>
-                <div className="delete-warning-actions">
-                  <button onClick={handleDeleteAllLeads}>Yes, Delete All</button>
-                  <button onClick={() => setShowDeleteAllWarning(false)}>Cancel</button>
-                </div>
+                    <div className="webhook-lead-info">
+                      <div className="webhook-lead-name">{getLeadDisplayName(lead)}</div>
+                      <div className="webhook-lead-meta">
+                        {lead.email && <span>{lead.email}</span>}
+                        {lead.phone && <span> • {lead.phone}</span>}
+                      </div>
+                    </div>
+                    <button 
+                      className={`webhook-lead-delete ${isDarkMode ? 'dark' : ''}`}
+                      onClick={(e) => handleDeleteLead(lead.id, e)}
+                      title="Delete lead"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
+              
+              <div className="leads-actions">
+                {!showDeleteAllWarning ? (
+                  <button 
+                    className={`delete-all-leads-btn ${isDarkMode ? 'dark' : ''}`}
+                    onClick={() => setShowDeleteAllWarning(true)}
+                  >
+                    🗑️ Remove All Leads
+                  </button>
+                ) : (
+                  <div className={`delete-all-warning ${isDarkMode ? 'dark' : ''}`}>
+                    <p>⚠️ Delete all {webhookLeads.length} leads?</p>
+                    <div className="warning-actions">
+                      <button 
+                        className="warning-confirm-btn"
+                        onClick={handleDeleteAllLeads}
+                      >
+                        Yes, Delete All
+                      </button>
+                      <button 
+                        className="warning-cancel-btn"
+                        onClick={() => setShowDeleteAllWarning(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -610,92 +677,266 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         <div className="form-section">
           <h2 className="form-section-title">Choose Template</h2>
           <div className="template-grid">
-            {templates.map(template => (
-              <div
+            {templates.map((template) => (
+              <button
                 key={template.id}
-                className={`template-card ${selectedTemplate === template.id ? 'selected' : ''} ${isDarkMode ? 'dark' : ''}`}
+                className={`template-option ${selectedTemplate === template.id ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
                 onClick={() => setSelectedTemplate(template.id)}
               >
                 <span className="template-icon">{template.icon}</span>
                 <span className="template-name">{template.name}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
-
+        
         {/* Business Information */}
         <div className="form-section">
           <h2 className="form-section-title">Business Information</h2>
           
           <div className="form-group">
-            <label>Company Name</label>
+            <label className="form-label">Company Name</label>
             <input
               type="text"
+              name="companyName"
               value={formData.companyName}
-              onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-              className={isDarkMode ? 'dark' : ''}
+              onChange={handleChange}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Your Company Name"
             />
           </div>
-
+          
           <div className="form-group">
-            <label>Owner Name</label>
+            <label className="form-label">Owner Name</label>
             <input
               type="text"
+              name="ownerName"
               value={formData.ownerName}
-              onChange={(e) => setFormData(prev => ({ ...prev, ownerName: e.target.value }))}
-              className={isDarkMode ? 'dark' : ''}
+              onChange={handleChange}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Owner/Contact Name"
             />
           </div>
-
+          
           <div className="form-group">
-            <label>Tagline</label>
+            <label className="form-label">Tagline</label>
             <input
               type="text"
+              name="tagline"
               value={formData.tagline}
-              onChange={(e) => setFormData(prev => ({ ...prev, tagline: e.target.value }))}
-              className={isDarkMode ? 'dark' : ''}
+              onChange={handleChange}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Your company tagline"
             />
           </div>
-
+          
           <div className="form-row">
             <div className="form-group">
-              <label>Phone</label>
+              <label className="form-label">Phone</label>
               <input
                 type="text"
+                name="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className={isDarkMode ? 'dark' : ''}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="(555) 123-4567"
               />
             </div>
+            
             <div className="form-group">
-              <label>Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
+                name="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className={isDarkMode ? 'dark' : ''}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="email@company.com"
               />
             </div>
           </div>
-
-          <div className="form-group">
-            <label>Address</label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className={isDarkMode ? 'dark' : ''}
-            />
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Years Experience</label>
+              <input
+                type="text"
+                name="yearsExperience"
+                value={formData.yearsExperience}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="25"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Address</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className={`form-input ${isDarkMode ? 'dark' : ''}`}
+                placeholder="123 Main Street"
+              />
+            </div>
           </div>
-
-          <div className="form-group">
-            <label>Years of Experience</label>
+        </div>
+        
+        {/* Services */}
+        <div className="form-section">
+          <h2 className="form-section-title">Services</h2>
+          
+          <div className="services-input-row">
             <input
               type="text"
-              value={formData.yearsExperience}
-              onChange={(e) => setFormData(prev => ({ ...prev, yearsExperience: e.target.value }))}
-              className={isDarkMode ? 'dark' : ''}
+              value={newService}
+              onChange={(e) => setNewService(e.target.value)}
+              className={`form-input ${isDarkMode ? 'dark' : ''}`}
+              placeholder="Add a service..."
+              onKeyPress={(e) => e.key === 'Enter' && addService()}
             />
+            <button className="add-service-btn" onClick={addService}>+</button>
+          </div>
+          
+          <div className="services-list">
+            {formData.services.map((service, index) => (
+              <div key={index} className={`service-tag ${isDarkMode ? 'dark' : ''}`}>
+                <span>{service}</span>
+                <button className="service-remove" onClick={() => removeService(index)}>×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Images */}
+        <div className="form-section">
+          <h2 className="form-section-title">Images</h2>
+          
+          {/* Logo */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">Logo</label>
+            <div 
+              className={`image-upload-area ${images.logo ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('logo', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('logo');
+              }}
+            >
+              {images.logo ? (
+                <>
+                  <img src={images.logo} alt="Logo" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('logo')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">📷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('logo', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          
+          {/* Hero Image */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">Hero Background</label>
+            <div 
+              className={`image-upload-area ${images.hero ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('hero', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('hero');
+              }}
+            >
+              {images.hero ? (
+                <>
+                  <img src={images.hero} alt="Hero" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('hero')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">🖼️</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('hero', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          
+          {/* About Image */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">About Section Image</label>
+            <div 
+              className={`image-upload-area ${images.about ? 'has-image' : ''} ${isDarkMode ? 'dark' : ''}`}
+              tabIndex={0}
+              onPaste={(e) => handlePaste('about', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('about');
+              }}
+            >
+              {images.about ? (
+                <>
+                  <img src={images.about} alt="About" className="uploaded-image" />
+                  <button className="image-remove-btn" onClick={() => removeImage('about')}>×</button>
+                </>
+              ) : (
+                <label className="image-upload-placeholder">
+                  <span className="upload-icon">👷</span>
+                  <span className="upload-text">Click to upload or paste image</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload('about', e)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          
+          {/* Gallery */}
+          <div className="image-upload-section">
+            <label className="image-upload-label">Gallery Images</label>
+            <div 
+              className="gallery-grid"
+              tabIndex={0}
+              onPaste={(e) => handlePaste('gallery', e)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleContextPaste('gallery');
+              }}
+            >
+              {images.gallery.map((img, index) => (
+                <div key={index} className={`gallery-item ${isDarkMode ? 'dark' : ''}`}>
+                  <img src={img} alt={`Gallery ${index + 1}`} className="gallery-image" />
+                  <button className="gallery-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
+                </div>
+              ))}
+              <label className={`gallery-add ${isDarkMode ? 'dark' : ''}`}>
+                <span className="gallery-add-icon">+</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleImageUpload('gallery', e)}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
           </div>
         </div>
 
@@ -704,184 +945,63 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           <h2 className="form-section-title">Brand Colors</h2>
           
           <div className="color-presets">
-            {colorPresets.map((preset, idx) => (
+            {colorPresets.map((preset, index) => (
               <button
-                key={idx}
+                key={index}
                 className={`color-preset ${isDarkMode ? 'dark' : ''}`}
-                style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }}
-                onClick={() => setFormData(prev => ({ ...prev, primaryColor: preset.primary, accentColor: preset.accent }))}
-                title={preset.name}
-              />
-            ))}
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Primary Color</label>
-              <div className="color-input-wrapper">
-                <input
-                  type="color"
-                  value={formData.primaryColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={formData.primaryColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
-                  className={isDarkMode ? 'dark' : ''}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Accent Color</label>
-              <div className="color-input-wrapper">
-                <input
-                  type="color"
-                  value={formData.accentColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={formData.accentColor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
-                  className={isDarkMode ? 'dark' : ''}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Services */}
-        <div className="form-section">
-          <h2 className="form-section-title">Services</h2>
-          
-          <div className="services-list">
-            {formData.services.map((service, idx) => (
-              <div key={idx} className={`service-tag ${isDarkMode ? 'dark' : ''}`}>
-                {service}
-                <button onClick={() => setFormData(prev => ({
+                onClick={() => setFormData(prev => ({
                   ...prev,
-                  services: prev.services.filter((_, i) => i !== idx)
-                }))}>×</button>
-              </div>
+                  primaryColor: preset.primary,
+                  accentColor: preset.accent
+                }))}
+                title={preset.name}
+              >
+                <div 
+                  className="color-preview" 
+                  style={{ background: `linear-gradient(135deg, ${preset.primary} 50%, ${preset.accent} 50%)` }}
+                />
+              </button>
             ))}
           </div>
           
-          <div className="add-service-row">
-            <input
-              type="text"
-              placeholder="Add a service..."
-              value={newService}
-              onChange={(e) => setNewService(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && newService.trim()) {
-                  setFormData(prev => ({
-                    ...prev,
-                    services: [...prev.services, newService.trim()]
-                  }));
-                  setNewService('');
-                }
-              }}
-              className={isDarkMode ? 'dark' : ''}
-            />
-            <button 
-              onClick={() => {
-                if (newService.trim()) {
-                  setFormData(prev => ({
-                    ...prev,
-                    services: [...prev.services, newService.trim()]
-                  }));
-                  setNewService('');
-                }
-              }}
-              className={isDarkMode ? 'dark' : ''}
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Images */}
-        <div className="form-section">
-          <h2 className="form-section-title">Images</h2>
-          
-          <div className="form-group">
-            <label>Logo</label>
-            <div 
-              className={`image-upload-box ${isDarkMode ? 'dark' : ''}`}
-              onPaste={(e) => handlePaste('logo', e)}
-            >
-              {images.logo ? (
-                <div className="image-preview">
-                  <img src={images.logo} alt="Logo" />
-                  <button onClick={() => setImages(prev => ({ ...prev, logo: null }))}>×</button>
-                </div>
-              ) : (
-                <label className="upload-label">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload('logo', e)} />
-                  <span>Click or paste image</span>
-                </label>
-              )}
+          <div className="color-pickers">
+            <div className="form-group">
+              <label className="form-label">Primary Color</label>
+              <div className="color-input-row">
+                <input
+                  type="color"
+                  name="primaryColor"
+                  value={formData.primaryColor}
+                  onChange={handleChange}
+                  className="color-picker"
+                />
+                <input
+                  type="text"
+                  name="primaryColor"
+                  value={formData.primaryColor}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label>Hero Image</label>
-            <div 
-              className={`image-upload-box ${isDarkMode ? 'dark' : ''}`}
-              onPaste={(e) => handlePaste('hero', e)}
-            >
-              {images.hero ? (
-                <div className="image-preview">
-                  <img src={images.hero} alt="Hero" />
-                  <button onClick={() => setImages(prev => ({ ...prev, hero: null }))}>×</button>
-                </div>
-              ) : (
-                <label className="upload-label">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload('hero', e)} />
-                  <span>Click or paste image</span>
-                </label>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>About Image</label>
-            <div 
-              className={`image-upload-box ${isDarkMode ? 'dark' : ''}`}
-              onPaste={(e) => handlePaste('about', e)}
-            >
-              {images.about ? (
-                <div className="image-preview">
-                  <img src={images.about} alt="About" />
-                  <button onClick={() => setImages(prev => ({ ...prev, about: null }))}>×</button>
-                </div>
-              ) : (
-                <label className="upload-label">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload('about', e)} />
-                  <span>Click or paste image</span>
-                </label>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Gallery Images</label>
-            <div className="gallery-grid">
-              {images.gallery.map((img, idx) => (
-                <div key={idx} className="gallery-item">
-                  <img src={img} alt={`Gallery ${idx + 1}`} />
-                  <button onClick={() => removeGalleryImage(idx)}>×</button>
-                </div>
-              ))}
-              <div 
-                className={`image-upload-box gallery-add ${isDarkMode ? 'dark' : ''}`}
-                onPaste={(e) => handlePaste('gallery', e)}
-              >
-                <label className="upload-label">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload('gallery', e)} />
-                  <span>+ Add</span>
-                </label>
+            
+            <div className="form-group">
+              <label className="form-label">Accent Color</label>
+              <div className="color-input-row">
+                <input
+                  type="color"
+                  name="accentColor"
+                  value={formData.accentColor}
+                  onChange={handleChange}
+                  className="color-picker"
+                />
+                <input
+                  type="text"
+                  name="accentColor"
+                  value={formData.accentColor}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
               </div>
             </div>
           </div>
@@ -890,31 +1010,45 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
         {/* Saved Websites */}
         <div className="form-section">
           <div className="section-header-row">
-            <h2 className="form-section-title">💾 Saved Websites</h2>
-            {savedWebsites.length > 0 && (
+            <h2 className="form-section-title">Saved Websites</h2>
+            <div className="section-actions">
               <button 
-                className={`clear-all-btn ${isDarkMode ? 'dark' : ''}`}
-                onClick={handleClearAllWebsites}
-                title="Delete all saved websites"
+                className={`section-action-btn ${isDarkMode ? 'dark' : ''}`}
+                onClick={handleDownloadCSV}
+                title="Export as CSV"
               >
-                🗑️ Clear All
+                📥
               </button>
-            )}
+              <button 
+                className={`section-action-btn danger ${isDarkMode ? 'dark' : ''}`}
+                onClick={handleClearAllWebsites}
+                title="Delete all websites"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
           
           {savedWebsites.length === 0 ? (
-            <p className={`no-saved-text ${isDarkMode ? 'dark' : ''}`}>
-              No websites saved yet. Generate a link to save your first website.
+            <p style={{ fontSize: 13, color: isDarkMode ? 'rgba(255,255,255,0.5)' : '#9ca3af', textAlign: 'center', padding: '20px 0' }}>
+              No websites saved yet. Click "Generate Link" to create one.
             </p>
           ) : (
             <div className="saved-websites-list">
-              {savedWebsites.map(site => {
-                const template = getTemplateById(site.template || 'general');
+              {savedWebsites.map((site) => {
+                const siteTemplate = getTemplateById(site.template || 'general');
                 return (
                   <div key={site.id} className={`saved-website-item ${isDarkMode ? 'dark' : ''}`}>
+                    <div 
+                      className="saved-website-color" 
+                      style={{ background: `linear-gradient(135deg, ${site.formData?.primaryColor || '#1a3a5c'}, ${site.formData?.accentColor || '#c9a227'})` }}
+                    />
                     <div className="saved-website-info">
-                      <span className="saved-website-name">{site.formData?.companyName || 'Unnamed'}</span>
-                      <span className="saved-website-template">{template.icon} {template.name}</span>
+                      <div className="saved-website-name">{site.formData?.companyName || 'Unnamed'}</div>
+                      <div className="saved-website-date">
+                        {new Date(site.createdAt).toLocaleDateString()}
+                        <span className="saved-website-template"> • {siteTemplate.icon} {siteTemplate.name}</span>
+                      </div>
                     </div>
                     <div className="saved-website-actions">
                       <button 
@@ -945,6 +1079,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             </div>
           )}
           
+          {/* NEW: Export to RepliQ Button */}
           {savedWebsites.length > 0 && (
             <button 
               className="export-to-repliq-btn"
