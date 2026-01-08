@@ -1,22 +1,42 @@
 /* FILE: src/components/RepliqStudio/styles.css */
 /* RepliQ Studio - Single Page Three-Column Layout */
+/* Light and Dark Mode Support */
 
-
-
+/* ==========================================
+   BASE STYLES - DARK MODE (Default)
+   ========================================== */
 
 .repliq-studio {
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Header */
+/* ==========================================
+   LIGHT MODE - Main Container
+   ========================================== */
+
+.repliq-studio.light {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  color: #1a1a2e;
+}
+
+/* ==========================================
+   HEADER
+   ========================================== */
+
 .studio-header {
   padding: 20px 40px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
   position: relative;
+  transition: border-color 0.3s ease;
+}
+
+.studio-header.light {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .studio-header h1 {
@@ -32,8 +52,14 @@
 .studio-header p {
   color: rgba(255, 255, 255, 0.7);
   font-size: 1rem;
+  transition: color 0.3s ease;
 }
 
+.studio-header.light p {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Back Button */
 .back-button {
   position: absolute;
   left: 24px;
@@ -53,7 +79,54 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Two Column Grid - 50/50 Split */
+.back-button.light {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a2e;
+}
+
+.back-button.light:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.theme-toggle.light {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle.light:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   GRID LAYOUT
+   ========================================== */
+
 .studio-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -73,17 +146,10 @@
   padding-right: 8px;
 }
 
-/* Left column - Controls */
-.studio-controls {
-  /* All controls in left column */
-}
+/* ==========================================
+   SCROLLBAR - Dark Mode
+   ========================================== */
 
-/* Right column - Preview */
-.studio-preview {
-  /* Preview takes up right column */
-}
-
-/* Scrollbar */
 .studio-column::-webkit-scrollbar {
   width: 6px;
 }
@@ -98,21 +164,48 @@
   border-radius: 3px;
 }
 
-/* Cards */
+/* Scrollbar - Light Mode */
+.studio-column.light::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.studio-column.light::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================
+   CARDS
+   ========================================== */
+
 .studio-card {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 20px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.studio-card.light {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .studio-card h3 {
   font-size: 1.1rem;
   margin-bottom: 16px;
   color: #fff;
+  transition: color 0.3s ease;
 }
 
-/* Upload Buttons */
+.studio-card.light h3 {
+  color: #1a1a2e;
+}
+
+/* ==========================================
+   UPLOAD BUTTONS
+   ========================================== */
+
 .upload-btn {
   width: 100%;
   padding: 14px 20px;
@@ -138,6 +231,29 @@
   color: #667eea;
 }
 
+/* Upload Button - Light Mode */
+.upload-btn.light {
+  background: rgba(0, 0, 0, 0.03);
+  border: 2px dashed rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.upload-btn.light:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.upload-btn.light.active {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  border-style: solid;
+  color: #667eea;
+}
+
+/* ==========================================
+   CHECKBOX LABELS
+   ========================================== */
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -146,6 +262,11 @@
   font-size: 0.9rem;
   margin-bottom: 8px;
   color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
+}
+
+.checkbox-label.light {
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -154,17 +275,30 @@
   accent-color: #667eea;
 }
 
-/* CSV Mapping */
+/* ==========================================
+   CSV MAPPING
+   ========================================== */
+
 .csv-mapping {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s ease;
+}
+
+.csv-mapping.light {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .csv-mapping h4 {
   font-size: 0.9rem;
   margin-bottom: 12px;
   color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
+}
+
+.csv-mapping.light h4 {
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .mapping-row {
@@ -176,6 +310,11 @@
   margin-bottom: 6px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+}
+
+.csv-mapping.light .mapping-row label {
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .mapping-row select {
@@ -186,13 +325,28 @@
   color: #fff;
   border-radius: 8px;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.csv-mapping.light .mapping-row select {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a2e;
 }
 
 .mapping-row select option {
   background: #1a1a2e;
 }
 
-/* Display Selector */
+.csv-mapping.light .mapping-row select option {
+  background: #fff;
+  color: #1a1a2e;
+}
+
+/* ==========================================
+   DISPLAY SELECTOR
+   ========================================== */
+
 .display-selector {
   display: flex;
   align-items: center;
@@ -200,6 +354,11 @@
   margin-bottom: 16px;
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
+}
+
+.display-selector.light {
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .display-selector select {
@@ -208,9 +367,19 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
-/* Display Modes */
+.display-selector.light select {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a2e;
+}
+
+/* ==========================================
+   DISPLAY MODES
+   ========================================== */
+
 .display-modes {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -238,18 +407,48 @@
   border-color: #667eea;
 }
 
+/* Mode Button - Light Mode */
+.mode-btn.light {
+  background: rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+}
+
+.mode-btn.light:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.mode-btn.light.active {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
 .mode-icon {
   font-size: 2rem;
   margin-bottom: 8px;
   color: #fff;
+  transition: color 0.3s ease;
+}
+
+.mode-btn.light .mode-icon {
+  color: #1a1a2e;
 }
 
 .mode-label {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
 }
 
-/* Settings Grid */
+.mode-btn.light .mode-label {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================
+   SETTINGS GRID
+   ========================================== */
+
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -269,6 +468,11 @@
   margin-bottom: 6px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+}
+
+.settings-grid.light .setting-field label {
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .setting-field input,
@@ -280,10 +484,22 @@
   color: #fff;
   border-radius: 8px;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.settings-grid.light .setting-field input,
+.settings-grid.light .setting-field select {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1a1a2e;
 }
 
 .setting-field input::placeholder {
   color: rgba(255, 255, 255, 0.4);
+}
+
+.settings-grid.light .setting-field input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
 }
 
 .setting-field input:focus,
@@ -292,7 +508,10 @@
   border-color: #667eea;
 }
 
-/* Color Grid */
+/* ==========================================
+   COLOR GRID
+   ========================================== */
+
 .color-grid {
   grid-column: 1 / -1;
   display: grid;
@@ -310,6 +529,11 @@
   margin-bottom: 6px;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
+  transition: color 0.3s ease;
+}
+
+.settings-grid.light .color-field label {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .color-field input[type="color"] {
@@ -321,7 +545,14 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Checkbox Grid */
+.settings-grid.light .color-field input[type="color"] {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================
+   CHECKBOX GRID
+   ========================================== */
+
 .checkbox-grid {
   grid-column: 1 / -1;
   display: grid;
@@ -330,7 +561,10 @@
   margin-top: 8px;
 }
 
-/* Create Button */
+/* ==========================================
+   CREATE BUTTON
+   ========================================== */
+
 .create-btn {
   width: 100%;
   padding: 18px 24px;
@@ -356,7 +590,18 @@
   cursor: not-allowed;
 }
 
-/* Preview Card */
+.create-btn.light {
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.create-btn.light:hover:not(:disabled) {
+  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
+}
+
+/* ==========================================
+   PREVIEW CARD
+   ========================================== */
+
 .preview-card {
   height: fit-content;
 }
@@ -414,12 +659,25 @@
   justify-content: center;
   color: rgba(255, 255, 255, 0.5);
   font-size: 1.1rem;
+  transition: color 0.3s ease;
 }
 
-/* Results Card */
+.preview-placeholder.light {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================
+   RESULTS CARD
+   ========================================== */
+
 .results-card {
   background: rgba(16, 185, 129, 0.1);
   border-color: rgba(16, 185, 129, 0.3);
+}
+
+.results-card.light {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
 }
 
 .results-list {
@@ -436,6 +694,11 @@
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   margin-bottom: 8px;
+  transition: background 0.3s ease;
+}
+
+.result-item.light {
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .result-name {
@@ -480,10 +743,25 @@
   transition: all 0.2s;
 }
 
+.result-item.light .result-actions a,
+.result-item.light .result-actions button {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a2e;
+}
+
 .result-actions a:hover,
 .result-actions button:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.result-item.light .result-actions a:hover,
+.result-item.light .result-actions button:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   EXPORT BUTTON
+   ========================================== */
 
 .export-btn {
   width: 100%;
@@ -521,7 +799,21 @@
   color: #fff;
 }
 
-/* Saved Videos */
+.close-results-btn.light {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.close-results-btn.light:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+}
+
+/* ==========================================
+   SAVED VIDEOS
+   ========================================== */
+
 .saved-header {
   display: flex;
   justify-content: space-between;
@@ -548,6 +840,15 @@
   background: rgba(239, 68, 68, 0.3);
 }
 
+.delete-all-btn.light {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.delete-all-btn.light:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
 .saved-list {
   max-height: 300px;
   overflow-y: auto;
@@ -568,6 +869,14 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.saved-item.light {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.saved-item.light:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .saved-info {
   display: flex;
   flex-direction: column;
@@ -578,11 +887,21 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
+  transition: color 0.3s ease;
+}
+
+.saved-item.light .saved-name {
+  color: #1a1a2e;
 }
 
 .saved-date {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
+  transition: color 0.3s ease;
+}
+
+.saved-item.light .saved-date {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .saved-actions {
@@ -607,16 +926,34 @@
   transition: all 0.2s;
 }
 
+.saved-item.light .saved-actions a,
+.saved-item.light .saved-actions button {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a2e;
+}
+
 .saved-actions a:hover,
 .saved-actions button:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.saved-item.light .saved-actions a:hover,
+.saved-item.light .saved-actions button:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .saved-actions button:last-child:hover {
   background: rgba(239, 68, 68, 0.3);
 }
 
-/* Responsive */
+.saved-item.light .saved-actions button:last-child:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
 @media (max-width: 1024px) {
   .studio-grid {
     grid-template-columns: 1fr;
@@ -629,5 +966,44 @@
   
   .studio-preview {
     min-height: 500px;
+  }
+  
+  .studio-header {
+    padding: 16px 20px;
+  }
+  
+  .back-button {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-bottom: 16px;
+    display: block;
+    width: fit-content;
+  }
+  
+  .theme-toggle {
+    position: absolute;
+    right: 20px;
+    top: 16px;
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .studio-header p {
+    font-size: 0.85rem;
+  }
+  
+  .display-modes {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
