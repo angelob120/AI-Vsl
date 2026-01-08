@@ -312,9 +312,25 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setShowResults(true);
     setIsCreating(false);
     
-    // Small delay to ensure database writes complete before fetching
-    await delay(500);
-    await loadSavedVideos();
+    // Directly add successful videos to savedVideos state
+    const successfulVideos = results
+      .filter(r => r.success)
+      .map(r => ({
+        id: r.id,
+        companyName: r.companyName,
+        link: r.link,
+        createdAt: new Date().toISOString()
+      }));
+    
+    setSavedVideos(prev => [...successfulVideos, ...prev]);
+    
+    // Also try to refresh from database
+    try {
+      await delay(500);
+      await loadSavedVideos();
+    } catch (e) {
+      console.log('Could not refresh from DB, using local state');
+    }
   };
 
   // Export results to CSV
