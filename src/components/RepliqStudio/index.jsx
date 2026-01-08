@@ -389,6 +389,15 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
 
   return (
     <div className={`repliq-studio ${isDarkMode ? 'dark' : 'light'}`}>
+      {/* Header - REMOVED theme toggle button */}
+      <header className={`studio-header ${isDarkMode ? 'dark' : 'light'}`}>
+        <button onClick={onNavigateToBuilder} className={`back-button ${isDarkMode ? 'dark' : 'light'}`}>← Back to Builder</button>
+        <h1>°RepliQ Studio</h1>
+        <p>Create personalized video landing pages with website backgrounds</p>
+        
+        {/* REMOVED: Theme Toggle Button - now controlled by navbar in App.jsx */}
+      </header>
+
       {/* Two Column Layout */}
       <div className="studio-grid">
         {/* LEFT COLUMN - All Controls */}
