@@ -281,21 +281,28 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
       await delay(100);
 
       const videoId = generateUniqueId();
-      const link = `${baseUrl}#landing-${videoId}`;
+      const landingPageLink = `${baseUrl}#landing-${videoId}`;
+      const videoOnlyLink = `${baseUrl}#video-${videoId}`;
 
       try {
+        // Send data in format server expects
         await saveRepliqVideo({
           id: videoId,
-          lead,
-          settings: { ...settings, introVideoData, secondVideoData },
-          link,
-          createdAt: new Date().toISOString()
+          leadData: lead,  // Server expects "leadData" not "lead"
+          settings: settings,
+          videoData: introVideoData,  // Separate field, not inside settings
+          secondVideoData: secondVideoData || null,
+          landingPageLink: landingPageLink,  // Server expects "landingPageLink" not "link"
+          videoOnlyLink: videoOnlyLink,
+          websiteUrl: lead.websiteUrl || null,
+          companyName: lead.companyName || null,
+          firstName: lead.firstName || null
         });
 
         results.push({
           id: videoId,
           companyName: lead.companyName,
-          link,
+          link: landingPageLink,
           success: true
         });
       } catch (err) {
