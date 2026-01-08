@@ -379,14 +379,7 @@ export default function LandingPageViewer() {
         </a>
       )}
 
-      {/* Powered By */}
-      <p style={{
-        marginTop: '40px',
-        fontSize: '0.85rem',
-        opacity: 0.5
-      }}>
-        Powered by <span style={{ color: accent, fontWeight: 600 }}>°RepliQ</span>
-      </p>
+      
     </div>
   );
 }
