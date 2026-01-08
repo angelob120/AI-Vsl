@@ -233,14 +233,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     setIsSaving(false);
   };
 
-  const handleDownloadCSV = () => {
-    if (savedWebsites.length === 0) {
-      alert('No websites saved yet. Generate some links first!');
-      return;
-    }
-    exportWebsitesCSV(savedWebsites);
-  };
-
   const handleExportToRepliQ = async () => {
     if (savedWebsites.length === 0) {
       alert('No websites saved yet. Generate some links first!');
