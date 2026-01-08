@@ -311,7 +311,10 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
     setCreatedVideos(results);
     setShowResults(true);
     setIsCreating(false);
-    loadSavedVideos();
+    
+    // Small delay to ensure database writes complete before fetching
+    await delay(500);
+    await loadSavedVideos();
   };
 
   // Export results to CSV
