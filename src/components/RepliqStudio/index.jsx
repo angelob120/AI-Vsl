@@ -56,6 +56,11 @@ export default function RepliqStudio({ onNavigateToBuilder, importedCSV, isDarkM
   // Video upload state
   const [introVideoUrl, setIntroVideoUrl] = useState(null);
   const [introVideoData, setIntroVideoData] = useState(null);
+  // Second video state - used in handleSecondUpload and UI conditionals
+  // eslint-disable-next-line no-unused-vars
+  const [secondVideoUrl, setSecondVideoUrl] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [secondVideoData, setSecondVideoData] = useState(null);
   const introInputRef = useRef(null);
   const secondInputRef = useRef(null);
 
