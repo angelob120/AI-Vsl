@@ -76,21 +76,3 @@ button:focus {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
-
-
-/* ==========================================
-   BLANK PAGE 2 STYLES
-   ========================================== */
-
-.blank-page {
-  min-height: calc(100vh - 60px);
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-  padding: 40px;
-  transition: background 0.3s ease, color 0.3s ease;
-  color: #1a1a2e;
-}
-
-.blank-page.dark {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  color: #fff;
-}
