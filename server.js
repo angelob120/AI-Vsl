@@ -487,13 +487,6 @@ const fs = require('fs');
 
 
 
-
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const { Pool } = require('pg');
-const fs = require('fs');
-
 // Import video composer functions
 
 
