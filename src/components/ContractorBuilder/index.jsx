@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
-import { exportWebsitesCSV } from '../../utils/csv';
+import { exportWebsitesCSV, downloadCSV } from '../../utils/csv';
 import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
 import { getAllWebhookLeads, deleteWebhookLead, deleteAllWebhookLeads, mapLeadToFormData } from '../../api/webhookLeads';
 import { 
@@ -355,24 +355,24 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   };
 
   // ============================================
-  // NEW: Export to RepliQ Studio function
+  // Download CSV function
   // ============================================
-  const handleExportToRepliQ = async () => {
-      if (savedWebsites.length === 0) {
-    alert('No websites saved yet. Generate some links first!');
-    return;
-  }
+  const handleDownloadLeadsCSV = () => {
+    if (savedWebsites.length === 0) {
+      alert('No websites saved yet. Generate some links first!');
+      return;
+    }
 
-  // Create CSV with Website Link, First Name, Company Name
-  const headers = ['Website Link', 'First Name', 'Company Name'];
-  const rows = savedWebsites.map(site => [
-    site.link,
-    site.formData?.ownerName || site.formData?.companyName || '',
-    site.formData?.companyName || ''
-  ]);
+    // Create CSV with Website Link, First Name, Company Name
+    const headers = ['Website Link', 'First Name', 'Company Name'];
+    const rows = savedWebsites.map(site => [
+      site.link,
+      site.formData?.ownerName || site.formData?.companyName || '',
+      site.formData?.companyName || ''
+    ]);
 
-  const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
-  downloadCSV(headers, rows, filename);
+    const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
+    downloadCSV(headers, rows, filename);
   };
 
   const clearForm = async () => {
@@ -1056,13 +1056,13 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             </div>
           )}
           
-          {/* NEW: Export to RepliQ Button */}
+          {/* Download CSV Button */}
           {savedWebsites.length > 0 && (
             <button 
               className="export-to-repliq-btn"
-              onClick={handleExportToRepliQ}
+              onClick={handleDownloadLeadsCSV}
             >
-              🚀 Export to RepliQ Studio
+              📥 Download CSV
             </button>
           )}
         </div>
