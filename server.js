@@ -479,84 +479,11 @@ app.listen(PORT, () => {
 // ============================================================
 
 // Add this import at the top of server.js (after the other requires):
-const { composeVideo, saveBase64ToFile, fileToBase64DataUrl } = require('./videoComposer');
 const fs = require('fs');
 
 // ============================================================
 // ADD THIS ENDPOINT (before the "STATIC FILE SERVING" section):
 // ============================================================
-
-// Compose video on server using FFmpeg
-app.post('/api/repliq/compose-video', async (req, res) => {
-  console.log('Received compose-video request');
-  
-  try {
-    const { 
-      introVideoData,  // base64 encoded video
-      websiteUrl,
-      displayMode,
-      videoPosition,
-      videoShape
-    } = req.body;
-
-    if (!introVideoData) {
-      return res.status(400).json({ error: 'Missing introVideoData' });
-    }
-
-    console.log('Composing video for:', websiteUrl);
-    console.log('Settings:', { displayMode, videoPosition, videoShape });
-
-    // Save the base64 video to a temp file
-    const introVideoPath = saveBase64ToFile(introVideoData);
-    console.log('Saved intro video to:', introVideoPath);
-
-    // Compose the video
-    const outputPath = await composeVideo({
-      introVideoPath,
-      websiteUrl,
-      displayMode,
-      videoPosition,
-      videoShape
-    });
-    console.log('Composed video saved to:', outputPath);
-
-    // Read the composed video as base64
-    const composedVideoData = fileToBase64DataUrl(outputPath);
-
-    // Clean up temp files
-    try {
-      fs.unlinkSync(introVideoPath);
-      fs.unlinkSync(outputPath);
-    } catch (e) {
-      console.log('Cleanup warning:', e.message);
-    }
-
-    res.json({
-      success: true,
-      composedVideoData
-    });
-
-  } catch (error) {
-    console.error('Video composition error:', error);
-    res.status(500).json({ 
-      error: 'Failed to compose video', 
-      details: error.message 
-    });
-  }
-});
-
-// ============================================================
-// Also update the json body size limit at the top of server.js:
-// Change from:
-//   app.use(express.json({ limit: '50mb' }));
-// To:
-//   app.use(express.json({ limit: '100mb' }));
-// 
-// This allows larger video uploads
-// ============================================================
-
-
-
 
 
 
@@ -568,7 +495,6 @@ const { Pool } = require('pg');
 const fs = require('fs');
 
 // Import video composer functions
-const { composeVideo, saveBase64ToFile, fileToBase64DataUrl } = require('./videoComposer');
 
 
 // Middleware - IMPORTANT: Increase limit for video uploads
@@ -651,88 +577,6 @@ app.post('/api/repliq/compose-video', async (req, res) => {
   }
 });
 
-// ==================== REPLIQ VIDEOS ROUTES ====================
-
-// Save a generated video landing page to database
-app.post('/api/repliq/videos', async (req, res) => {
-  try {
-    const { 
-      id, 
-      leadData, 
-      settings, 
-      videoData,
-      secondVideoData,
-      landingPageHtml, 
-      videoOnlyHtml, 
-      landingPageLink, 
-      videoOnlyLink,
-      websiteUrl,
-      companyName,
-      firstName
-    } = req.body;
-
-    if (!id || !leadData || !settings) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const query = `
-      INSERT INTO repliq_videos (
-        id, lead_data, settings, video_data, second_video_data,
-        landing_page_html, video_only_html, landing_page_link, video_only_link,
-        website_url, company_name, first_name, created_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
-      ON CONFLICT (id) DO UPDATE SET
-        lead_data = $2,
-        settings = $3,
-        video_data = $4,
-        second_video_data = $5,
-        landing_page_html = $6,
-        video_only_html = $7,
-        landing_page_link = $8,
-        video_only_link = $9,
-        website_url = $10,
-        company_name = $11,
-        first_name = $12
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [
-      id,
-      JSON.stringify(leadData),
-      JSON.stringify(settings),
-      videoData || null,
-      secondVideoData || null,
-      landingPageHtml || null,
-      videoOnlyHtml || null,
-      landingPageLink || null,
-      videoOnlyLink || null,
-      websiteUrl || null,
-      companyName || null,
-      firstName || null
-    ]);
-
-    console.log('✅ Saved video to database:', id);
-
-    res.json({
-      success: true,
-      video: {
-        id: result.rows[0].id,
-        leadData: result.rows[0].lead_data,
-        settings: result.rows[0].settings,
-        landingPageLink: result.rows[0].landing_page_link,
-        videoOnlyLink: result.rows[0].video_only_link,
-        websiteUrl: result.rows[0].website_url,
-        companyName: result.rows[0].company_name,
-        firstName: result.rows[0].first_name,
-        createdAt: result.rows[0].created_at
-      }
-    });
-  } catch (error) {
-    console.error('❌ Save repliq video error:', error);
-    res.status(500).json({ error: 'Failed to save video', details: error.message });
-  }
-});
 
 // ==================== WEBHOOK ROUTES ====================
 
