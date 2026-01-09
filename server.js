@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { Pool } = require('pg');
 
 const app = express();
@@ -8,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
 
 // PostgreSQL connection
 const pool = new Pool({
@@ -96,18 +97,53 @@ const initDatabase = async () => {
 
 initDatabase();
 
-// ==================== API ROUTES ====================
+// ==================== HEALTH CHECK ====================
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Also support /health for backwards compatibility
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ==================== VIDEO COMPOSITION ENDPOINT ====================
+
+app.post('/api/repliq/compose-video', async (req, res) => {
+  console.log('📹 Received compose-video request');
+  
+  try {
+    const { 
+      introVideoData,
+      websiteUrl,
+      displayMode,
+      videoPosition,
+      videoShape
+    } = req.body;
+
+    if (!introVideoData) {
+      return res.status(400).json({ error: 'Missing introVideoData' });
+    }
+
+    console.log('🎬 Composing video for:', websiteUrl);
+    console.log('⚙️ Settings:', { displayMode, videoPosition, videoShape });
+
+    // Note: saveBase64ToFile, composeVideo, and fileToBase64DataUrl functions
+    // need to be implemented or imported for this endpoint to work
+    // For now, return a placeholder response
+    res.status(501).json({ 
+      error: 'Video composition not yet implemented',
+      message: 'The video composer functions need to be added'
+    });
+
+  } catch (error) {
+    console.error('❌ Video composition error:', error);
+    res.status(500).json({ 
+      error: 'Failed to compose video', 
+      details: error.message 
+    });
+  }
+});
 
 // ==================== WEBHOOK LEADS ROUTES ====================
 
@@ -189,7 +225,7 @@ app.post('/api/webhook/ghl', async (req, res) => {
       JSON.stringify(lead.raw_data)
     ]);
 
-    console.log(`Webhook lead received: ${lead.company_name || lead.first_name || lead.id}`);
+    console.log(`✅ Webhook lead received: ${lead.company_name || lead.first_name || lead.id}`);
 
     res.json({
       success: true,
@@ -197,7 +233,7 @@ app.post('/api/webhook/ghl', async (req, res) => {
       lead: result.rows[0]
     });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('❌ Webhook error:', error);
     res.status(500).json({ error: 'Failed to process webhook', details: error.message });
   }
 });
@@ -232,7 +268,7 @@ app.get('/api/webhook/leads', async (req, res) => {
 
     res.json({ success: true, leads });
   } catch (error) {
-    console.error('Get webhook leads error:', error);
+    console.error('❌ Get webhook leads error:', error);
     res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
   }
 });
@@ -275,7 +311,7 @@ app.get('/api/webhook/leads/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get webhook lead error:', error);
+    console.error('❌ Get webhook lead error:', error);
     res.status(500).json({ error: 'Failed to fetch lead', details: error.message });
   }
 });
@@ -295,7 +331,7 @@ app.delete('/api/webhook/leads/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Lead deleted successfully' });
   } catch (error) {
-    console.error('Delete webhook lead error:', error);
+    console.error('❌ Delete webhook lead error:', error);
     res.status(500).json({ error: 'Failed to delete lead', details: error.message });
   }
 });
@@ -311,7 +347,7 @@ app.delete('/api/webhook/leads', async (req, res) => {
       deletedCount: result.rowCount
     });
   } catch (error) {
-    console.error('Delete all webhook leads error:', error);
+    console.error('❌ Delete all webhook leads error:', error);
     res.status(500).json({ error: 'Failed to delete leads', details: error.message });
   }
 });
@@ -327,7 +363,6 @@ app.post('/api/websites', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Default template to 'general' if not provided
     const websiteTemplate = template || 'general';
 
     const query = `
@@ -361,7 +396,7 @@ app.post('/api/websites', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Save website error:', error);
+    console.error('❌ Save website error:', error);
     res.status(500).json({ error: 'Failed to save website', details: error.message });
   }
 });
@@ -384,7 +419,7 @@ app.get('/api/websites', async (req, res) => {
 
     res.json({ success: true, websites });
   } catch (error) {
-    console.error('Get websites error:', error);
+    console.error('❌ Get websites error:', error);
     res.status(500).json({ error: 'Failed to fetch websites', details: error.message });
   }
 });
@@ -415,7 +450,7 @@ app.get('/api/websites/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get website error:', error);
+    console.error('❌ Get website error:', error);
     res.status(500).json({ error: 'Failed to fetch website', details: error.message });
   }
 });
@@ -431,7 +466,7 @@ app.delete('/api/websites/all', async (req, res) => {
       deletedCount: result.rowCount
     });
   } catch (error) {
-    console.error('Delete all websites error:', error);
+    console.error('❌ Delete all websites error:', error);
     res.status(500).json({ error: 'Failed to delete websites', details: error.message });
   }
 });
@@ -451,7 +486,7 @@ app.delete('/api/websites/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Website deleted successfully' });
   } catch (error) {
-    console.error('Delete website error:', error);
+    console.error('❌ Delete website error:', error);
     res.status(500).json({ error: 'Failed to delete website', details: error.message });
   }
 });
@@ -462,261 +497,6 @@ app.delete('/api/websites/:id', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'build')));
 
 // For any other route, serve the React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Webhook endpoint available at: POST /api/webhook/ghl`);
-  console.log(`RepliQ Videos API available at: /api/repliq/videos`);
-});
-
-
-// ============================================================
-// ADD THIS CODE TO server.js
-// ============================================================
-
-// Add this import at the top of server.js (after the other requires):
-const fs = require('fs');
-
-// ============================================================
-// ADD THIS ENDPOINT (before the "STATIC FILE SERVING" section):
-// ============================================================
-
-
-
-// Import video composer functions
-
-
-// Middleware - IMPORTANT: Increase limit for video uploads
-app.use(cors());
-app.use(express.json({ limit: '100mb' }));
-
-
-
-initDatabase();
-
-// ==================== HEALTH CHECK ====================
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// ==================== VIDEO COMPOSITION ENDPOINT ====================
-// This is the main endpoint that handles server-side video processing
-
-app.post('/api/repliq/compose-video', async (req, res) => {
-  console.log('📹 Received compose-video request');
-  
-  try {
-    const { 
-      introVideoData,  // base64 encoded video from client
-      websiteUrl,
-      displayMode,
-      videoPosition,
-      videoShape
-    } = req.body;
-
-    if (!introVideoData) {
-      return res.status(400).json({ error: 'Missing introVideoData' });
-    }
-
-    console.log('🎬 Composing video for:', websiteUrl);
-    console.log('⚙️ Settings:', { displayMode, videoPosition, videoShape });
-
-    // Step 1: Save the base64 video to a temp file
-    const introVideoPath = saveBase64ToFile(introVideoData);
-    console.log('💾 Saved intro video to:', introVideoPath);
-
-    // Step 2: Compose the video using FFmpeg
-    const outputPath = await composeVideo({
-      introVideoPath,
-      websiteUrl,
-      displayMode,
-      videoPosition,
-      videoShape
-    });
-    console.log('✅ Composed video saved to:', outputPath);
-
-    // Step 3: Read the composed video as base64
-    const composedVideoData = fileToBase64DataUrl(outputPath);
-
-    // Step 4: Clean up temp files
-    try {
-      fs.unlinkSync(introVideoPath);
-      fs.unlinkSync(outputPath);
-      console.log('🧹 Cleaned up temp files');
-    } catch (e) {
-      console.log('⚠️ Cleanup warning:', e.message);
-    }
-
-    // Return the composed video to the client
-    res.json({
-      success: true,
-      composedVideoData
-    });
-
-  } catch (error) {
-    console.error('❌ Video composition error:', error);
-    res.status(500).json({ 
-      error: 'Failed to compose video', 
-      details: error.message 
-    });
-  }
-});
-
-
-// ==================== WEBHOOK ROUTES ====================
-
-// Inbound webhook endpoint for GHL (GoHighLevel)
-app.post('/api/webhook/ghl', async (req, res) => {
-  try {
-    const data = req.body;
-    
-    const id = data.id || data.contact_id || data.contactId || 
-               Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    
-    const lead = {
-      id,
-      company_name: data.companyName || data.company_name || data.company || null,
-      owner_name: data.ownerName || data.owner_name || data.owner || null,
-      first_name: data.firstName || data.first_name || null,
-      last_name: data.lastName || data.last_name || null,
-      phone: data.phone || data.phoneNumber || null,
-      email: data.email || null,
-      address: data.address || null,
-      city: data.city || null,
-      state: data.state || null,
-      postal_code: data.postalCode || data.postal_code || data.zip || null,
-      country: data.country || null,
-      website: data.website || data.websiteUrl || null,
-      tagline: data.tagline || null,
-      years_experience: data.yearsExperience || data.years_experience || null,
-      services: data.services || null,
-      raw_data: data
-    };
-
-    const query = `
-      INSERT INTO webhook_leads (
-        id, company_name, owner_name, first_name, last_name, phone, email,
-        address, city, state, postal_code, country, website, tagline,
-        years_experience, services, raw_data, created_at
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP)
-      ON CONFLICT (id) DO UPDATE SET
-        company_name = COALESCE($2, webhook_leads.company_name),
-        raw_data = $17
-      RETURNING *
-    `;
-
-    await pool.query(query, [
-      lead.id, lead.company_name, lead.owner_name, lead.first_name, lead.last_name,
-      lead.phone, lead.email, lead.address, lead.city, lead.state, lead.postal_code,
-      lead.country, lead.website, lead.tagline, lead.years_experience,
-      JSON.stringify(lead.services), JSON.stringify(lead.raw_data)
-    ]);
-
-    console.log('✅ Webhook lead saved:', lead.id);
-    res.json({ success: true, id: lead.id });
-  } catch (error) {
-    console.error('❌ Webhook error:', error);
-    res.status(500).json({ error: 'Failed to process webhook', details: error.message });
-  }
-});
-
-// Get all webhook leads
-app.get('/api/webhook/leads', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM webhook_leads ORDER BY created_at DESC'
-    );
-    res.json({ success: true, leads: result.rows });
-  } catch (error) {
-    console.error('❌ Get leads error:', error);
-    res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
-  }
-});
-
-// ==================== WEBSITES ROUTES ====================
-
-app.post('/api/websites', async (req, res) => {
-  try {
-    const { id, formData, images, template, link } = req.body;
-
-    if (!id || !formData || !images || !link) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const websiteTemplate = template || 'general';
-
-    const query = `
-      INSERT INTO contractor_websites (id, form_data, images, template, link, created_at)
-      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-      ON CONFLICT (id) DO UPDATE SET
-        form_data = $2,
-        images = $3,
-        template = $4,
-        link = $5
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [
-      id,
-      JSON.stringify(formData),
-      JSON.stringify(images),
-      websiteTemplate,
-      link
-    ]);
-
-    res.json({ success: true, website: result.rows[0] });
-  } catch (error) {
-    console.error('❌ Save website error:', error);
-    res.status(500).json({ error: 'Failed to save website', details: error.message });
-  }
-});
-
-app.get('/api/websites/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      'SELECT * FROM contractor_websites WHERE id = $1',
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Website not found' });
-    }
-
-    res.json({ success: true, website: result.rows[0] });
-  } catch (error) {
-    console.error('❌ Get website error:', error);
-    res.status(500).json({ error: 'Failed to fetch website', details: error.message });
-  }
-});
-
-app.get('/api/websites', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, form_data, template, link, created_at FROM contractor_websites ORDER BY created_at DESC'
-    );
-    res.json({ success: true, websites: result.rows });
-  } catch (error) {
-    console.error('❌ Get websites error:', error);
-    res.status(500).json({ error: 'Failed to fetch websites', details: error.message });
-  }
-});
-
-// ==================== STATIC FILE SERVING ====================
-
-// Serve static files from the build directory
-app.use(express.static(path.join(__dirname, 'build')));
-
-// Handle React routing - serve index.html for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
