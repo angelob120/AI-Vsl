@@ -358,44 +358,21 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   // NEW: Export to RepliQ Studio function
   // ============================================
   const handleExportToRepliQ = async () => {
-    if (savedWebsites.length === 0) {
-      alert('No websites saved yet. Generate some links first!');
-      return;
-    }
+      if (savedWebsites.length === 0) {
+    alert('No websites saved yet. Generate some links first!');
+    return;
+  }
 
-    // Single confirmation alert
-    const confirmed = window.confirm(
-      `⚠️ Export ${savedWebsites.length} website(s) to RepliQ Studio?\n\nThis will:\n• Send all saved websites to RepliQ as leads\n• Delete all saved websites from this list\n\nThis action cannot be undone!`
-    );
+  // Create CSV with Website Link, First Name, Company Name
+  const headers = ['Website Link', 'First Name', 'Company Name'];
+  const rows = savedWebsites.map(site => [
+    site.link,
+    site.formData?.ownerName || site.formData?.companyName || '',
+    site.formData?.companyName || ''
+  ]);
 
-    if (confirmed) {
-      // Create CSV data in the format RepliQ expects
-      // Headers: Website URL, First Name (Owner Name), Company Name
-      const csvData = [
-        ['Website Link', 'First Name', 'Company Name'], // Header row
-        ...savedWebsites.map(site => [
-          site.link,
-          site.formData?.ownerName || site.formData?.companyName || '',
-          site.formData?.companyName || ''
-        ])
-      ];
-
-      // Delete all saved websites
-      try {
-        const success = await deleteAllWebsites();
-        if (success) {
-          setSavedWebsites([]);
-        }
-      } catch (error) {
-        console.error('Delete all error:', error);
-        // Continue anyway - data is being exported
-      }
-
-      // Navigate to RepliQ with the CSV data
-      if (onNavigateToRepliq) {
-        onNavigateToRepliq(csvData);
-      }
-    }
+  const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(headers, rows, filename);
   };
 
   const clearForm = async () => {
