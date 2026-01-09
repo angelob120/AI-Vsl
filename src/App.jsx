@@ -8,14 +8,12 @@ import './styles/global.css';
  * Also handles direct site preview links and landing page links
  */
 export default function App() {
-  const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
+  const [currentTool, setCurrentTool] = useState('builder');
   const [isSitePreview, setIsSitePreview] = useState(false);
   const [isEmbedMode, setIsEmbedMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isLandingPage, setIsLandingPage] = useState(false);
 
-
-
-  
   // Check URL hash on mount for direct links
   useEffect(() => {
     const checkHash = () => {
@@ -23,15 +21,12 @@ export default function App() {
       const urlParams = new URLSearchParams(window.location.search);
       const embedParam = urlParams.get('embed') === 'true';
       
-      // Set embed mode from URL parameter
       setIsEmbedMode(embedParam);
       
-      // Check if this is a site preview link
       if (hash.startsWith('#site-')) {
         setCurrentTool('builder');
         setIsSitePreview(true);
         setIsLandingPage(false);
-
       } else {
         setIsSitePreview(false);
         setIsLandingPage(false);
@@ -57,6 +52,13 @@ export default function App() {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Handle navigation to RepliQ
+  const handleGoToRepliQ = () => {
+    setCurrentTool('repliq');
+    setIsSitePreview(false);
+    setIsLandingPage(false);
+  };
+
   // Handle navigation back to Builder
   const handleGoToBuilder = () => {
     setCurrentTool('builder');
@@ -70,13 +72,7 @@ export default function App() {
     setIsDarkMode(prev => !prev);
   };
 
-  // =====================================================
-  // LANDING PAGE VIEW - No menu, just the landing page
-  // =====================================================
-
-  // =====================================================
   // SITE PREVIEW VIEW (standalone or embedded) - No menu
-  // =====================================================
   if (isSitePreview || isEmbedMode) {
     return (
       <ContractorBuilder 
@@ -87,12 +83,9 @@ export default function App() {
     );
   }
 
-  // =====================================================
   // NORMAL APP VIEW - With navigation menu
-  // =====================================================
   return (
     <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
-      {/* Navigation Header - Only shows in builder/repliq mode */}
       <nav className={`app-nav ${isDarkMode ? 'dark' : ''}`}>
         <div className="app-nav-brand">
           <span className="app-nav-icon">⚡</span>
@@ -128,7 +121,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="app-main">
         {currentTool === 'builder' ? (
           <ContractorBuilder 
@@ -261,6 +253,20 @@ export default function App() {
           flex: 1;
           display: flex;
           flex-direction: column;
+        }
+
+        .blank-page {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f5f5f5;
+          color: #333;
+        }
+
+        .blank-page.dark {
+          background: #0d1117;
+          color: #fff;
         }
       `}</style>
     </div>
