@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ContractorBuilder from './components/ContractorBuilder';
-import RepliqStudio from './components/RepliqStudio';
-import LandingPageViewer from './components/RepliqStudio/LandingPageViewer';
 import './styles/global.css';
 
 /**
@@ -11,12 +9,13 @@ import './styles/global.css';
  */
 export default function App() {
   const [currentTool, setCurrentTool] = useState('builder'); // 'builder' or 'repliq'
-  const [exportedCSV, setExportedCSV] = useState(null);
   const [isSitePreview, setIsSitePreview] = useState(false);
-  const [isLandingPage, setIsLandingPage] = useState(false);
   const [isEmbedMode, setIsEmbedMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+
+
+  
   // Check URL hash on mount for direct links
   useEffect(() => {
     const checkHash = () => {
@@ -27,22 +26,12 @@ export default function App() {
       // Set embed mode from URL parameter
       setIsEmbedMode(embedParam);
       
-      // CRITICAL: Check if this is a landing page or video-only link FIRST
-      if (hash.startsWith('#landing-') || hash.startsWith('#video-')) {
-        setIsLandingPage(true);
-        setIsSitePreview(false);
-        return;
-      }
-      
       // Check if this is a site preview link
       if (hash.startsWith('#site-')) {
         setCurrentTool('builder');
         setIsSitePreview(true);
         setIsLandingPage(false);
-      } else if (hash === '#repliq') {
-        setCurrentTool('repliq');
-        setIsSitePreview(false);
-        setIsLandingPage(false);
+
       } else {
         setIsSitePreview(false);
         setIsLandingPage(false);
@@ -68,15 +57,6 @@ export default function App() {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Handle navigation to RepliQ with exported data
-  const handleGoToRepliQ = (csvData) => {
-    setExportedCSV(csvData);
-    setCurrentTool('repliq');
-    setIsSitePreview(false);
-    setIsLandingPage(false);
-    window.location.hash = '#repliq';
-  };
-
   // Handle navigation back to Builder
   const handleGoToBuilder = () => {
     setCurrentTool('builder');
@@ -93,9 +73,6 @@ export default function App() {
   // =====================================================
   // LANDING PAGE VIEW - No menu, just the landing page
   // =====================================================
-  if (isLandingPage) {
-    return <LandingPageViewer />;
-  }
 
   // =====================================================
   // SITE PREVIEW VIEW (standalone or embedded) - No menu
@@ -131,11 +108,11 @@ export default function App() {
             Website Builder
           </button>
           <button
-            className={`app-nav-tab ${currentTool === 'repliq' ? 'active' : ''}`}
-            onClick={() => handleGoToRepliQ(null)}
+            className={`app-nav-tab ${currentTool === 'page2' ? 'active' : ''}`}
+            onClick={() => setCurrentTool('page2')}
           >
-            <span className="tab-icon">🎬</span>
-            RepliQ Studio
+            <span className="tab-icon">📄</span>
+            Page 2
           </button>
         </div>
 
@@ -160,11 +137,9 @@ export default function App() {
             isDarkMode={isDarkMode}
           />
         ) : (
-          <RepliqStudio 
-            importedCSV={exportedCSV}
-            onNavigateToBuilder={handleGoToBuilder}
-            isDarkMode={isDarkMode}
-          />
+          <div className={`blank-page ${isDarkMode ? 'dark' : ''}`}>
+            {/* Your new content goes here */}
+          </div>
         )}
       </main>
 
