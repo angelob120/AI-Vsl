@@ -13,6 +13,9 @@ export default function App() {
   const [isEmbedMode, setIsEmbedMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+
+
+  
   // Check URL hash on mount for direct links
   useEffect(() => {
     const checkHash = () => {
