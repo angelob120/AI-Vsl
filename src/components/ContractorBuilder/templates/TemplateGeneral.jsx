@@ -5,7 +5,201 @@ import React from 'react';
  * Features a dark, professional design that adapts to any contractor niche
  * Based on the Boston Electric style but flexible for all industries
  */
-export default function TemplateGeneral({ formData, images }) {
+
+// Smart image matching system - maps keywords to relevant images
+const serviceImageMap = {
+  // Electrical
+  'electrical': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600',
+  'electric': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600',
+  'wiring': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'panel': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'outlet': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'lighting': 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
+  'light': 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
+  'led': 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
+  'ev charger': 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600',
+  'charger': 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=600',
+  'generator': 'https://images.unsplash.com/photo-1548872607-a5765e18263d?w=600',
+  'surge': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'smoke detector': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'ceiling fan': 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
+  
+  // Plumbing
+  'plumbing': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  'plumber': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  'pipe': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  'drain': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600',
+  'water heater': 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600',
+  'faucet': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600',
+  'toilet': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600',
+  'sewer': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  'leak': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  'water': 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600',
+  'garbage disposal': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600',
+  'sump pump': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+  
+  // HVAC
+  'hvac': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+  'air conditioning': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+  'ac ': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+  'heating': 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
+  'furnace': 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
+  'duct': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+  'ventilation': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+  'thermostat': 'https://images.unsplash.com/photo-1567315219301-cb047f3b1c1f?w=600',
+  'heat pump': 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
+  'boiler': 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
+  
+  // Roofing
+  'roof': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+  'roofing': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+  'shingle': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+  'gutter': 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600',
+  'siding': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'chimney': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+  'skylight': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+  
+  // Landscaping
+  'landscap': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  'lawn': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  'garden': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600',
+  'tree': 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600',
+  'shrub': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600',
+  'irrigation': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  'sprinkler': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  'sod': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  'mulch': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600',
+  'paver': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
+  'retaining wall': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
+  'outdoor': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+  
+  // Kitchen
+  'kitchen': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'cabinet': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'countertop': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'granite': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'quartz': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'backsplash': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  'appliance': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+  
+  // Bathroom
+  'bathroom': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  'bath': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  'shower': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  'tub': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  'vanity': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  'tile': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+  
+  // Flooring
+  'floor': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+  'hardwood': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+  'carpet': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+  'laminate': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+  'vinyl': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+  
+  // Painting
+  'paint': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600',
+  'painting': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600',
+  'stain': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600',
+  'wallpaper': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600',
+  'drywall': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  
+  // Windows and Doors
+  'window': 'https://images.unsplash.com/photo-1509644851169-2acc08aa25b5?w=600',
+  'door': 'https://images.unsplash.com/photo-1506377295352-e3154d43ea9e?w=600',
+  'glass': 'https://images.unsplash.com/photo-1509644851169-2acc08aa25b5?w=600',
+  
+  // Concrete and Masonry
+  'concrete': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'masonry': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'brick': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'stone': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'foundation': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'driveway': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'sidewalk': 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?w=600',
+  'patio': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
+  
+  // Fencing and Decks
+  'fence': 'https://images.unsplash.com/photo-1578869236155-11a1a00e7d50?w=600',
+  'fencing': 'https://images.unsplash.com/photo-1578869236155-11a1a00e7d50?w=600',
+  'deck': 'https://images.unsplash.com/photo-1591825729269-caeb344f6df2?w=600',
+  'pergola': 'https://images.unsplash.com/photo-1591825729269-caeb344f6df2?w=600',
+  'gazebo': 'https://images.unsplash.com/photo-1591825729269-caeb344f6df2?w=600',
+  
+  // Pool and Spa
+  'pool': 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600',
+  'spa': 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600',
+  'hot tub': 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=600',
+  
+  // Solar and Green
+  'solar': 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600',
+  'energy': 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600',
+  'insulation': 'https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=600',
+  
+  // General Construction
+  'remodel': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'renovation': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'addition': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'construction': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'build': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'framing': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'basement': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'attic': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'home': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600',
+  'house': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600',
+  'commercial': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600',
+  'office': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600',
+  
+  // Specialty
+  'pressure wash': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'cleaning': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'mold': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'pest': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'security': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'camera': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'alarm': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'smart home': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'automation': 'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  
+  // Misc
+  'repair': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'maintenance': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'install': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'replace': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'upgrade': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'inspect': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'emergency': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  '24/7': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+};
+
+// Default fallback images for when no keyword matches
+const defaultServiceImages = [
+  'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+  'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+  'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600',
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+  'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
+  'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
+  'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=600',
+];
+
+// Function to find the best matching image for a service
+const getServiceImage = (serviceName, index) => {
+  const lowerName = serviceName.toLowerCase();
+  
+  // Check each keyword in our map
+  for (const [keyword, imageUrl] of Object.entries(serviceImageMap)) {
+    if (lowerName.includes(keyword)) {
+      return imageUrl;
+    }
+  }
+  
+  // Fallback to default images if no match
+  return defaultServiceImages[index % defaultServiceImages.length];
+};
+
+function TemplateGeneral({ formData, images }) {
   const data = formData;
   const imgs = images;
 
@@ -13,22 +207,6 @@ export default function TemplateGeneral({ formData, images }) {
   const services = data.services && data.services.length > 0 
     ? data.services 
     : ['Service 1', 'Service 2', 'Service 3', 'Service 4'];
-
-  // Service images - generic professional images
-  const serviceImages = [
-    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
-    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
-    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600',
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
-    'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600',
-    'https://images.unsplash.com/photo-1558002038-1055907df827?w=600',
-    'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=600',
-    'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600',
-    'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=600',
-    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600'
-  ];
 
   // Get service areas from formData or use defaults
   const serviceAreas = data.serviceAreas && data.serviceAreas.length > 0 
@@ -50,7 +228,7 @@ export default function TemplateGeneral({ formData, images }) {
             {imgs.logo ? (
               <img src={imgs.logo} alt="Logo" className="tg-logo-img" />
             ) : (
-              <span className="tg-logo-text">🏢 {data.companyName || 'Company Name'}</span>
+              <span className="tg-logo-text">{data.companyName || 'Company Name'}</span>
             )}
           </a>
           <nav className="tg-nav">
@@ -70,7 +248,7 @@ export default function TemplateGeneral({ formData, images }) {
           <div className="tg-header-buttons">
             <a href="#" className="tg-btn tg-btn-primary">Get Free Quote</a>
             <a href={`tel:${data.phone || '(555) 123-4567'}`} className="tg-btn tg-btn-outline tg-phone-btn">
-              📞 {data.phone || '(555) 123-4567'}
+              {data.phone || '(555) 123-4567'}
             </a>
           </div>
         </div>
@@ -112,8 +290,8 @@ export default function TemplateGeneral({ formData, images }) {
               <div className="tg-form-group">
                 <label>Phone</label>
                 <div className="tg-phone-field">
-                  <div className="tg-flag">🇺🇸 +1</div>
-                  <input type="tel" placeholder="Example: (808) 555-1234" />
+                  <div className="tg-flag">+1</div>
+                  <input type="tel" placeholder="(555) 555-1234" />
                 </div>
               </div>
               <div className="tg-form-group">
@@ -122,7 +300,7 @@ export default function TemplateGeneral({ formData, images }) {
               </div>
               <div className="tg-form-checkbox">
                 <input type="checkbox" id="terms" />
-                <label htmlFor="terms">I agree to terms & conditions provided by the company. By providing my phone number, I agree to receive text messages from the business.</label>
+                <label htmlFor="terms">I agree to terms and conditions provided by the company.</label>
               </div>
               <button type="submit" className="tg-form-submit">Send</button>
             </form>
@@ -178,7 +356,7 @@ export default function TemplateGeneral({ formData, images }) {
           <div className="tg-services-grid">
             {services.map((service, idx) => (
               <a key={idx} href="#" className="tg-service-card">
-                <img src={serviceImages[idx % serviceImages.length]} alt={service} />
+                <img src={getServiceImage(service, idx)} alt={service} />
                 <div className="tg-service-card-label">
                   <h3>{service}</h3>
                   <span className="tg-service-arrow">→</span>
@@ -205,13 +383,13 @@ export default function TemplateGeneral({ formData, images }) {
               <div className="tg-step-icon">
                 <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
               </div>
-              <h4>Estimation & Proposal</h4>
+              <h4>Estimation</h4>
             </div>
             <div className="tg-process-step">
               <div className="tg-step-icon">
                 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
               </div>
-              <h4>We do the work</h4>
+              <h4>We Do The Work</h4>
             </div>
             <div className="tg-process-step">
               <div className="tg-step-icon">
@@ -238,7 +416,7 @@ export default function TemplateGeneral({ formData, images }) {
                 <p className="tg-section-label">See Why Our Customers Love Us</p>
                 <h2 className="tg-section-title">See Our Work</h2>
               </div>
-              <a href="#" className="tg-btn tg-btn-outline">See All Photos →</a>
+              <a href="#" className="tg-btn tg-btn-outline">See All Photos</a>
             </div>
             <div className="tg-work-grid">
               {imgs.gallery.map((img, idx) => (
@@ -274,7 +452,7 @@ export default function TemplateGeneral({ formData, images }) {
               <p className="tg-section-label tg-section-label-dark">Discover What Our Customers Have To Say About Us</p>
               <h2 className="tg-section-title">Reviews</h2>
             </div>
-            <a href="#" className="tg-btn tg-btn-outline">Contact Us Now →</a>
+            <a href="#" className="tg-btn tg-btn-outline">Contact Us Now</a>
           </div>
           <div className="tg-reviews-grid">
             {[
@@ -321,13 +499,13 @@ export default function TemplateGeneral({ formData, images }) {
                   Can you provide references from past clients?
                 </div>
                 <div className="tg-faq-answer">
-                  Absolutely, we can provide references from past clients. Additionally, you can read the reviews and testimonials from our satisfied customers on our website. If you would like to speak with specific past clients, we can provide their contact information upon request.
+                  Absolutely, we can provide references from past clients. Additionally, you can read the reviews and testimonials from our satisfied customers on our website.
                 </div>
               </div>
               <div className="tg-faq-item">
                 <div className="tg-faq-question">
                   <span className="tg-faq-icon">▼</span>
-                  What sets you apart from other contractors in the area?
+                  What sets you apart from other contractors?
                 </div>
                 <div className="tg-faq-answer">
                   We distinguish ourselves through meticulous attention to detail, a dedication to quality, and a personalized approach. We prioritize client communication to seamlessly bring their vision to life.
@@ -336,7 +514,7 @@ export default function TemplateGeneral({ formData, images }) {
               <div className="tg-faq-item">
                 <div className="tg-faq-question">
                   <span className="tg-faq-icon">▼</span>
-                  Is there a fee for a consultation or estimate/quote?
+                  Is there a fee for a consultation or estimate?
                 </div>
                 <div className="tg-faq-answer">
                   No, we offer complimentary estimates to all prospective clients.
@@ -413,7 +591,7 @@ export default function TemplateGeneral({ formData, images }) {
                 {imgs.logo ? (
                   <img src={imgs.logo} alt="Logo" />
                 ) : (
-                  <span>🏢 {data.companyName || 'Company Name'}</span>
+                  <span>{data.companyName || 'Company Name'}</span>
                 )}
               </div>
               <div className="tg-footer-contact">
@@ -495,1067 +673,168 @@ const templateGeneralStyles = (accentColor, primaryColor) => `
     box-shadow: 0 20px 60px rgba(0,0,0,0.12);
     min-height: calc(100vh - 48px);
   }
-
-  .template-general a {
-    text-decoration: none;
-    color: inherit;
-  }
-
-  /* Header */
-  .tg-header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 10px 0;
-  }
-
-  .tg-header-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .tg-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .tg-logo-img {
-    height: 50px;
-    object-fit: contain;
-  }
-
-  .tg-logo-text {
-    font-size: 20px;
-    font-weight: 700;
-  }
-
-  .tg-nav {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-  }
-
-  .tg-nav-link {
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #ffffff;
-    cursor: pointer;
-    transition: color 0.3s;
-    background: none;
-    border: none;
-  }
-
-  .tg-nav-link:hover {
-    color: ${accentColor};
-  }
-
-  .tg-nav-dropdown {
-    position: relative;
-  }
-
-  .tg-dropdown-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: #111111;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 4px;
-    min-width: 200px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-  }
-
-  .tg-nav-dropdown:hover .tg-dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(5px);
-  }
-
-  .tg-dropdown-menu a {
-    display: block;
-    padding: 8px 20px;
-    font-size: 13px;
-    text-transform: none;
-    color: #888888;
-  }
-
-  .tg-dropdown-menu a:hover {
-    color: ${accentColor};
-    background: ${accentColor}15;
-  }
-
-  .tg-header-buttons {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .tg-btn {
-    padding: 10px 20px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.3s;
-    border: 2px solid transparent;
-    display: inline-block;
-  }
-
-  .tg-btn-primary {
-    background: ${accentColor};
-    color: #ffffff;
-    border-color: ${accentColor};
-  }
-
-  .tg-btn-primary:hover {
-    background: ${accentColor}dd;
-    border-color: ${accentColor}dd;
-  }
-
-  .tg-btn-outline {
-    background: transparent;
-    color: ${accentColor};
-    border-color: ${accentColor};
-  }
-
-  .tg-btn-outline:hover {
-    background: ${accentColor};
-    color: #ffffff;
-  }
-
-  .tg-phone-btn {
-    font-size: 12px;
-    padding: 8px 15px;
-  }
-
-  /* Hero Section */
-  .tg-hero {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 100px 40px 60px;
-    position: relative;
-  }
-
-  .tg-hero-overlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 60%;
-    background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%);
-    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
-  }
-
-  .tg-hero-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 80px;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-  }
-
-  .tg-hero-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 52px;
-    font-weight: 700;
-    line-height: 1.1;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-
-  .tg-hero-text {
-    font-size: 15px;
-    color: #cccccc;
-    max-width: 400px;
-    line-height: 1.7;
-  }
-
-  /* Quote Form */
-  .tg-quote-form {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 30px;
-    color: #333;
-  }
-
-  .tg-form-header {
-    text-align: center;
-    margin-bottom: 25px;
-  }
-
-  .tg-form-logo {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 15px;
-  }
-
-  .tg-form-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .tg-form-header h3 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-transform: uppercase;
-  }
-
-  .tg-form-group {
-    margin-bottom: 15px;
-  }
-
-  .tg-form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #333;
-  }
-
-  .tg-form-group input,
-  .tg-form-group textarea {
-    width: 100%;
-    padding: 12px 15px;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 14px;
-    font-family: inherit;
-    color: #333;
-    box-sizing: border-box;
-  }
-
-  .tg-form-group input::placeholder,
-  .tg-form-group textarea::placeholder {
-    color: #999;
-  }
-
-  .tg-form-group textarea {
-    min-height: 80px;
-    resize: vertical;
-  }
-
-  .tg-phone-field {
-    display: flex;
-    align-items: center;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .tg-flag {
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    border-right: 1px solid #e0e0e0;
-  }
-
-  .tg-phone-field input {
-    border: none;
-    background: transparent;
-  }
-
-  .tg-form-checkbox {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-
-  .tg-form-checkbox input {
-    margin-top: 3px;
-  }
-
-  .tg-form-submit {
-    width: 100%;
-    padding: 14px;
-    background: ${accentColor};
-    border: none;
-    border-radius: 4px;
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .tg-form-submit:hover {
-    background: ${accentColor}dd;
-  }
-
-  /* Trust Badges */
-  .tg-trust-badges {
-    background: #0a0a0a;
-    padding: 20px 40px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .tg-badges-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-
-  .tg-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #cccccc;
-  }
-
-  .tg-badge-icon {
-    color: ${accentColor};
-  }
-
-  /* About Section */
-  .tg-about {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-about-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
-  }
-
-  .tg-section-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .tg-section-title::after {
-    content: '';
-    flex: 1;
-    height: 3px;
-    background: ${accentColor};
-    max-width: 100px;
-  }
-
-  .tg-about-text {
-    font-size: 14px;
-    color: #888888;
-    line-height: 1.8;
-  }
-
-  .tg-google-badge {
-    margin-top: 30px;
-    display: inline-block;
-  }
-
-  .tg-about-image img {
-    width: 100%;
-    max-width: 500px;
-    border-radius: 8px;
-  }
-
-  /* Services Section */
-  .tg-services {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-services-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .tg-section-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #888888;
-    margin-bottom: 10px;
-  }
-
-  .tg-services-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 40px;
-  }
-
-  .tg-service-card {
-    position: relative;
-    aspect-ratio: 1.1;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-  }
-
-  .tg-service-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s;
-  }
-
-  .tg-service-card:hover img {
-    transform: scale(1.1);
-  }
-
-  .tg-service-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%);
-  }
-
-  .tg-service-card-label {
-    position: absolute;
-    bottom: 15px;
-    left: 15px;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .tg-service-card-label h3 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .tg-service-arrow {
-    width: 18px;
-    height: 18px;
-    background: ${accentColor};
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-  }
-
-  /* Process Section */
-  .tg-process {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-process-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .tg-process-subtitle {
-    font-size: 14px;
-    color: #888888;
-    margin-top: 10px;
-  }
-
-  .tg-process-steps {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-top: 60px;
-    position: relative;
-  }
-
-  .tg-process-steps::before {
-    content: '';
-    position: absolute;
-    top: 40px;
-    left: 80px;
-    right: 80px;
-    height: 2px;
-    background: rgba(255,255,255,0.1);
-  }
-
-  .tg-process-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    flex: 1;
-  }
-
-  .tg-step-icon {
-    width: 80px;
-    height: 80px;
-    background: #ffffff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-  }
-
-  .tg-step-icon svg {
-    width: 35px;
-    height: 35px;
-    fill: #333;
-  }
-
-  .tg-process-step h4 {
-    font-size: 13px;
-    font-weight: 500;
-    color: #cccccc;
-    max-width: 90px;
-    line-height: 1.4;
-  }
-
-  /* Work Gallery */
-  .tg-work {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-work-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .tg-work-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
-  }
-
-  .tg-work-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-  }
-
-  .tg-work-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .tg-work-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s;
-  }
-
-  .tg-work-item:hover img {
-    transform: scale(1.1);
-  }
-
-  /* Reviews Section */
-  .tg-reviews {
-    padding: 120px 40px;
-    position: relative;
-  }
-
-  .tg-wave-top,
-  .tg-wave-bottom {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
-  }
-
-  .tg-wave-top {
-    top: 0;
-  }
-
-  .tg-wave-bottom {
-    bottom: 0;
-    transform: rotate(180deg);
-  }
-
-  .tg-wave-top svg,
-  .tg-wave-bottom svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 1.3px);
-    height: 80px;
-  }
-
-  .tg-shape-fill {
-    fill: #0a0a0a;
-  }
-
-  .tg-reviews-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
-
-  .tg-reviews-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
-  }
-
-  .tg-section-label-dark {
-    background: #0a0a0a;
-    display: inline-block;
-    padding: 8px 15px;
-    margin-bottom: 10px;
-  }
-
-  .tg-reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
-  }
-
-  .tg-review-card {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 20px;
-    color: #333;
-  }
-
-  .tg-review-rating {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .tg-review-number {
-    font-weight: 700;
-    font-size: 14px;
-  }
-
-  .tg-review-stars {
-    color: ${accentColor};
-    font-size: 14px;
-  }
-
-  .tg-review-text {
-    font-size: 13px;
-    color: #555;
-    line-height: 1.6;
-    margin-bottom: 15px;
-  }
-
-  .tg-review-author {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .tg-review-author span {
-    font-size: 12px;
-    color: #888;
-  }
-
-  .tg-review-cta {
-    text-align: center;
-    padding: 50px 60px;
-    background: #111111;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 8px;
-    max-width: 500px;
-    margin: 40px auto 0;
-  }
-
-  .tg-review-cta h3 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 26px;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-bottom: 15px;
-  }
-
-  .tg-review-cta-stars {
-    color: ${accentColor};
-    font-size: 26px;
-    margin-bottom: 25px;
-  }
-
-  /* FAQ Section */
-  .tg-faq {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-faq-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: start;
-  }
-
-  .tg-faq-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 34px;
-    font-style: italic;
-    font-weight: 400;
-    margin-bottom: 30px;
-  }
-
-  .tg-faq-item {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 18px 0;
-  }
-
-  .tg-faq-question {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: color 0.3s;
-  }
-
-  .tg-faq-question:hover {
-    color: ${accentColor};
-  }
-
-  .tg-faq-icon {
-    color: #888888;
-    font-size: 10px;
-    transition: transform 0.3s;
-  }
-
-  .tg-faq-answer {
-    padding: 15px 0 0 25px;
-    font-size: 13px;
-    color: #888888;
-    line-height: 1.7;
-    display: none;
-  }
-
-  .tg-faq-item.active .tg-faq-answer {
-    display: block;
-  }
-
-  .tg-faq-image img {
-    width: 100%;
-    border-radius: 8px;
-  }
-
-  /* Service Areas */
-  .tg-service-areas {
-    padding: 80px 40px;
-    background: #0a0a0a;
-  }
-
-  .tg-areas-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 60px;
-    align-items: start;
-  }
-
-  .tg-map-container {
-    border-radius: 8px;
-    overflow: hidden;
-    height: 300px;
-  }
-
-  .tg-map-container iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-
-  .tg-areas-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .tg-areas-title::after {
-    content: '';
-    flex: 1;
-    height: 3px;
-    background: ${accentColor};
-    max-width: 150px;
-  }
-
-  .tg-areas-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .tg-area-item {
-    font-size: 14px;
-    color: #888888;
-  }
-
-  /* CTA Section */
-  .tg-cta {
-    padding: 120px 40px;
-    text-align: center;
-    position: relative;
-  }
-
-  .tg-cta-container {
-    max-width: 800px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
-
-  .tg-cta h2,
-  .tg-cta h3 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 42px;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-style: italic;
-  }
-
-  .tg-cta h2 {
-    margin-bottom: 5px;
-  }
-
-  .tg-cta h3 {
-    margin-bottom: 30px;
-  }
-
-  /* Footer */
-  .tg-footer {
-    background: #0f0f0f;
-    padding: 60px 40px 30px;
-  }
-
-  .tg-footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .tg-footer-top {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-    gap: 40px;
-    padding-bottom: 40px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .tg-footer-brand img {
-    height: 50px;
-    margin-bottom: 20px;
-  }
-
-  .tg-footer-contact {
-    margin-bottom: 20px;
-  }
-
-  .tg-footer-contact a,
-  .tg-footer-address {
-    display: block;
-    color: #888888;
-    font-size: 14px;
-    margin-bottom: 5px;
-    transition: color 0.3s;
-  }
-
-  .tg-footer-contact a:hover {
-    color: ${accentColor};
-  }
-
-  .tg-footer-buttons {
-    display: flex;
-    gap: 10px;
-  }
-
-  .tg-footer-buttons .tg-btn {
-    padding: 8px 15px;
-    font-size: 10px;
-  }
-
-  .tg-footer-column h4 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
-  }
-
-  .tg-footer-links a {
-    display: block;
-    color: #888888;
-    font-size: 13px;
-    margin-bottom: 8px;
-    transition: color 0.3s;
-  }
-
-  .tg-footer-links a:hover {
-    color: ${accentColor};
-  }
-
-  .tg-footer-hours p {
-    color: #888888;
-    font-size: 12px;
-    margin-bottom: 5px;
-  }
-
-  .tg-footer-bottom {
-    padding-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .tg-footer-legal a {
-    color: #888888;
-    font-size: 13px;
-    margin-right: 30px;
-    transition: color 0.3s;
-  }
-
-  .tg-footer-legal a:hover {
-    color: ${accentColor};
-  }
-
-  /* Chat Button */
-  .tg-chat-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 50px;
-    height: 50px;
-    background: ${accentColor};
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 5px 20px ${accentColor}66;
-    z-index: 999;
-    transition: transform 0.3s;
-  }
-
-  .tg-chat-btn:hover {
-    transform: scale(1.1);
-  }
-
-  .tg-chat-btn svg {
-    width: 24px;
-    height: 24px;
-    fill: #ffffff;
-  }
-
-  /* Responsive */
+  .template-general a { text-decoration: none; color: inherit; }
+  .tg-header { position: sticky; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); padding: 10px 0; }
+  .tg-header-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
+  .tg-logo { display: flex; align-items: center; gap: 10px; }
+  .tg-logo-img { height: 50px; object-fit: contain; }
+  .tg-logo-text { font-size: 20px; font-weight: 700; }
+  .tg-nav { display: flex; align-items: center; gap: 25px; }
+  .tg-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; cursor: pointer; transition: color 0.3s; background: none; border: none; }
+  .tg-nav-link:hover { color: ${accentColor}; }
+  .tg-nav-dropdown { position: relative; }
+  .tg-dropdown-menu { position: absolute; top: 100%; left: 0; background: #111111; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
+  .tg-nav-dropdown:hover .tg-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(5px); }
+  .tg-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: #888888; }
+  .tg-dropdown-menu a:hover { color: ${accentColor}; background: ${accentColor}15; }
+  .tg-header-buttons { display: flex; align-items: center; gap: 15px; }
+  .tg-btn { padding: 10px 20px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; display: inline-block; }
+  .tg-btn-primary { background: ${accentColor}; color: #ffffff; border-color: ${accentColor}; }
+  .tg-btn-primary:hover { background: ${accentColor}dd; border-color: ${accentColor}dd; }
+  .tg-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
+  .tg-btn-outline:hover { background: ${accentColor}; color: #ffffff; }
+  .tg-phone-btn { font-size: 12px; padding: 8px 15px; }
+  .tg-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
+  .tg-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
+  .tg-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
+  .tg-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; }
+  .tg-hero-text { font-size: 15px; color: #cccccc; max-width: 400px; line-height: 1.7; }
+  .tg-quote-form { background: #ffffff; border-radius: 8px; padding: 30px; color: #333; }
+  .tg-form-header { text-align: center; margin-bottom: 25px; }
+  .tg-form-logo { width: 60px; height: 60px; margin: 0 auto 15px; }
+  .tg-form-logo img { width: 100%; height: 100%; object-fit: contain; }
+  .tg-form-header h3 { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; }
+  .tg-form-group { margin-bottom: 15px; }
+  .tg-form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #333; }
+  .tg-form-group input, .tg-form-group textarea { width: 100%; padding: 12px 15px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 14px; font-family: inherit; color: #333; box-sizing: border-box; }
+  .tg-form-group input::placeholder, .tg-form-group textarea::placeholder { color: #999; }
+  .tg-form-group textarea { min-height: 80px; resize: vertical; }
+  .tg-phone-field { display: flex; align-items: center; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .tg-flag { padding: 12px; display: flex; align-items: center; gap: 5px; font-size: 14px; border-right: 1px solid #e0e0e0; }
+  .tg-phone-field input { border: none; background: transparent; }
+  .tg-form-checkbox { display: flex; align-items: flex-start; gap: 10px; font-size: 11px; color: #666; margin-bottom: 20px; line-height: 1.5; }
+  .tg-form-checkbox input { margin-top: 3px; }
+  .tg-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: #ffffff; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
+  .tg-form-submit:hover { background: ${accentColor}dd; }
+  .tg-trust-badges { background: #0a0a0a; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .tg-badges-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+  .tg-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #cccccc; }
+  .tg-badge-icon { color: ${accentColor}; }
+  .tg-about { padding: 80px 40px; background: #0a0a0a; }
+  .tg-about-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .tg-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+  .tg-section-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 100px; }
+  .tg-about-text { font-size: 14px; color: #888888; line-height: 1.8; }
+  .tg-google-badge { margin-top: 30px; display: inline-block; }
+  .tg-about-image img { width: 100%; max-width: 500px; border-radius: 8px; }
+  .tg-services { padding: 80px 40px; background: #0a0a0a; }
+  .tg-services-container { max-width: 1200px; margin: 0 auto; }
+  .tg-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888888; margin-bottom: 10px; }
+  .tg-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 40px; }
+  .tg-service-card { position: relative; aspect-ratio: 1.1; border-radius: 8px; overflow: hidden; cursor: pointer; }
+  .tg-service-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+  .tg-service-card:hover img { transform: scale(1.1); }
+  .tg-service-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%); }
+  .tg-service-card-label { position: absolute; bottom: 15px; left: 15px; z-index: 1; display: flex; align-items: center; gap: 8px; }
+  .tg-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tg-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .tg-process { padding: 80px 40px; background: #0a0a0a; }
+  .tg-process-container { max-width: 1200px; margin: 0 auto; }
+  .tg-process-subtitle { font-size: 14px; color: #888888; margin-top: 10px; }
+  .tg-process-steps { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 60px; position: relative; }
+  .tg-process-steps::before { content: ''; position: absolute; top: 40px; left: 80px; right: 80px; height: 2px; background: rgba(255,255,255,0.1); }
+  .tg-process-step { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; flex: 1; }
+  .tg-step-icon { width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+  .tg-step-icon svg { width: 35px; height: 35px; fill: #333; }
+  .tg-process-step h4 { font-size: 13px; font-weight: 500; color: #cccccc; max-width: 90px; line-height: 1.4; }
+  .tg-work { padding: 80px 40px; background: #0a0a0a; }
+  .tg-work-container { max-width: 1200px; margin: 0 auto; }
+  .tg-work-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+  .tg-work-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+  .tg-work-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+  .tg-work-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+  .tg-work-item:hover img { transform: scale(1.1); }
+  .tg-reviews { padding: 120px 40px; position: relative; }
+  .tg-wave-top, .tg-wave-bottom { position: absolute; left: 0; width: 100%; overflow: hidden; line-height: 0; }
+  .tg-wave-top { top: 0; }
+  .tg-wave-bottom { bottom: 0; transform: rotate(180deg); }
+  .tg-wave-top svg, .tg-wave-bottom svg { position: relative; display: block; width: calc(100% + 1.3px); height: 80px; }
+  .tg-shape-fill { fill: #0a0a0a; }
+  .tg-reviews-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+  .tg-reviews-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+  .tg-section-label-dark { background: #0a0a0a; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
+  .tg-reviews-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+  .tg-review-card { background: #ffffff; border-radius: 8px; padding: 20px; color: #333; }
+  .tg-review-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .tg-review-number { font-weight: 700; font-size: 14px; }
+  .tg-review-stars { color: ${accentColor}; font-size: 14px; }
+  .tg-review-text { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
+  .tg-review-author { display: flex; justify-content: space-between; align-items: center; }
+  .tg-review-author span { font-size: 12px; color: #888; }
+  .tg-review-cta { text-align: center; padding: 50px 60px; background: #111111; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
+  .tg-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+  .tg-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
+  .tg-faq { padding: 80px 40px; background: #0a0a0a; }
+  .tg-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .tg-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; }
+  .tg-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
+  .tg-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; }
+  .tg-faq-question:hover { color: ${accentColor}; }
+  .tg-faq-icon { color: #888888; font-size: 10px; transition: transform 0.3s; }
+  .tg-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: #888888; line-height: 1.7; display: none; }
+  .tg-faq-item.active .tg-faq-answer { display: block; }
+  .tg-faq-image img { width: 100%; border-radius: 8px; }
+  .tg-service-areas { padding: 80px 40px; background: #0a0a0a; }
+  .tg-areas-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; align-items: start; }
+  .tg-map-container { border-radius: 8px; overflow: hidden; height: 300px; }
+  .tg-map-container iframe { width: 100%; height: 100%; border: 0; }
+  .tg-areas-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+  .tg-areas-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 150px; }
+  .tg-areas-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .tg-area-item { font-size: 14px; color: #888888; }
+  .tg-cta { padding: 120px 40px; text-align: center; position: relative; }
+  .tg-cta-container { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
+  .tg-cta h2, .tg-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; }
+  .tg-cta h2 { margin-bottom: 5px; }
+  .tg-cta h3 { margin-bottom: 30px; }
+  .tg-footer { background: #0f0f0f; padding: 60px 40px 30px; }
+  .tg-footer-container { max-width: 1200px; margin: 0 auto; }
+  .tg-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .tg-footer-brand img { height: 50px; margin-bottom: 20px; }
+  .tg-footer-contact { margin-bottom: 20px; }
+  .tg-footer-contact a, .tg-footer-address { display: block; color: #888888; font-size: 14px; margin-bottom: 5px; transition: color 0.3s; }
+  .tg-footer-contact a:hover { color: ${accentColor}; }
+  .tg-footer-buttons { display: flex; gap: 10px; }
+  .tg-footer-buttons .tg-btn { padding: 8px 15px; font-size: 10px; }
+  .tg-footer-column h4 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+  .tg-footer-links a { display: block; color: #888888; font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
+  .tg-footer-links a:hover { color: ${accentColor}; }
+  .tg-footer-hours p { color: #888888; font-size: 12px; margin-bottom: 5px; }
+  .tg-footer-bottom { padding-top: 30px; display: flex; justify-content: space-between; align-items: center; }
+  .tg-footer-legal a { color: #888888; font-size: 13px; margin-right: 30px; transition: color 0.3s; }
+  .tg-footer-legal a:hover { color: ${accentColor}; }
+  .tg-chat-btn { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 20px ${accentColor}66; z-index: 999; transition: transform 0.3s; }
+  .tg-chat-btn:hover { transform: scale(1.1); }
+  .tg-chat-btn svg { width: 24px; height: 24px; fill: #ffffff; }
   @media (max-width: 1200px) {
-    .tg-hero-container {
-      grid-template-columns: 1fr;
-      gap: 40px;
-    }
-    .tg-quote-form {
-      max-width: 450px;
-    }
-    .tg-about-container,
-    .tg-faq-container,
-    .tg-areas-container {
-      grid-template-columns: 1fr;
-    }
-    .tg-services-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .tg-work-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .tg-reviews-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .tg-footer-top {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    .tg-hero-container { grid-template-columns: 1fr; gap: 40px; }
+    .tg-quote-form { max-width: 450px; }
+    .tg-about-container, .tg-faq-container, .tg-areas-container { grid-template-columns: 1fr; }
+    .tg-services-grid { grid-template-columns: repeat(2, 1fr); }
+    .tg-work-grid { grid-template-columns: repeat(3, 1fr); }
+    .tg-reviews-grid { grid-template-columns: repeat(2, 1fr); }
+    .tg-footer-top { grid-template-columns: repeat(3, 1fr); }
   }
-
   @media (max-width: 768px) {
-    .tg-nav {
-      display: none;
-    }
-    .tg-hero-title {
-      font-size: 36px;
-    }
-    .tg-services-grid,
-    .tg-work-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .tg-reviews-grid {
-      grid-template-columns: 1fr;
-    }
-    .tg-process-steps {
-      flex-direction: column;
-      gap: 30px;
-      align-items: center;
-    }
-    .tg-process-steps::before {
-      display: none;
-    }
-    .tg-footer-top {
-      grid-template-columns: 1fr;
-    }
-    .tg-badges-container {
-      justify-content: center;
-    }
+    .tg-nav { display: none; }
+    .tg-hero-title { font-size: 36px; }
+    .tg-services-grid, .tg-work-grid { grid-template-columns: repeat(2, 1fr); }
+    .tg-reviews-grid { grid-template-columns: 1fr; }
+    .tg-process-steps { flex-direction: column; gap: 30px; align-items: center; }
+    .tg-process-steps::before { display: none; }
+    .tg-footer-top { grid-template-columns: 1fr; }
+    .tg-badges-container { justify-content: center; }
   }
 `;
+
+export default TemplateGeneral;
