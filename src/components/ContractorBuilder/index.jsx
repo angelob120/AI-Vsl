@@ -15,7 +15,7 @@ import './styles.css';
 import './webhook-leads-styles.css';
 import './templates/template-styles.css';
 
-// Generate unique ID (moved here since we're not importing from storage)
+// Generate unique ID
 const generateUniqueId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 };
@@ -27,8 +27,8 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     phone: '(555) 123-4567',
     email: 'email@email.com',
     tagline: 'Building Dreams, One Project at a Time',
-    primaryColor: '#1a3a5c',
-    accentColor: '#c9a227',
+    primaryColor: '#0a0a0a',
+    accentColor: '#ff4d00',
     services: ['Kitchen Remodels', 'Bathroom Renovations', 'Home Additions', 'Deck Building'],
     yearsExperience: '25',
     address: '123 Main Street'
@@ -63,15 +63,14 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     loadWebhookLeads();
     
     const hash = window.location.hash;
-    if (hash && hash.startsWith('#site-')) {
-      const siteId = hash.substring(6);
+    if (hash.startsWith('#site-')) {
+      const siteId = hash.replace('#site-', '');
       loadWebsiteById(siteId);
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  // Load all saved websites from database
   const loadSavedWebsites = async () => {
     try {
       const websites = await getAllWebsites();
@@ -81,7 +80,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     }
   };
 
-  // Load all webhook leads from database
   const loadWebhookLeads = async () => {
     setIsLoadingLeads(true);
     try {
@@ -93,36 +91,26 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     setIsLoadingLeads(false);
   };
 
-  // Load a specific lead into the form
-  const handleSelectLead = (lead) => {
+  // Select a lead and populate the form
+  const selectLead = (lead) => {
+    setSelectedLeadId(lead.id);
     const mappedData = mapLeadToFormData(lead);
-    
-    // Merge with existing form data, keeping colors and services if not in lead
     setFormData(prev => ({
       ...prev,
-      ...mappedData,
-      // Keep existing colors
-      primaryColor: prev.primaryColor,
-      accentColor: prev.accentColor,
-      // Keep existing services if lead has none
-      services: mappedData.services.length > 0 ? mappedData.services : prev.services
+      ...mappedData
     }));
-    
-    setSelectedLeadId(lead.id);
-    setGeneratedLink(null); // Clear any existing generated link
   };
 
   // Delete a single lead
   const handleDeleteLead = async (leadId, e) => {
-    e.stopPropagation(); // Prevent selecting the lead when clicking delete
-    
+    e.stopPropagation();
     try {
-      await deleteWebhookLead(leadId);
-      setWebhookLeads(prev => prev.filter(lead => lead.id !== leadId));
-      
-      // If this was the selected lead, clear the selection
-      if (selectedLeadId === leadId) {
-        setSelectedLeadId(null);
+      const result = await deleteWebhookLead(leadId);
+      if (result.success) {
+        setWebhookLeads(prev => prev.filter(lead => lead.id !== leadId));
+        if (selectedLeadId === leadId) {
+          setSelectedLeadId(null);
+        }
       }
     } catch (error) {
       console.error('Failed to delete lead:', error);
@@ -354,9 +342,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     exportWebsitesCSV(savedWebsites);
   };
 
-  // ============================================
   // Download CSV function
-  // ============================================
   const handleDownloadLeadsCSV = () => {
     if (savedWebsites.length === 0) {
       alert('No websites saved yet. Generate some links first!');
@@ -492,12 +478,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             min-height: 100vh;
             background: white;
           }
-          .standalone-site-preview .template-general,
-          .standalone-site-preview .template-roofing,
-          .standalone-site-preview .template-plumbing,
-          .standalone-site-preview .template-electrical,
-          .standalone-site-preview .template-hvac,
-          .standalone-site-preview .template-landscaping {
+          .standalone-site-preview .template-general {
             border-radius: 0;
             box-shadow: none;
             min-height: 100vh;
@@ -597,22 +578,19 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 {webhookLeads.map((lead) => (
                   <div 
                     key={lead.id} 
-                    className={`webhook-lead-item ${isDarkMode ? 'dark' : ''} ${selectedLeadId === lead.id ? 'selected' : ''}`}
-                    onClick={() => handleSelectLead(lead)}
+                    className={`webhook-lead-item ${selectedLeadId === lead.id ? 'selected' : ''} ${isDarkMode ? 'dark' : ''}`}
+                    onClick={() => selectLead(lead)}
                   >
-                    <div className="webhook-lead-info">
-                      <div className="webhook-lead-name">{getLeadDisplayName(lead)}</div>
-                      <div className="webhook-lead-meta">
-                        {lead.email && <span>{lead.email}</span>}
-                        {lead.phone && <span> • {lead.phone}</span>}
-                      </div>
+                    <div className="lead-info">
+                      <span className="lead-name">{getLeadDisplayName(lead)}</span>
+                      {lead.phone && <span className="lead-detail">{lead.phone}</span>}
                     </div>
                     <button 
-                      className={`webhook-lead-delete ${isDarkMode ? 'dark' : ''}`}
+                      className="lead-delete-btn"
                       onClick={(e) => handleDeleteLead(lead.id, e)}
                       title="Delete lead"
                     >
-                      🗑️
+                      ×
                     </button>
                   </div>
                 ))}
@@ -650,22 +628,24 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           )}
         </div>
 
-        {/* Template Selection */}
-        <div className="form-section">
-          <h2 className="form-section-title">Choose Template</h2>
-          <div className="template-grid">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                className={`template-option ${selectedTemplate === template.id ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
-                onClick={() => setSelectedTemplate(template.id)}
-              >
-                <span className="template-icon">{template.icon}</span>
-                <span className="template-name">{template.name}</span>
-              </button>
-            ))}
+        {/* Template Selection - Only show if more than one template */}
+        {templates.length > 1 && (
+          <div className="form-section">
+            <h2 className="form-section-title">Choose Template</h2>
+            <div className="template-grid">
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  className={`template-option ${selectedTemplate === template.id ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
+                  onClick={() => setSelectedTemplate(template.id)}
+                >
+                  <span className="template-icon">{template.icon}</span>
+                  <span className="template-name">{template.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         
         {/* Business Information */}
         <div className="form-section">
@@ -1007,25 +987,20 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           </div>
           
           {savedWebsites.length === 0 ? (
-            <p style={{ fontSize: 13, color: isDarkMode ? 'rgba(255,255,255,0.5)' : '#9ca3af', textAlign: 'center', padding: '20px 0' }}>
-              No websites saved yet. Click "Generate Link" to create one.
+            <p style={{ fontSize: 13, color: isDarkMode ? 'rgba(255,255,255,0.5)' : '#6b7280' }}>
+              No saved websites yet. Generate a link to save your first website!
             </p>
           ) : (
             <div className="saved-websites-list">
               {savedWebsites.map((site) => {
-                const siteTemplate = getTemplateById(site.template || 'general');
+                const displayName = site.formData?.companyName || 'Untitled Site';
+                const template = getTemplateById(site.template || 'general');
+                
                 return (
                   <div key={site.id} className={`saved-website-item ${isDarkMode ? 'dark' : ''}`}>
-                    <div 
-                      className="saved-website-color" 
-                      style={{ background: `linear-gradient(135deg, ${site.formData?.primaryColor || '#1a3a5c'}, ${site.formData?.accentColor || '#c9a227'})` }}
-                    />
                     <div className="saved-website-info">
-                      <div className="saved-website-name">{site.formData?.companyName || 'Unnamed'}</div>
-                      <div className="saved-website-date">
-                        {new Date(site.createdAt).toLocaleDateString()}
-                        <span className="saved-website-template"> • {siteTemplate.icon} {siteTemplate.name}</span>
-                      </div>
+                      <span className="saved-website-name">{displayName}</span>
+                      <span className="saved-website-template">{template.icon} {template.name}</span>
                     </div>
                     <div className="saved-website-actions">
                       <button 
