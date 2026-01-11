@@ -225,68 +225,6 @@ button, a {
   gap: 12px;
 }
 
-/* Section Header Row */
-.section-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.form-panel.dark .section-header-row {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-.section-header-row .form-section-title {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.section-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.section-action-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: #f3f4f6;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.section-action-btn:hover {
-  background: #e5e7eb;
-}
-
-.section-action-btn.danger:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-/* Dark Mode - Section Action Buttons */
-.section-action-btn.dark {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.section-action-btn.dark:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.section-action-btn.danger.dark:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-}
-
 /* Color Input Row - for color picker + text input */
 .color-input-row {
   display: flex;
@@ -294,19 +232,16 @@ button, a {
   gap: 10px;
 }
 
-/* Color Picker - native input - FIXED VERSION */
+/* Color Picker - native input */
 .color-picker {
   width: 42px;
   height: 42px;
-  min-width: 42px;
-  min-height: 42px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
-  padding: 0;
-  background: transparent;  /* Changed from #fafafa */
+  padding: 2px;
+  background: #fafafa;
   flex-shrink: 0;
-  /* REMOVED: appearance: none - this was breaking it! */
 }
 
 .color-picker::-webkit-color-swatch-wrapper {
@@ -318,111 +253,17 @@ button, a {
   border-radius: 4px;
 }
 
-.color-picker::-moz-color-swatch {
-  border: none;
-  border-radius: 4px;
-}
-
 .form-panel.dark .color-picker {
   border-color: rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Color Text Input - FIXED VERSION */
+/* Color Text Input */
 .color-text {
   flex: 1;
-  width: auto !important;
   font-family: 'SF Mono', 'Monaco', monospace;
   font-size: 13px;
   text-transform: uppercase;
-}
-
-/* Color Presets */
-.color-presets {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.color-preset {
-  width: 36px;
-  height: 36px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 2px;
-  background: white;
-  transition: all 0.2s ease;
-}
-
-.color-preset:hover {
-  transform: scale(1.1);
-  border-color: #3b82f6;
-}
-
-/* Dark Mode - Color Presets */
-.color-preset.dark {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.color-preset.dark:hover {
-  border-color: #04CFAF;
-}
-
-.color-preview {
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
-}
-
-.color-preset-swatch {
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
-}
-
-.color-pickers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.color-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: #fafafa;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-}
-
-/* Dark Mode - Color Input Wrapper */
-.color-input-wrapper.dark {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.color-input {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.color-value {
-  font-size: 12px;
-  font-family: 'SF Mono', monospace;
-  color: #6b7280;
-  text-transform: uppercase;
-}
-
-.color-input-wrapper.dark .color-value {
-  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Template Grid */
@@ -670,31 +511,27 @@ button, a {
   transform: scale(1.1);
 }
 
-/* Gallery */
+/* Gallery Grid */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .gallery-item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
 }
 
-.gallery-item.dark {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.gallery-image {
+.gallery-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+/* Gallery Remove Button - FIX */
 .gallery-remove-btn {
   position: absolute;
   top: 4px;
@@ -710,46 +547,135 @@ button, a {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  opacity: 0;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 
-.gallery-item:hover .gallery-remove-btn {
-  opacity: 1;
+.gallery-remove-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
 }
 
 .gallery-add {
   aspect-ratio: 1;
   border: 2px dashed #d1d5db;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 24px;
+  color: #9ca3af;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: auto;
 }
 
 .gallery-add:hover {
   border-color: #3b82f6;
-  background: #f8fafc;
+  color: #3b82f6;
 }
 
+/* Dark Mode - Gallery Add */
 .gallery-add.dark {
   border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .gallery-add.dark:hover {
   border-color: #04CFAF;
-  background: rgba(4, 207, 175, 0.05);
+  color: #04CFAF;
 }
 
-.gallery-add-icon {
-  font-size: 24px;
-  color: #9ca3af;
+/* Color Presets */
+.color-presets {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
-.gallery-add.dark .gallery-add-icon {
-  color: rgba(255, 255, 255, 0.5);
+.color-preset {
+  width: 36px;
+  height: 36px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  background: #f3f4f6;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.color-preset:hover {
+  transform: scale(1.1);
+}
+
+.color-preset.active {
+  border-color: #3b82f6;
+}
+
+/* Dark Mode - Color Presets */
+.color-preset.dark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.color-preset.dark.active {
+  border-color: #04CFAF;
+}
+
+/* Color Preview - FIX: This was missing! */
+.color-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.color-preset-swatch {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.color-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.color-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+/* Dark Mode - Color Input Wrapper */
+.color-input-wrapper.dark {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.color-input {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-value {
+  font-size: 12px;
+  font-family: 'SF Mono', monospace;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.color-input-wrapper.dark .color-value {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Saved Websites */
@@ -880,9 +806,7 @@ button, a {
 }
 
 .saved-website-template {
-  font-size: 12px;
   color: #6b7280;
-  opacity: 0.8;
 }
 
 .saved-website-item.dark .saved-website-template {
@@ -1051,46 +975,4 @@ button, a {
 .form-panel.dark .export-to-repliq-btn:hover {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
   box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
-}
-
-/* Refresh Leads Button */
-.refresh-leads-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: #f3f4f6;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.refresh-leads-btn:hover {
-  background: #e5e7eb;
-}
-
-.refresh-leads-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.refresh-leads-btn.dark {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.refresh-leads-btn.dark:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* No Leads Text */
-.no-leads-text {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.no-leads-text.dark {
-  color: rgba(255, 255, 255, 0.5);
 }
