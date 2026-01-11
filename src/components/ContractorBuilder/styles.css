@@ -303,14 +303,10 @@ button, a {
   border: 2px solid #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
-  padding: 2px;
-  background: #fafafa;
+  padding: 0;
+  background: transparent;  /* Changed from #fafafa */
   flex-shrink: 0;
-  /* Key fixes for browser compatibility */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  overflow: hidden;
+  /* REMOVED: appearance: none - this was breaking it! */
 }
 
 .color-picker::-webkit-color-swatch-wrapper {
