@@ -636,6 +636,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               {templates.map((template) => (
                 <button
                   key={template.id}
+                  type="button"
                   className={`template-option ${selectedTemplate === template.id ? 'active' : ''} ${isDarkMode ? 'dark' : ''}`}
                   onClick={() => setSelectedTemplate(template.id)}
                 >
@@ -753,14 +754,14 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               placeholder="Add a service..."
               onKeyPress={(e) => e.key === 'Enter' && addService()}
             />
-            <button className="add-service-btn" onClick={addService}>+</button>
+            <button type="button" className="add-service-btn" onClick={addService}>+</button>
           </div>
           
           <div className="services-list">
             {formData.services.map((service, index) => (
               <div key={index} className={`service-tag ${isDarkMode ? 'dark' : ''}`}>
                 <span>{service}</span>
-                <button className="service-remove" onClick={() => removeService(index)}>×</button>
+                <button type="button" className="service-remove" onClick={() => removeService(index)}>×</button>
               </div>
             ))}
           </div>
@@ -785,7 +786,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               {images.logo ? (
                 <>
                   <img src={images.logo} alt="Logo" className="uploaded-image" />
-                  <button className="image-remove-btn" onClick={() => removeImage('logo')}>×</button>
+                  <button type="button" className="image-remove-btn" onClick={() => removeImage('logo')}>×</button>
                 </>
               ) : (
                 <label className="image-upload-placeholder">
@@ -817,7 +818,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               {images.hero ? (
                 <>
                   <img src={images.hero} alt="Hero" className="uploaded-image" />
-                  <button className="image-remove-btn" onClick={() => removeImage('hero')}>×</button>
+                  <button type="button" className="image-remove-btn" onClick={() => removeImage('hero')}>×</button>
                 </>
               ) : (
                 <label className="image-upload-placeholder">
@@ -849,7 +850,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               {images.about ? (
                 <>
                   <img src={images.about} alt="About" className="uploaded-image" />
-                  <button className="image-remove-btn" onClick={() => removeImage('about')}>×</button>
+                  <button type="button" className="image-remove-btn" onClick={() => removeImage('about')}>×</button>
                 </>
               ) : (
                 <label className="image-upload-placeholder">
@@ -881,7 +882,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               {images.gallery.map((img, index) => (
                 <div key={index} className={`gallery-item ${isDarkMode ? 'dark' : ''}`}>
                   <img src={img} alt={`Gallery ${index + 1}`} className="gallery-image" />
-                  <button className="gallery-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
+                  <button type="button" className="gallery-remove-btn" onClick={() => removeGalleryImage(index)}>×</button>
                 </div>
               ))}
               <label className={`gallery-add ${isDarkMode ? 'dark' : ''}`}>
@@ -897,7 +898,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           </div>
         </div>
 
-        {/* Brand Colors */}
+        {/* Brand Colors - FIXED VERSION */}
         <div className="form-section">
           <h2 className="form-section-title">Brand Colors</h2>
           
@@ -905,6 +906,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             {colorPresets.map((preset, index) => (
               <button
                 key={index}
+                type="button"
                 className={`color-preset ${isDarkMode ? 'dark' : ''}`}
                 onClick={() => setFormData(prev => ({
                   ...prev,
@@ -925,11 +927,11 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             <div className="form-group">
               <label className="form-label">Primary Color</label>
               <div className="color-input-row">
+                {/* FIXED: Using direct onChange handler instead of handleChange */}
                 <input
                   type="color"
-                  name="primaryColor"
                   value={formData.primaryColor}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, primaryColor: e.target.value }))}
                   className="color-picker"
                 />
                 <input
@@ -945,11 +947,11 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             <div className="form-group">
               <label className="form-label">Accent Color</label>
               <div className="color-input-row">
+                {/* FIXED: Using direct onChange handler instead of handleChange */}
                 <input
                   type="color"
-                  name="accentColor"
                   value={formData.accentColor}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
                   className="color-picker"
                 />
                 <input
@@ -970,6 +972,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             <h2 className="form-section-title">Saved Websites</h2>
             <div className="section-actions">
               <button 
+                type="button"
                 className={`section-action-btn ${isDarkMode ? 'dark' : ''}`}
                 onClick={handleDownloadCSV}
                 title="Export as CSV"
@@ -977,6 +980,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                 📥
               </button>
               <button 
+                type="button"
                 className={`section-action-btn danger ${isDarkMode ? 'dark' : ''}`}
                 onClick={handleClearAllWebsites}
                 title="Delete all websites"
@@ -1004,6 +1008,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                     </div>
                     <div className="saved-website-actions">
                       <button 
+                        type="button"
                         className={`saved-action-btn ${isDarkMode ? 'dark' : ''}`}
                         title="Copy Link"
                         onClick={() => handleCopyLink(site.link)}
@@ -1011,6 +1016,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                         🔗
                       </button>
                       <button 
+                        type="button"
                         className={`saved-action-btn ${isDarkMode ? 'dark' : ''}`}
                         title="Duplicate"
                         onClick={() => duplicateWebsite(site)}
@@ -1018,6 +1024,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                         📋
                       </button>
                       <button 
+                        type="button"
                         className={`saved-action-btn delete ${isDarkMode ? 'dark' : ''}`}
                         title="Delete"
                         onClick={() => handleDeleteWebsite(site.id)}
@@ -1034,6 +1041,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           {/* Download CSV Button */}
           {savedWebsites.length > 0 && (
             <button 
+              type="button"
               className="export-to-repliq-btn"
               onClick={handleDownloadLeadsCSV}
             >
