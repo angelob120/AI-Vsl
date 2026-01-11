@@ -660,7 +660,7 @@ function TemplateProfessional({ formData, images }) {
 // Dynamic styles function that uses accent and primary colors
 const templateProfessionalStyles = (accentColor, primaryColor) => `
   .template-professional {
-    background: #0a0a0a;
+    background: ${primaryColor};
     color: #ffffff;
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
@@ -670,7 +670,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
     min-height: calc(100vh - 48px);
   }
   .template-professional a { text-decoration: none; color: inherit; }
-  .tp-header { position: sticky; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); padding: 10px 0; }
+  .tp-header { position: sticky; top: 0; left: 0; right: 0; z-index: 1000; background: ${primaryColor}f2; backdrop-filter: blur(10px); padding: 10px 0; }
   .tp-header-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
   .tp-logo { display: flex; align-items: center; gap: 10px; }
   .tp-logo-img { height: 50px; object-fit: contain; }
@@ -679,7 +679,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; cursor: pointer; transition: color 0.3s; background: none; border: none; }
   .tp-nav-link:hover { color: ${accentColor}; }
   .tp-nav-dropdown { position: relative; }
-  .tp-dropdown-menu { position: absolute; top: 100%; left: 0; background: #111111; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
+  .tp-dropdown-menu { position: absolute; top: 100%; left: 0; background: ${primaryColor}; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
   .tp-nav-dropdown:hover .tp-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(5px); }
   .tp-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: #888888; }
   .tp-dropdown-menu a:hover { color: ${accentColor}; background: ${accentColor}15; }
@@ -712,18 +712,18 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-form-checkbox input { margin-top: 3px; }
   .tp-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: #ffffff; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
   .tp-form-submit:hover { background: ${accentColor}dd; }
-  .tp-trust-badges { background: #0a0a0a; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .tp-trust-badges { background: ${primaryColor}; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tp-badges-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
   .tp-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #cccccc; }
   .tp-badge-icon { color: ${accentColor}; }
-  .tp-about { padding: 80px 40px; background: #0a0a0a; }
+  .tp-about { padding: 80px 40px; background: ${primaryColor}; }
   .tp-about-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
   .tp-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
   .tp-section-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 100px; }
   .tp-about-text { font-size: 14px; color: #888888; line-height: 1.8; }
   .tp-google-badge { margin-top: 30px; display: inline-block; }
   .tp-about-image img { width: 100%; max-width: 500px; border-radius: 8px; }
-  .tp-services { padding: 80px 40px; background: #0a0a0a; }
+  .tp-services { padding: 80px 40px; background: ${primaryColor}; }
   .tp-services-container { max-width: 1200px; margin: 0 auto; }
   .tp-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888888; margin-bottom: 10px; }
   .tp-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 40px; }
@@ -734,7 +734,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-service-card-label { position: absolute; bottom: 15px; left: 15px; z-index: 1; display: flex; align-items: center; gap: 8px; }
   .tp-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .tp-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-  .tp-process { padding: 80px 40px; background: #0a0a0a; }
+  .tp-process { padding: 80px 40px; background: ${primaryColor}; }
   .tp-process-container { max-width: 1200px; margin: 0 auto; }
   .tp-process-subtitle { font-size: 14px; color: #888888; margin-top: 10px; }
   .tp-process-steps { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 60px; position: relative; }
@@ -743,7 +743,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-step-icon { width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
   .tp-step-icon svg { width: 35px; height: 35px; fill: #333; }
   .tp-process-step h4 { font-size: 13px; font-weight: 500; color: #cccccc; max-width: 90px; line-height: 1.4; }
-  .tp-work { padding: 80px 40px; background: #0a0a0a; }
+  .tp-work { padding: 80px 40px; background: ${primaryColor}; }
   .tp-work-container { max-width: 1200px; margin: 0 auto; }
   .tp-work-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
   .tp-work-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
@@ -755,10 +755,10 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-wave-top { top: 0; }
   .tp-wave-bottom { bottom: 0; transform: rotate(180deg); }
   .tp-wave-top svg, .tp-wave-bottom svg { position: relative; display: block; width: calc(100% + 1.3px); height: 80px; }
-  .tp-shape-fill { fill: #0a0a0a; }
+  .tp-shape-fill { fill: ${primaryColor}; }
   .tp-reviews-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
   .tp-reviews-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-  .tp-section-label-dark { background: #0a0a0a; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
+  .tp-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
   .tp-reviews-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
   .tp-review-card { background: #ffffff; border-radius: 8px; padding: 20px; color: #333; }
   .tp-review-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -767,10 +767,10 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-review-text { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
   .tp-review-author { display: flex; justify-content: space-between; align-items: center; }
   .tp-review-author span { font-size: 12px; color: #888; }
-  .tp-review-cta { text-align: center; padding: 50px 60px; background: #111111; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
+  .tp-review-cta { text-align: center; padding: 50px 60px; background: ${primaryColor}; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
   .tp-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
   .tp-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
-  .tp-faq { padding: 80px 40px; background: #0a0a0a; }
+  .tp-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tp-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
   .tp-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; }
   .tp-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
@@ -780,7 +780,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: #888888; line-height: 1.7; display: none; }
   .tp-faq-item.active .tp-faq-answer { display: block; }
   .tp-faq-image img { width: 100%; border-radius: 8px; }
-  .tp-service-areas { padding: 80px 40px; background: #0a0a0a; }
+  .tp-service-areas { padding: 80px 40px; background: ${primaryColor}; }
   .tp-areas-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; align-items: start; }
   .tp-map-container { border-radius: 8px; overflow: hidden; height: 300px; }
   .tp-map-container iframe { width: 100%; height: 100%; border: 0; }
@@ -793,7 +793,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-cta h2, .tp-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; }
   .tp-cta h2 { margin-bottom: 5px; }
   .tp-cta h3 { margin-bottom: 30px; }
-  .tp-footer { background: #0f0f0f; padding: 60px 40px 30px; }
+  .tp-footer { background: ${primaryColor}; padding: 60px 40px 30px; }
   .tp-footer-container { max-width: 1200px; margin: 0 auto; }
   .tp-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tp-footer-brand img { height: 50px; margin-bottom: 20px; }

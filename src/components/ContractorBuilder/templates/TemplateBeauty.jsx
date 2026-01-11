@@ -652,7 +652,7 @@ function TemplateBeauty({ formData, images }) {
 // Dynamic styles function that uses accent and primary colors
 const templateBeautyStyles = (accentColor, primaryColor) => `
   .template-beauty {
-    background: #0a0a0a;
+    background: ${primaryColor};
     color: #ffffff;
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
@@ -662,7 +662,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
     min-height: calc(100vh - 48px);
   }
   .template-beauty a { text-decoration: none; color: inherit; }
-  .tb-header { position: sticky; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); padding: 10px 0; }
+  .tb-header { position: sticky; top: 0; left: 0; right: 0; z-index: 1000; background: ${primaryColor}f2; backdrop-filter: blur(10px); padding: 10px 0; }
   .tb-header-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
   .tb-logo { display: flex; align-items: center; gap: 10px; }
   .tb-logo-img { height: 50px; object-fit: contain; }
@@ -671,7 +671,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; cursor: pointer; transition: color 0.3s; background: none; border: none; }
   .tb-nav-link:hover { color: ${accentColor}; }
   .tb-nav-dropdown { position: relative; }
-  .tb-dropdown-menu { position: absolute; top: 100%; left: 0; background: #111111; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
+  .tb-dropdown-menu { position: absolute; top: 100%; left: 0; background: ${primaryColor}; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
   .tb-nav-dropdown:hover .tb-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(5px); }
   .tb-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: #888888; }
   .tb-dropdown-menu a:hover { color: ${accentColor}; background: ${accentColor}15; }
@@ -704,18 +704,18 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-form-checkbox input { margin-top: 3px; }
   .tb-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: #ffffff; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
   .tb-form-submit:hover { background: ${accentColor}dd; }
-  .tb-trust-badges { background: #0a0a0a; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .tb-trust-badges { background: ${primaryColor}; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tb-badges-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
   .tb-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #cccccc; }
   .tb-badge-icon { color: ${accentColor}; }
-  .tb-about { padding: 80px 40px; background: #0a0a0a; }
+  .tb-about { padding: 80px 40px; background: ${primaryColor}; }
   .tb-about-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
   .tb-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
   .tb-section-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 100px; }
   .tb-about-text { font-size: 14px; color: #888888; line-height: 1.8; }
   .tb-google-badge { margin-top: 30px; display: inline-block; }
   .tb-about-image img { width: 100%; max-width: 500px; border-radius: 8px; }
-  .tb-services { padding: 80px 40px; background: #0a0a0a; }
+  .tb-services { padding: 80px 40px; background: ${primaryColor}; }
   .tb-services-container { max-width: 1200px; margin: 0 auto; }
   .tb-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888888; margin-bottom: 10px; }
   .tb-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 40px; }
@@ -726,7 +726,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-service-card-label { position: absolute; bottom: 15px; left: 15px; z-index: 1; display: flex; align-items: center; gap: 8px; }
   .tb-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .tb-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-  .tb-process { padding: 80px 40px; background: #0a0a0a; }
+  .tb-process { padding: 80px 40px; background: ${primaryColor}; }
   .tb-process-container { max-width: 1200px; margin: 0 auto; }
   .tb-process-subtitle { font-size: 14px; color: #888888; margin-top: 10px; }
   .tb-process-steps { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 60px; position: relative; }
@@ -735,7 +735,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-step-icon { width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
   .tb-step-icon svg { width: 35px; height: 35px; fill: #333; }
   .tb-process-step h4 { font-size: 13px; font-weight: 500; color: #cccccc; max-width: 90px; line-height: 1.4; }
-  .tb-work { padding: 80px 40px; background: #0a0a0a; }
+  .tb-work { padding: 80px 40px; background: ${primaryColor}; }
   .tb-work-container { max-width: 1200px; margin: 0 auto; }
   .tb-work-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
   .tb-work-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
@@ -747,10 +747,10 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-wave-top { top: 0; }
   .tb-wave-bottom { bottom: 0; transform: rotate(180deg); }
   .tb-wave-top svg, .tb-wave-bottom svg { position: relative; display: block; width: calc(100% + 1.3px); height: 80px; }
-  .tb-shape-fill { fill: #0a0a0a; }
+  .tb-shape-fill { fill: ${primaryColor}; }
   .tb-reviews-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
   .tb-reviews-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-  .tb-section-label-dark { background: #0a0a0a; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
+  .tb-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
   .tb-reviews-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
   .tb-review-card { background: #ffffff; border-radius: 8px; padding: 20px; color: #333; }
   .tb-review-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -759,10 +759,10 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-review-text { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
   .tb-review-author { display: flex; justify-content: space-between; align-items: center; }
   .tb-review-author span { font-size: 12px; color: #888; }
-  .tb-review-cta { text-align: center; padding: 50px 60px; background: #111111; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
+  .tb-review-cta { text-align: center; padding: 50px 60px; background: ${primaryColor}; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
   .tb-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
   .tb-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
-  .tb-faq { padding: 80px 40px; background: #0a0a0a; }
+  .tb-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tb-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
   .tb-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; }
   .tb-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
@@ -772,7 +772,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: #888888; line-height: 1.7; display: none; }
   .tb-faq-item.active .tb-faq-answer { display: block; }
   .tb-faq-image img { width: 100%; border-radius: 8px; }
-  .tb-service-areas { padding: 80px 40px; background: #0a0a0a; }
+  .tb-service-areas { padding: 80px 40px; background: ${primaryColor}; }
   .tb-areas-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; align-items: start; }
   .tb-map-container { border-radius: 8px; overflow: hidden; height: 300px; }
   .tb-map-container iframe { width: 100%; height: 100%; border: 0; }
@@ -785,7 +785,7 @@ const templateBeautyStyles = (accentColor, primaryColor) => `
   .tb-cta h2, .tb-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; }
   .tb-cta h2 { margin-bottom: 5px; }
   .tb-cta h3 { margin-bottom: 30px; }
-  .tb-footer { background: #0f0f0f; padding: 60px 40px 30px; }
+  .tb-footer { background: ${primaryColor}; padding: 60px 40px 30px; }
   .tb-footer-container { max-width: 1200px; margin: 0 auto; }
   .tb-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tb-footer-brand img { height: 50px; margin-bottom: 20px; }
