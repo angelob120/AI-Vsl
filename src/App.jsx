@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import ContractorBuilder from './components/ContractorBuilder';
+import ArchiveHistory from './components/ArchiveHistory';
 import './styles/global.css';
 
 /**
  * Main App Component
- * Handles navigation between ContractorBuilder and RepliqStudio
- * Also handles direct site preview links and landing page links
+ * Handles navigation between:
+ * - Website Builder (create websites)
+ * - Archive & History (search all archived websites, re-download CSVs)
  */
 export default function App() {
   const [currentTool, setCurrentTool] = useState('builder');
   const [isSitePreview, setIsSitePreview] = useState(false);
   const [isEmbedMode, setIsEmbedMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isLandingPage, setIsLandingPage] = useState(false);
 
   // Check URL hash on mount for direct links
   useEffect(() => {
@@ -26,10 +27,11 @@ export default function App() {
       if (hash.startsWith('#site-')) {
         setCurrentTool('builder');
         setIsSitePreview(true);
-        setIsLandingPage(false);
+      } else if (hash === '#archive') {
+        setCurrentTool('archive');
+        setIsSitePreview(false);
       } else {
         setIsSitePreview(false);
-        setIsLandingPage(false);
       }
     };
 
@@ -52,19 +54,18 @@ export default function App() {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Handle navigation to RepliQ
-  const handleGoToRepliQ = () => {
-    setCurrentTool('repliq');
-    setIsSitePreview(false);
-    setIsLandingPage(false);
-  };
-
   // Handle navigation back to Builder
   const handleGoToBuilder = () => {
     setCurrentTool('builder');
     setIsSitePreview(false);
-    setIsLandingPage(false);
     window.location.hash = '';
+  };
+
+  // Handle navigation to Archive
+  const handleGoToArchive = () => {
+    setCurrentTool('archive');
+    setIsSitePreview(false);
+    window.location.hash = '#archive';
   };
 
   // Toggle dark mode
@@ -76,7 +77,6 @@ export default function App() {
   if (isSitePreview || isEmbedMode) {
     return (
       <ContractorBuilder 
-        onNavigateToRepliq={handleGoToRepliQ}
         isStandaloneSitePreview={true}
         isDarkMode={false}
       />
@@ -101,11 +101,11 @@ export default function App() {
             Website Builder
           </button>
           <button
-            className={`app-nav-tab ${currentTool === 'page2' ? 'active' : ''}`}
-            onClick={() => setCurrentTool('page2')}
+            className={`app-nav-tab ${currentTool === 'archive' ? 'active' : ''}`}
+            onClick={handleGoToArchive}
           >
-            <span className="tab-icon">📄</span>
-            Page 2
+            <span className="tab-icon">📦</span>
+            Archive & History
           </button>
         </div>
 
@@ -124,14 +124,13 @@ export default function App() {
       <main className="app-main">
         {currentTool === 'builder' ? (
           <ContractorBuilder 
-            onNavigateToRepliq={handleGoToRepliQ}
             isStandaloneSitePreview={false}
             isDarkMode={isDarkMode}
           />
         ) : (
-          <div className={`blank-page ${isDarkMode ? 'dark' : ''}`}>
-            {/* Your new content goes here */}
-          </div>
+          <ArchiveHistory 
+            isDarkMode={isDarkMode}
+          />
         )}
       </main>
 
@@ -255,18 +254,22 @@ export default function App() {
           flex-direction: column;
         }
 
-        .blank-page {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f5f5f5;
-          color: #333;
-        }
-
-        .blank-page.dark {
-          background: #0d1117;
-          color: #fff;
+        @media (max-width: 768px) {
+          .app-nav {
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          
+          .app-nav-tabs {
+            order: 3;
+            width: 100%;
+            justify-content: center;
+          }
+          
+          .app-nav-tab {
+            padding: 8px 14px;
+            font-size: 13px;
+          }
         }
       `}</style>
     </div>

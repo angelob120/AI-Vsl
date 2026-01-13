@@ -4,6 +4,7 @@ import { Button } from '../shared';
 import { exportWebsitesCSV, downloadCSV } from '../../utils/csv';
 import { saveWebsite, getAllWebsites, getWebsiteById, deleteWebsite, deleteAllWebsites } from '../../api/websites';
 import { getAllWebhookLeads, deleteWebhookLead, deleteAllWebhookLeads, mapLeadToFormData } from '../../api/webhookLeads';
+import { archiveAndExport } from '../../api/archive';
 import { 
   colorPresets, 
   defaultContractorFormData, 
@@ -337,31 +338,90 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     setIsSaving(false);
   };
 
-  const handleDownloadCSV = () => {
+  // Download CSV with archive flow:
+  // 1. Archive all websites to permanent storage
+  // 2. Create export record for re-download capability
+  // 3. Download the CSV
+  // 4. Clear the active workspace (savedWebsites list)
+  const handleDownloadCSV = async () => {
     if (savedWebsites.length === 0) {
       alert('No websites saved yet. Generate some links first!');
       return;
     }
-    exportWebsitesCSV(savedWebsites);
+
+    const confirmed = window.confirm(
+      `📥 Download CSV with ${savedWebsites.length} website(s)?\n\nThis will:\n• Archive all websites permanently (viewable in Archive & History)\n• Create an export record for future re-downloads\n• Clear this list after download\n\nYou can always re-download this exact CSV from the Archive & History page.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // 1. Archive websites and create export record
+      const result = await archiveAndExport(savedWebsites);
+      
+      if (result.success) {
+        // 2. Generate and download CSV
+        const headers = ['Business Name', 'Website Link', 'Created Date', 'Phone', 'Email'];
+        const rows = savedWebsites.map(site => [
+          site.formData?.companyName || '',
+          site.link || '',
+          new Date(site.createdAt).toLocaleDateString(),
+          site.formData?.phone || '',
+          site.formData?.email || ''
+        ]);
+        
+        const filename = `contractor-websites-${new Date().toISOString().split('T')[0]}.csv`;
+        downloadCSV(headers, rows, filename);
+
+        // 3. Clear the local savedWebsites state (API already cleared the DB)
+        setSavedWebsites([]);
+        
+        console.log(`✅ Archived ${result.archivedCount} websites with batch ID: ${result.batchId}`);
+      } else {
+        throw new Error('Archive failed');
+      }
+    } catch (error) {
+      console.error('Download/archive error:', error);
+      alert('Failed to archive and download. Please try again.');
+    }
   };
 
-  // Download CSV function
-  const handleDownloadLeadsCSV = () => {
+  // Download Leads CSV with archive flow
+  const handleDownloadLeadsCSV = async () => {
     if (savedWebsites.length === 0) {
       alert('No websites saved yet. Generate some links first!');
       return;
     }
 
-    // Create CSV with Website Link, First Name, Company Name
-    const headers = ['Website Link', 'First Name', 'Company Name'];
-    const rows = savedWebsites.map(site => [
-      site.link,
-      site.formData?.ownerName || site.formData?.companyName || '',
-      site.formData?.companyName || ''
-    ]);
+    const confirmed = window.confirm(
+      `📥 Download Leads CSV with ${savedWebsites.length} website(s)?\n\nThis will archive all websites and clear this list.`
+    );
 
-    const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
-    downloadCSV(headers, rows, filename);
+    if (!confirmed) return;
+
+    try {
+      // Archive websites
+      const result = await archiveAndExport(savedWebsites);
+      
+      if (result.success) {
+        // Create CSV with Website Link, First Name, Company Name
+        const headers = ['Website Link', 'First Name', 'Company Name'];
+        const rows = savedWebsites.map(site => [
+          site.link,
+          site.formData?.ownerName || site.formData?.companyName || '',
+          site.formData?.companyName || ''
+        ]);
+
+        const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
+        downloadCSV(headers, rows, filename);
+
+        // Clear local state
+        setSavedWebsites([]);
+      }
+    } catch (error) {
+      console.error('Download/archive error:', error);
+      alert('Failed to archive and download. Please try again.');
+    }
   };
 
   const clearForm = async () => {
@@ -447,25 +507,22 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   const handleClearAllWebsites = async () => {
     if (savedWebsites.length === 0) {
-      alert('No websites to delete.');
+      alert('No websites to clear.');
       return;
     }
     
     const confirmed = window.confirm(
-      `⚠️ WARNING: This will permanently delete ALL ${savedWebsites.length} saved websites.\n\nThis action cannot be undone!`
+      `🗑️ Clear all ${savedWebsites.length} saved websites?\n\nThis will:\n• Archive all websites permanently (viewable in Archive & History)\n• Clear this list\n\nWebsites are never truly deleted - they're moved to the archive.`
     );
     
     if (confirmed) {
       try {
-        const success = await deleteAllWebsites();
-        if (success) {
-          setSavedWebsites([]);
-        } else {
-          alert('Failed to delete websites.');
-        }
+        // Archive websites before clearing
+        await archiveAndExport(savedWebsites);
+        setSavedWebsites([]);
       } catch (error) {
-        console.error('Delete all error:', error);
-        alert('Failed to delete websites. Please try again.');
+        console.error('Clear all error:', error);
+        alert('Failed to clear websites. Please try again.');
       }
     }
   };
