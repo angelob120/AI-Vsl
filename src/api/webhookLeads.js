@@ -89,13 +89,50 @@ export const deleteAllWebhookLeads = async () => {
 };
 
 /**
+ * Format phone number to +1 (XXX) - XXX - XXXX format
+ */
+const formatPhoneNumber = (phone) => {
+  if (!phone) return '';
+  
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // Handle different lengths
+  if (digits.length === 10) {
+    // US number without country code: 1234567890
+    return `+1 (${digits.slice(0, 3)}) - ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+  } else if (digits.length === 11 && digits.startsWith('1')) {
+    // US number with country code: 11234567890
+    return `+1 (${digits.slice(1, 4)}) - ${digits.slice(4, 7)} - ${digits.slice(7)}`;
+  } else if (digits.length > 10) {
+    // International number with country code
+    const countryCode = digits.slice(0, digits.length - 10);
+    const rest = digits.slice(-10);
+    return `+${countryCode} (${rest.slice(0, 3)}) - ${rest.slice(3, 6)} - ${rest.slice(6)}`;
+  }
+  
+  // Return original if we can't format it
+  return phone;
+};
+
+/**
  * Map a webhook lead to form data format for the builder
  */
 export const mapLeadToFormData = (lead) => {
+  // Build owner name from firstName + lastName, but ONLY if they exist
+  // Don't use companyName as a fallback for ownerName
+  const ownerName = lead.ownerName || 
+    (lead.firstName || lead.lastName 
+      ? `${lead.firstName || ''} ${lead.lastName || ''}`.trim() 
+      : '');
+  
+  // Company name should only come from companyName field
+  const companyName = lead.companyName || '';
+  
   return {
-    companyName: lead.companyName || '',
-    ownerName: lead.ownerName || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || '',
-    phone: lead.phone || '',
+    companyName: companyName,
+    ownerName: ownerName,
+    phone: formatPhoneNumber(lead.phone),
     email: lead.email || '',
     tagline: lead.tagline || '',
     address: lead.address ? 

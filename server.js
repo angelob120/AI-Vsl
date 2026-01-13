@@ -120,12 +120,42 @@ app.post('/api/webhook/ghl', async (req, res) => {
     const id = data.id || data.contact_id || data.contactId || 
                Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     
+    // Handle the 'name' field more intelligently
+    // If we have explicit first/last name fields, use those
+    // Only fall back to splitting 'name' if it looks like a person name (has lowercase)
+    let firstName = data.firstName || data.first_name || null;
+    let lastName = data.lastName || data.last_name || null;
+    
+    // If no explicit first/last name but we have a 'name' field
+    if (!firstName && !lastName && data.name) {
+      // Check if it looks like a business name (all caps, contains common business words, etc.)
+      const businessIndicators = ['llc', 'inc', 'corp', 'ltd', 'company', 'co', 'services', 'construction', 'plumbing', 'roofing', 'electric'];
+      const nameLower = data.name.toLowerCase();
+      const looksLikeBusiness = businessIndicators.some(word => nameLower.includes(word));
+      
+      if (!looksLikeBusiness && data.name.includes(' ')) {
+        // Looks like a person name, split it
+        const parts = data.name.split(' ');
+        firstName = parts[0];
+        lastName = parts.slice(1).join(' ');
+      }
+      // If it looks like a business name, don't use it for first/last name
+    }
+    
+    // Company name - check multiple possible fields including 'name' if it looks like a business
+    let companyName = data.companyName || data.company_name || data.company || data.businessName || data.business_name || null;
+    
+    // If no company name but 'name' field exists and we didn't use it for first/last name
+    if (!companyName && data.name && !firstName && !lastName) {
+      companyName = data.name;
+    }
+    
     const lead = {
       id,
-      company_name: data.companyName || data.company_name || data.company || data.businessName || data.business_name || null,
-      owner_name: data.ownerName || data.owner_name || data.owner || null,
-      first_name: data.firstName || data.first_name || data.name?.split(' ')[0] || null,
-      last_name: data.lastName || data.last_name || data.name?.split(' ').slice(1).join(' ') || null,
+      company_name: companyName,
+      owner_name: data.ownerName || data.owner_name || data.owner || data.contactName || data.contact_name || null,
+      first_name: firstName,
+      last_name: lastName,
       phone: data.phone || data.phoneNumber || data.phone_number || data.mobile || null,
       email: data.email || data.emailAddress || data.email_address || null,
       address: data.address || data.address1 || data.streetAddress || data.street_address || null,
