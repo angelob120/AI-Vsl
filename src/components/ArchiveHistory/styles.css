@@ -1,14 +1,15 @@
-/* Archive History Styles */
+/* Archive History Styles - FULL WIDTH */
 
 .archive-history {
+  width: 100%;
   padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+  margin: 0;
   min-height: calc(100vh - 80px);
+  background: #0f1419;
 }
 
 .archive-history.dark {
-  background: #1a1a2e;
+  background: #0f1419;
   color: #fff;
 }
 
@@ -62,8 +63,8 @@
 }
 
 .archive-history.dark .archive-panel {
-  background: #16213e;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  background: #1a2332;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
 .panel-header {
@@ -136,13 +137,13 @@
 }
 
 .search-input.dark {
-  background: #0f172a;
-  border-color: #334155;
+  background: #0f1419;
+  border-color: #2d3748;
   color: #fff;
 }
 
 .search-input.dark:focus {
-  border-color: #667eea;
+  border-color: #8b5cf6;
 }
 
 .search-clear {
@@ -181,8 +182,8 @@
 }
 
 .filter-select.dark {
-  background: #0f172a;
-  border-color: #334155;
+  background: #0f1419;
+  border-color: #2d3748;
   color: #fff;
 }
 
@@ -205,11 +206,17 @@
 .archived-website-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: #8b5cf6;
 }
 
 .archived-website-card.dark {
-  background: #0f172a;
-  border-color: #334155;
+  background: #0f1419;
+  border-color: #2d3748;
+}
+
+.archived-website-card.dark:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
 }
 
 .website-color-bar {
@@ -247,7 +254,7 @@
 }
 
 .archived-website-card.dark .website-template {
-  background: #1e293b;
+  background: #1a2332;
   color: #94a3b8;
 }
 
@@ -288,7 +295,7 @@
 }
 
 .archived-website-card.dark .batch-id {
-  background: #1e293b;
+  background: #1a2332;
   color: #94a3b8;
 }
 
@@ -318,14 +325,14 @@
 }
 
 .archived-website-card.dark .card-action-btn {
-  background: #1e293b;
-  border-color: #334155;
+  background: #1a2332;
+  border-color: #2d3748;
   color: #e2e8f0;
 }
 
 .archived-website-card.dark .card-action-btn:hover {
-  background: #334155;
-  border-color: #667eea;
+  background: #2d3748;
+  border-color: #8b5cf6;
 }
 
 /* Archive List States */
@@ -383,7 +390,7 @@
 }
 
 .archive-history.dark .archive-count {
-  border-top-color: #334155;
+  border-top-color: #2d3748;
   color: #94a3b8;
 }
 
@@ -402,7 +409,7 @@
 
 .exports-table.dark th,
 .exports-table.dark td {
-  border-bottom-color: #334155;
+  border-bottom-color: #2d3748;
 }
 
 .exports-table th {
@@ -415,7 +422,7 @@
 }
 
 .exports-table.dark th {
-  background: #0f172a;
+  background: #0f1419;
   color: #94a3b8;
 }
 
@@ -424,7 +431,7 @@
 }
 
 .exports-table.dark tr:hover {
-  background: #1e293b;
+  background: #1a2332;
 }
 
 .export-date {
@@ -500,13 +507,13 @@
 }
 
 .exports-table.dark .view-batch-btn {
-  background: #1e293b;
-  border-color: #334155;
+  background: #1a2332;
+  border-color: #2d3748;
   color: #e2e8f0;
 }
 
 .exports-table.dark .view-batch-btn:hover {
-  background: #334155;
+  background: #2d3748;
 }
 
 /* Responsive */
