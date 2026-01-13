@@ -456,8 +456,8 @@ export default function ArchiveHistory({ isDarkMode = false }) {
       : [images?.hero, images?.about].filter(Boolean);
     
     return `<!DOCTYPE html>
-<html lang="en">
-<head>
+  <html lang="en">
+  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${formData?.companyName || 'Business Website'}</title>
@@ -924,8 +924,8 @@ export default function ArchiveHistory({ isDarkMode = false }) {
       }
     }
   </style>
-</head>
-<body>
+  </head>
+  <body>
   <!-- Header -->
   <header class="header">
     <div class="logo">
@@ -1084,8 +1084,8 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   <footer class="footer">
     <p>© ${new Date().getFullYear()} ${formData?.companyName || 'Business Name'}. All rights reserved.</p>
   </footer>
-</body>
-</html>`;
+  </body>
+  </html>`;
   };
 
   // Helper function to adjust color brightness
