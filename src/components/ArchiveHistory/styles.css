@@ -1016,6 +1016,23 @@
   color: #6b7280;
 }
 
+/* Edit image upload area - wrapper for paste support */
+.edit-image-upload-area {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.edit-image-upload-area:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.edit-image-upload-area:not(.has-image) {
+  cursor: pointer;
+}
+
 .image-preview {
   position: relative;
   width: 100%;
@@ -1095,6 +1112,15 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+  outline: none;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.edit-gallery-grid:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 .gallery-image-item {

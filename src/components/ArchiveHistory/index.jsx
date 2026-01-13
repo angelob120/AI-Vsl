@@ -177,6 +177,61 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     }
   };
 
+  // Handle paste event (Ctrl+V) for edit images
+  const handleEditPaste = async (type, e) => {
+    const clipboardItems = e.clipboardData?.items;
+    if (clipboardItems) {
+      for (let item of clipboardItems) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          const dataUrl = await readFileAsDataURL(blob);
+          if (type === 'gallery') {
+            setEditImages(prev => ({
+              ...prev,
+              gallery: [...(prev.gallery || []), dataUrl]
+            }));
+          } else {
+            setEditImages(prev => ({
+              ...prev,
+              [type]: dataUrl
+            }));
+          }
+          break;
+        }
+      }
+    }
+  };
+
+  // Handle right-click paste for edit images
+  const handleEditContextPaste = async (type) => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        for (const mimeType of item.types) {
+          if (mimeType.startsWith('image/')) {
+            const blob = await item.getType(mimeType);
+            const dataUrl = await readFileAsDataURL(blob);
+            if (type === 'gallery') {
+              setEditImages(prev => ({
+                ...prev,
+                gallery: [...(prev.gallery || []), dataUrl]
+              }));
+            } else {
+              setEditImages(prev => ({
+                ...prev,
+                [type]: dataUrl
+              }));
+            }
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to paste from clipboard:', error);
+    }
+  };
+
   const removeEditImage = (type) => {
     setEditImages(prev => ({
       ...prev,
@@ -1012,54 +1067,92 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                     {/* Logo */}
                     <div className="edit-image-item">
                       <label>Logo</label>
-                      {editImages?.logo ? (
-                        <div className="image-preview">
-                          <img src={editImages.logo} alt="Logo" />
-                          <button type="button" onClick={() => removeEditImage('logo')}>×</button>
-                        </div>
-                      ) : (
-                        <label className="image-upload-btn">
-                          <span>+ Upload</span>
-                          <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('logo', e)} />
-                        </label>
-                      )}
+                      <div 
+                        className={`edit-image-upload-area ${editImages?.logo ? 'has-image' : ''}`}
+                        tabIndex={0}
+                        onPaste={(e) => handleEditPaste('logo', e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleEditContextPaste('logo');
+                        }}
+                      >
+                        {editImages?.logo ? (
+                          <div className="image-preview">
+                            <img src={editImages.logo} alt="Logo" />
+                            <button type="button" onClick={() => removeEditImage('logo')}>×</button>
+                          </div>
+                        ) : (
+                          <label className="image-upload-btn">
+                            <span>+ Upload or Paste</span>
+                            <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('logo', e)} />
+                          </label>
+                        )}
+                      </div>
                     </div>
                     {/* Hero */}
                     <div className="edit-image-item">
                       <label>Hero</label>
-                      {editImages?.hero ? (
-                        <div className="image-preview">
-                          <img src={editImages.hero} alt="Hero" />
-                          <button type="button" onClick={() => removeEditImage('hero')}>×</button>
-                        </div>
-                      ) : (
-                        <label className="image-upload-btn">
-                          <span>+ Upload</span>
-                          <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('hero', e)} />
-                        </label>
-                      )}
+                      <div 
+                        className={`edit-image-upload-area ${editImages?.hero ? 'has-image' : ''}`}
+                        tabIndex={0}
+                        onPaste={(e) => handleEditPaste('hero', e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleEditContextPaste('hero');
+                        }}
+                      >
+                        {editImages?.hero ? (
+                          <div className="image-preview">
+                            <img src={editImages.hero} alt="Hero" />
+                            <button type="button" onClick={() => removeEditImage('hero')}>×</button>
+                          </div>
+                        ) : (
+                          <label className="image-upload-btn">
+                            <span>+ Upload or Paste</span>
+                            <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('hero', e)} />
+                          </label>
+                        )}
+                      </div>
                     </div>
                     {/* About */}
                     <div className="edit-image-item">
                       <label>About</label>
-                      {editImages?.about ? (
-                        <div className="image-preview">
-                          <img src={editImages.about} alt="About" />
-                          <button type="button" onClick={() => removeEditImage('about')}>×</button>
-                        </div>
-                      ) : (
-                        <label className="image-upload-btn">
-                          <span>+ Upload</span>
-                          <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('about', e)} />
-                        </label>
-                      )}
+                      <div 
+                        className={`edit-image-upload-area ${editImages?.about ? 'has-image' : ''}`}
+                        tabIndex={0}
+                        onPaste={(e) => handleEditPaste('about', e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleEditContextPaste('about');
+                        }}
+                      >
+                        {editImages?.about ? (
+                          <div className="image-preview">
+                            <img src={editImages.about} alt="About" />
+                            <button type="button" onClick={() => removeEditImage('about')}>×</button>
+                          </div>
+                        ) : (
+                          <label className="image-upload-btn">
+                            <span>+ Upload or Paste</span>
+                            <input type="file" accept="image/*" onChange={(e) => handleEditImageUpload('about', e)} />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   {/* Gallery Images */}
                   <div className="edit-gallery-section">
                     <label className="gallery-label">Gallery Images</label>
-                    <div className="edit-gallery-grid">
+                    <div 
+                      className="edit-gallery-grid"
+                      tabIndex={0}
+                      onPaste={(e) => handleEditPaste('gallery', e)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleEditContextPaste('gallery');
+                      }}
+                    >
                       {/* Existing gallery images */}
                       {(editImages?.gallery || []).map((img, index) => (
                         <div key={index} className="gallery-image-item">
@@ -1075,7 +1168,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                       ))}
                       {/* Add new gallery image button */}
                       <label className="gallery-upload-btn">
-                        <span>+ Add Image</span>
+                        <span>+ Add or Paste</span>
                         <input 
                           type="file" 
                           accept="image/*" 
@@ -1083,7 +1176,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         />
                       </label>
                     </div>
-                    <p className="gallery-hint">Add images to showcase your work in the gallery section</p>
+                    <p className="gallery-hint">Add images to showcase your work - click to upload or right-click to paste</p>
                   </div>
                 </div>
               </div>
