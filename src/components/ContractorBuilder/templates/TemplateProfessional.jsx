@@ -5,6 +5,7 @@ import React from 'react';
  * Features a dark, professional design that adapts to any professional service niche
  * Works for: Accountants, Financial Advisors, Consultants, Real Estate, Insurance, IT Services, etc.
  * (Excludes legal services)
+ * UPDATED: Now supports textColor and accentTextColor from formData
  */
 
 // Smart image matching system - maps keywords to relevant professional services images
@@ -209,13 +210,16 @@ function TemplateProfessional({ formData, images }) {
     ? data.serviceAreas 
     : ['Local Area', 'Surrounding Cities', 'Metro Region'];
 
-  // Dynamic accent color with fallback
+  // Dynamic colors with fallbacks
   const accentColor = data.accentColor || '#ff4d00';
   const primaryColor = data.primaryColor || '#0a0a0a';
+  // NEW: Text color variables
+  const textColor = data.textColor || '#ffffff';
+  const accentTextColor = data.accentTextColor || '#cccccc';
 
   return (
     <div className="template-professional">
-      <style>{templateProfessionalStyles(accentColor, primaryColor)}</style>
+      <style>{templateProfessionalStyles(accentColor, primaryColor, textColor, accentTextColor)}</style>
       
       {/* Header */}
       <header className="tp-header">
@@ -657,11 +661,15 @@ function TemplateProfessional({ formData, images }) {
   );
 }
 
-// Dynamic styles function that uses accent and primary colors
-const templateProfessionalStyles = (accentColor, primaryColor) => `
+// ============================================
+// UPDATED: Dynamic styles function now accepts textColor and accentTextColor
+// All hardcoded #ffffff replaced with ${textColor}
+// All hardcoded #cccccc/#888888 replaced with ${accentTextColor}
+// ============================================
+const templateProfessionalStyles = (accentColor, primaryColor, textColor, accentTextColor) => `
   .template-professional {
     background: ${primaryColor};
-    color: #ffffff;
+    color: ${textColor};
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
     border-radius: 16px;
@@ -674,27 +682,27 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-header-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
   .tp-logo { display: flex; align-items: center; gap: 10px; }
   .tp-logo-img { height: 50px; object-fit: contain; }
-  .tp-logo-text { font-size: 20px; font-weight: 700; }
+  .tp-logo-text { font-size: 20px; font-weight: 700; color: ${textColor}; }
   .tp-nav { display: flex; align-items: center; gap: 25px; }
-  .tp-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; cursor: pointer; transition: color 0.3s; background: none; border: none; }
+  .tp-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: ${textColor}; cursor: pointer; transition: color 0.3s; background: none; border: none; }
   .tp-nav-link:hover { color: ${accentColor}; }
   .tp-nav-dropdown { position: relative; }
   .tp-dropdown-menu { position: absolute; top: 100%; left: 0; background: ${primaryColor}; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
   .tp-nav-dropdown:hover .tp-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(5px); }
-  .tp-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: #888888; }
+  .tp-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: ${accentTextColor}; }
   .tp-dropdown-menu a:hover { color: ${accentColor}; background: ${accentColor}15; }
   .tp-header-buttons { display: flex; align-items: center; gap: 15px; }
   .tp-btn { padding: 10px 20px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; display: inline-block; }
-  .tp-btn-primary { background: ${accentColor}; color: #ffffff; border-color: ${accentColor}; }
+  .tp-btn-primary { background: ${accentColor}; color: ${textColor}; border-color: ${accentColor}; }
   .tp-btn-primary:hover { background: ${accentColor}dd; border-color: ${accentColor}dd; }
   .tp-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
-  .tp-btn-outline:hover { background: ${accentColor}; color: #ffffff; }
+  .tp-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .tp-phone-btn { font-size: 12px; padding: 8px 15px; }
   .tp-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .tp-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .tp-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
-  .tp-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; }
-  .tp-hero-text { font-size: 15px; color: #cccccc; max-width: 400px; line-height: 1.7; }
+  .tp-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
+  .tp-hero-text { font-size: 15px; color: ${accentTextColor}; max-width: 400px; line-height: 1.7; }
   .tp-quote-form { background: #ffffff; border-radius: 8px; padding: 30px; color: #333; }
   .tp-form-header { text-align: center; margin-bottom: 25px; }
   .tp-form-logo { width: 60px; height: 60px; margin: 0 auto 15px; }
@@ -710,39 +718,39 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-phone-field input { border: none; background: transparent; }
   .tp-form-checkbox { display: flex; align-items: flex-start; gap: 10px; font-size: 11px; color: #666; margin-bottom: 20px; line-height: 1.5; }
   .tp-form-checkbox input { margin-top: 3px; }
-  .tp-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: #ffffff; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
+  .tp-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: ${textColor}; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
   .tp-form-submit:hover { background: ${accentColor}dd; }
   .tp-trust-badges { background: ${primaryColor}; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tp-badges-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-  .tp-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #cccccc; }
+  .tp-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: ${accentTextColor}; }
   .tp-badge-icon { color: ${accentColor}; }
   .tp-about { padding: 80px 40px; background: ${primaryColor}; }
   .tp-about-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-  .tp-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+  .tp-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; color: ${textColor}; }
   .tp-section-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 100px; }
-  .tp-about-text { font-size: 14px; color: #888888; line-height: 1.8; }
+  .tp-about-text { font-size: 14px; color: ${accentTextColor}; line-height: 1.8; }
   .tp-google-badge { margin-top: 30px; display: inline-block; }
   .tp-about-image img { width: 100%; max-width: 500px; border-radius: 8px; }
   .tp-services { padding: 80px 40px; background: ${primaryColor}; }
   .tp-services-container { max-width: 1200px; margin: 0 auto; }
-  .tp-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888888; margin-bottom: 10px; }
+  .tp-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: ${accentTextColor}; margin-bottom: 10px; }
   .tp-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 40px; }
   .tp-service-card { position: relative; aspect-ratio: 1.1; border-radius: 8px; overflow: hidden; cursor: pointer; }
   .tp-service-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
   .tp-service-card:hover img { transform: scale(1.1); }
   .tp-service-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%); }
   .tp-service-card-label { position: absolute; bottom: 15px; left: 15px; z-index: 1; display: flex; align-items: center; gap: 8px; }
-  .tp-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .tp-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .tp-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: ${textColor}; }
+  .tp-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: ${textColor}; }
   .tp-process { padding: 80px 40px; background: ${primaryColor}; }
   .tp-process-container { max-width: 1200px; margin: 0 auto; }
-  .tp-process-subtitle { font-size: 14px; color: #888888; margin-top: 10px; }
+  .tp-process-subtitle { font-size: 14px; color: ${accentTextColor}; margin-top: 10px; }
   .tp-process-steps { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 60px; position: relative; }
   .tp-process-steps::before { content: ''; position: absolute; top: 40px; left: 80px; right: 80px; height: 2px; background: rgba(255,255,255,0.1); }
   .tp-process-step { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; flex: 1; }
   .tp-step-icon { width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
   .tp-step-icon svg { width: 35px; height: 35px; fill: #333; }
-  .tp-process-step h4 { font-size: 13px; font-weight: 500; color: #cccccc; max-width: 90px; line-height: 1.4; }
+  .tp-process-step h4 { font-size: 13px; font-weight: 500; color: ${accentTextColor}; max-width: 90px; line-height: 1.4; }
   .tp-work { padding: 80px 40px; background: ${primaryColor}; }
   .tp-work-container { max-width: 1200px; margin: 0 auto; }
   .tp-work-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
@@ -758,7 +766,7 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-shape-fill { fill: ${primaryColor}; }
   .tp-reviews-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
   .tp-reviews-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-  .tp-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
+  .tp-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; color: ${accentTextColor}; }
   .tp-reviews-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
   .tp-review-card { background: #ffffff; border-radius: 8px; padding: 20px; color: #333; }
   .tp-review-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -768,50 +776,51 @@ const templateProfessionalStyles = (accentColor, primaryColor) => `
   .tp-review-author { display: flex; justify-content: space-between; align-items: center; }
   .tp-review-author span { font-size: 12px; color: #888; }
   .tp-review-cta { text-align: center; padding: 50px 60px; background: ${primaryColor}; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
-  .tp-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+  .tp-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; color: ${textColor}; }
   .tp-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .tp-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tp-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .tp-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; }
+  .tp-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .tp-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
-  .tp-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; }
+  .tp-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .tp-faq-question:hover { color: ${accentColor}; }
-  .tp-faq-icon { color: #888888; font-size: 10px; transition: transform 0.3s; }
-  .tp-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: #888888; line-height: 1.7; display: none; }
+  .tp-faq-icon { color: ${accentTextColor}; font-size: 10px; transition: transform 0.3s; }
+  .tp-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: ${accentTextColor}; line-height: 1.7; display: none; }
   .tp-faq-item.active .tp-faq-answer { display: block; }
   .tp-faq-image img { width: 100%; border-radius: 8px; }
   .tp-service-areas { padding: 80px 40px; background: ${primaryColor}; }
   .tp-areas-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; align-items: start; }
   .tp-map-container { border-radius: 8px; overflow: hidden; height: 300px; }
   .tp-map-container iframe { width: 100%; height: 100%; border: 0; }
-  .tp-areas-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+  .tp-areas-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; color: ${textColor}; }
   .tp-areas-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 150px; }
   .tp-areas-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .tp-area-item { font-size: 14px; color: #888888; }
+  .tp-area-item { font-size: 14px; color: ${accentTextColor}; }
   .tp-cta { padding: 120px 40px; text-align: center; position: relative; }
   .tp-cta-container { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
-  .tp-cta h2, .tp-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; }
+  .tp-cta h2, .tp-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; color: ${textColor}; }
   .tp-cta h2 { margin-bottom: 5px; }
   .tp-cta h3 { margin-bottom: 30px; }
   .tp-footer { background: ${primaryColor}; padding: 60px 40px 30px; }
   .tp-footer-container { max-width: 1200px; margin: 0 auto; }
   .tp-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
   .tp-footer-brand img { height: 50px; margin-bottom: 20px; }
+  .tp-footer-brand span { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: ${textColor}; }
   .tp-footer-contact { margin-bottom: 20px; }
-  .tp-footer-contact a, .tp-footer-address { display: block; color: #888888; font-size: 14px; margin-bottom: 5px; transition: color 0.3s; }
+  .tp-footer-contact a, .tp-footer-address { display: block; color: ${accentTextColor}; font-size: 14px; margin-bottom: 5px; transition: color 0.3s; }
   .tp-footer-contact a:hover { color: ${accentColor}; }
   .tp-footer-buttons { display: flex; gap: 10px; }
   .tp-footer-buttons .tp-btn { padding: 8px 15px; font-size: 10px; }
-  .tp-footer-column h4 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-  .tp-footer-links a { display: block; color: #888888; font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
+  .tp-footer-column h4 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; color: ${textColor}; }
+  .tp-footer-links a { display: block; color: ${accentTextColor}; font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
   .tp-footer-links a:hover { color: ${accentColor}; }
-  .tp-footer-hours p { color: #888888; font-size: 12px; margin-bottom: 5px; }
+  .tp-footer-hours p { color: ${accentTextColor}; font-size: 12px; margin-bottom: 5px; }
   .tp-footer-bottom { padding-top: 30px; display: flex; justify-content: space-between; align-items: center; }
-  .tp-footer-legal a { color: #888888; font-size: 13px; margin-right: 30px; transition: color 0.3s; }
+  .tp-footer-legal a { color: ${accentTextColor}; font-size: 13px; margin-right: 30px; transition: color 0.3s; }
   .tp-footer-legal a:hover { color: ${accentColor}; }
   .tp-chat-btn { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 20px ${accentColor}66; z-index: 999; transition: transform 0.3s; }
   .tp-chat-btn:hover { transform: scale(1.1); }
-  .tp-chat-btn svg { width: 24px; height: 24px; fill: #ffffff; }
+  .tp-chat-btn svg { width: 24px; height: 24px; fill: ${textColor}; }
   @media (max-width: 1200px) {
     .tp-hero-container { grid-template-columns: 1fr; gap: 40px; }
     .tp-quote-form { max-width: 450px; }

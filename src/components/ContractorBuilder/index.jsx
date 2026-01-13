@@ -29,6 +29,9 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     tagline: 'Building Dreams, One Project at a Time',
     primaryColor: '#0a0a0a',
     accentColor: '#ff4d00',
+    // NEW: Text color customization
+    textColor: '#ffffff',
+    accentTextColor: '#cccccc',
     services: ['Kitchen Remodels', 'Bathroom Renovations', 'Home Additions', 'Deck Building'],
     yearsExperience: '25',
     address: '123 Main Street'
@@ -400,7 +403,12 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
       }
     }
     
-    setFormData(defaultContractorFormData);
+    // Reset form with default values including new text colors
+    setFormData({
+      ...defaultContractorFormData,
+      textColor: '#ffffff',
+      accentTextColor: '#cccccc'
+    });
     setImages(defaultContractorImages);
     setSelectedTemplate('general');
     setGeneratedLink(null);
@@ -408,7 +416,12 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   };
 
   const duplicateWebsite = (website) => {
-    setFormData({ ...website.formData });
+    setFormData({ 
+      ...website.formData,
+      // Ensure text colors have defaults if not present in saved data
+      textColor: website.formData?.textColor || '#ffffff',
+      accentTextColor: website.formData?.accentTextColor || '#cccccc'
+    });
     setImages({ ...website.images });
     setSelectedTemplate(website.template || 'general');
     setGeneratedLink(null);
@@ -898,7 +911,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           </div>
         </div>
 
-        {/* Brand Colors - FIXED VERSION */}
+        {/* Brand Colors - UPDATED with Text Colors */}
         <div className="form-section">
           <h2 className="form-section-title">Brand Colors</h2>
           
@@ -924,10 +937,10 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           </div>
           
           <div className="color-pickers">
+            {/* Primary Color */}
             <div className="form-group">
-              <label className="form-label">Primary Color</label>
+              <label className="form-label">Primary Color (Background)</label>
               <div className="color-input-row">
-                {/* FIXED: Using direct onChange handler instead of handleChange */}
                 <input
                   type="color"
                   value={formData.primaryColor}
@@ -944,10 +957,10 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
               </div>
             </div>
             
+            {/* Accent Color */}
             <div className="form-group">
-              <label className="form-label">Accent Color</label>
+              <label className="form-label">Accent Color (Buttons/Highlights)</label>
               <div className="color-input-row">
-                {/* FIXED: Using direct onChange handler instead of handleChange */}
                 <input
                   type="color"
                   value={formData.accentColor}
@@ -958,6 +971,46 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
                   type="text"
                   name="accentColor"
                   value={formData.accentColor}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
+              </div>
+            </div>
+            
+            {/* NEW: Text Color */}
+            <div className="form-group">
+              <label className="form-label">Text Color (Main Body Text)</label>
+              <div className="color-input-row">
+                <input
+                  type="color"
+                  value={formData.textColor || '#ffffff'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, textColor: e.target.value }))}
+                  className="color-picker"
+                />
+                <input
+                  type="text"
+                  name="textColor"
+                  value={formData.textColor || '#ffffff'}
+                  onChange={handleChange}
+                  className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
+                />
+              </div>
+            </div>
+            
+            {/* NEW: Accent Text Color */}
+            <div className="form-group">
+              <label className="form-label">Secondary Text Color (Labels/Descriptions)</label>
+              <div className="color-input-row">
+                <input
+                  type="color"
+                  value={formData.accentTextColor || '#cccccc'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accentTextColor: e.target.value }))}
+                  className="color-picker"
+                />
+                <input
+                  type="text"
+                  name="accentTextColor"
+                  value={formData.accentTextColor || '#cccccc'}
                   onChange={handleChange}
                   className={`form-input color-text ${isDarkMode ? 'dark' : ''}`}
                 />

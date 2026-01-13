@@ -4,6 +4,7 @@ import React from 'react';
  * TemplateHealth - Universal Health & Medical Business Template
  * Features a dark, professional design that adapts to any health/medical niche
  * Works for: Dentists, Chiropractors, Med Spas, Physical Therapy, Dermatology, etc.
+ * UPDATED: Now supports textColor and accentTextColor from formData
  */
 
 // Smart image matching system - maps keywords to relevant health/medical images
@@ -222,13 +223,16 @@ function TemplateHealth({ formData, images }) {
     ? data.serviceAreas 
     : ['Local Area', 'Surrounding Cities', 'Metro Region'];
 
-  // Dynamic accent color with fallback
+  // Dynamic colors with fallbacks
   const accentColor = data.accentColor || '#ff4d00';
   const primaryColor = data.primaryColor || '#0a0a0a';
+  // NEW: Text color variables
+  const textColor = data.textColor || '#ffffff';
+  const accentTextColor = data.accentTextColor || '#cccccc';
 
   return (
     <div className="template-health">
-      <style>{templateHealthStyles(accentColor, primaryColor)}</style>
+      <style>{templateHealthStyles(accentColor, primaryColor, textColor, accentTextColor)}</style>
       
       {/* Header */}
       <header className="th-header">
@@ -671,11 +675,15 @@ function TemplateHealth({ formData, images }) {
   );
 }
 
-// Dynamic styles function that uses accent and primary colors
-const templateHealthStyles = (accentColor, primaryColor) => `
+// ============================================
+// UPDATED: Dynamic styles function now accepts textColor and accentTextColor
+// All hardcoded #ffffff replaced with ${textColor}
+// All hardcoded #cccccc/#888888 replaced with ${accentTextColor}
+// ============================================
+const templateHealthStyles = (accentColor, primaryColor, textColor, accentTextColor) => `
   .template-health {
     background: ${primaryColor};
-    color: #ffffff;
+    color: ${textColor};
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
     border-radius: 16px;
@@ -688,27 +696,27 @@ const templateHealthStyles = (accentColor, primaryColor) => `
   .th-header-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
   .th-logo { display: flex; align-items: center; gap: 10px; }
   .th-logo-img { height: 50px; object-fit: contain; }
-  .th-logo-text { font-size: 20px; font-weight: 700; }
+  .th-logo-text { font-size: 20px; font-weight: 700; color: ${textColor}; }
   .th-nav { display: flex; align-items: center; gap: 25px; }
-  .th-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; cursor: pointer; transition: color 0.3s; background: none; border: none; }
+  .th-nav-link { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: ${textColor}; cursor: pointer; transition: color 0.3s; background: none; border: none; }
   .th-nav-link:hover { color: ${accentColor}; }
   .th-nav-dropdown { position: relative; }
   .th-dropdown-menu { position: absolute; top: 100%; left: 0; background: ${primaryColor}; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; min-width: 200px; padding: 10px 0; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s; }
   .th-nav-dropdown:hover .th-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(5px); }
-  .th-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: #888888; }
+  .th-dropdown-menu a { display: block; padding: 8px 20px; font-size: 13px; text-transform: none; color: ${accentTextColor}; }
   .th-dropdown-menu a:hover { color: ${accentColor}; background: ${accentColor}15; }
   .th-header-buttons { display: flex; align-items: center; gap: 15px; }
   .th-btn { padding: 10px 20px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; display: inline-block; }
-  .th-btn-primary { background: ${accentColor}; color: #ffffff; border-color: ${accentColor}; }
+  .th-btn-primary { background: ${accentColor}; color: ${textColor}; border-color: ${accentColor}; }
   .th-btn-primary:hover { background: ${accentColor}dd; border-color: ${accentColor}dd; }
   .th-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
-  .th-btn-outline:hover { background: ${accentColor}; color: #ffffff; }
+  .th-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .th-phone-btn { font-size: 12px; padding: 8px 15px; }
   .th-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .th-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .th-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
-  .th-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; }
-  .th-hero-text { font-size: 15px; color: #cccccc; max-width: 400px; line-height: 1.7; }
+  .th-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
+  .th-hero-text { font-size: 15px; color: ${accentTextColor}; max-width: 400px; line-height: 1.7; }
   .th-quote-form { background: #ffffff; border-radius: 8px; padding: 30px; color: #333; }
   .th-form-header { text-align: center; margin-bottom: 25px; }
   .th-form-logo { width: 60px; height: 60px; margin: 0 auto 15px; }
@@ -724,39 +732,39 @@ const templateHealthStyles = (accentColor, primaryColor) => `
   .th-phone-field input { border: none; background: transparent; }
   .th-form-checkbox { display: flex; align-items: flex-start; gap: 10px; font-size: 11px; color: #666; margin-bottom: 20px; line-height: 1.5; }
   .th-form-checkbox input { margin-top: 3px; }
-  .th-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: #ffffff; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
+  .th-form-submit { width: 100%; padding: 14px; background: ${accentColor}; border: none; border-radius: 4px; color: ${textColor}; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.3s; }
   .th-form-submit:hover { background: ${accentColor}dd; }
   .th-trust-badges { background: ${primaryColor}; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); }
   .th-badges-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-  .th-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #cccccc; }
+  .th-badge { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: ${accentTextColor}; }
   .th-badge-icon { color: ${accentColor}; }
   .th-about { padding: 80px 40px; background: ${primaryColor}; }
   .th-about-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-  .th-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
+  .th-section-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; color: ${textColor}; }
   .th-section-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 100px; }
-  .th-about-text { font-size: 14px; color: #888888; line-height: 1.8; }
+  .th-about-text { font-size: 14px; color: ${accentTextColor}; line-height: 1.8; }
   .th-google-badge { margin-top: 30px; display: inline-block; }
   .th-about-image img { width: 100%; max-width: 500px; border-radius: 8px; }
   .th-services { padding: 80px 40px; background: ${primaryColor}; }
   .th-services-container { max-width: 1200px; margin: 0 auto; }
-  .th-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888888; margin-bottom: 10px; }
+  .th-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: ${accentTextColor}; margin-bottom: 10px; }
   .th-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 40px; }
   .th-service-card { position: relative; aspect-ratio: 1.1; border-radius: 8px; overflow: hidden; cursor: pointer; }
   .th-service-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
   .th-service-card:hover img { transform: scale(1.1); }
   .th-service-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%); }
   .th-service-card-label { position: absolute; bottom: 15px; left: 15px; z-index: 1; display: flex; align-items: center; gap: 8px; }
-  .th-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .th-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .th-service-card-label h3 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: ${textColor}; }
+  .th-service-arrow { width: 18px; height: 18px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: ${textColor}; }
   .th-process { padding: 80px 40px; background: ${primaryColor}; }
   .th-process-container { max-width: 1200px; margin: 0 auto; }
-  .th-process-subtitle { font-size: 14px; color: #888888; margin-top: 10px; }
+  .th-process-subtitle { font-size: 14px; color: ${accentTextColor}; margin-top: 10px; }
   .th-process-steps { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 60px; position: relative; }
   .th-process-steps::before { content: ''; position: absolute; top: 40px; left: 80px; right: 80px; height: 2px; background: rgba(255,255,255,0.1); }
   .th-process-step { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; flex: 1; }
   .th-step-icon { width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
   .th-step-icon svg { width: 35px; height: 35px; fill: #333; }
-  .th-process-step h4 { font-size: 13px; font-weight: 500; color: #cccccc; max-width: 90px; line-height: 1.4; }
+  .th-process-step h4 { font-size: 13px; font-weight: 500; color: ${accentTextColor}; max-width: 90px; line-height: 1.4; }
   .th-work { padding: 80px 40px; background: ${primaryColor}; }
   .th-work-container { max-width: 1200px; margin: 0 auto; }
   .th-work-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
@@ -772,7 +780,7 @@ const templateHealthStyles = (accentColor, primaryColor) => `
   .th-shape-fill { fill: ${primaryColor}; }
   .th-reviews-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
   .th-reviews-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-  .th-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; }
+  .th-section-label-dark { background: ${primaryColor}; display: inline-block; padding: 8px 15px; margin-bottom: 10px; color: ${accentTextColor}; }
   .th-reviews-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
   .th-review-card { background: #ffffff; border-radius: 8px; padding: 20px; color: #333; }
   .th-review-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -782,50 +790,51 @@ const templateHealthStyles = (accentColor, primaryColor) => `
   .th-review-author { display: flex; justify-content: space-between; align-items: center; }
   .th-review-author span { font-size: 12px; color: #888; }
   .th-review-cta { text-align: center; padding: 50px 60px; background: ${primaryColor}; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; max-width: 500px; margin: 40px auto 0; }
-  .th-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+  .th-review-cta h3 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; color: ${textColor}; }
   .th-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .th-faq { padding: 80px 40px; background: ${primaryColor}; }
   .th-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .th-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; }
+  .th-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .th-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
-  .th-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; }
+  .th-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .th-faq-question:hover { color: ${accentColor}; }
-  .th-faq-icon { color: #888888; font-size: 10px; transition: transform 0.3s; }
-  .th-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: #888888; line-height: 1.7; display: none; }
+  .th-faq-icon { color: ${accentTextColor}; font-size: 10px; transition: transform 0.3s; }
+  .th-faq-answer { padding: 15px 0 0 25px; font-size: 13px; color: ${accentTextColor}; line-height: 1.7; display: none; }
   .th-faq-item.active .th-faq-answer { display: block; }
   .th-faq-image img { width: 100%; border-radius: 8px; }
   .th-service-areas { padding: 80px 40px; background: ${primaryColor}; }
   .th-areas-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; align-items: start; }
   .th-map-container { border-radius: 8px; overflow: hidden; height: 300px; }
   .th-map-container iframe { width: 100%; height: 100%; border: 0; }
-  .th-areas-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+  .th-areas-title { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; text-transform: uppercase; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; color: ${textColor}; }
   .th-areas-title::after { content: ''; flex: 1; height: 3px; background: ${accentColor}; max-width: 150px; }
   .th-areas-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .th-area-item { font-size: 14px; color: #888888; }
+  .th-area-item { font-size: 14px; color: ${accentTextColor}; }
   .th-cta { padding: 120px 40px; text-align: center; position: relative; }
   .th-cta-container { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
-  .th-cta h2, .th-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; }
+  .th-cta h2, .th-cta h3 { font-family: 'Oswald', sans-serif; font-size: 42px; font-weight: 700; text-transform: uppercase; font-style: italic; color: ${textColor}; }
   .th-cta h2 { margin-bottom: 5px; }
   .th-cta h3 { margin-bottom: 30px; }
   .th-footer { background: ${primaryColor}; padding: 60px 40px 30px; }
   .th-footer-container { max-width: 1200px; margin: 0 auto; }
   .th-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); }
   .th-footer-brand img { height: 50px; margin-bottom: 20px; }
+  .th-footer-brand span { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700; color: ${textColor}; }
   .th-footer-contact { margin-bottom: 20px; }
-  .th-footer-contact a, .th-footer-address { display: block; color: #888888; font-size: 14px; margin-bottom: 5px; transition: color 0.3s; }
+  .th-footer-contact a, .th-footer-address { display: block; color: ${accentTextColor}; font-size: 14px; margin-bottom: 5px; transition: color 0.3s; }
   .th-footer-contact a:hover { color: ${accentColor}; }
   .th-footer-buttons { display: flex; gap: 10px; }
   .th-footer-buttons .th-btn { padding: 8px 15px; font-size: 10px; }
-  .th-footer-column h4 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-  .th-footer-links a { display: block; color: #888888; font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
+  .th-footer-column h4 { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; color: ${textColor}; }
+  .th-footer-links a { display: block; color: ${accentTextColor}; font-size: 13px; margin-bottom: 8px; transition: color 0.3s; }
   .th-footer-links a:hover { color: ${accentColor}; }
-  .th-footer-hours p { color: #888888; font-size: 12px; margin-bottom: 5px; }
+  .th-footer-hours p { color: ${accentTextColor}; font-size: 12px; margin-bottom: 5px; }
   .th-footer-bottom { padding-top: 30px; display: flex; justify-content: space-between; align-items: center; }
-  .th-footer-legal a { color: #888888; font-size: 13px; margin-right: 30px; transition: color 0.3s; }
+  .th-footer-legal a { color: ${accentTextColor}; font-size: 13px; margin-right: 30px; transition: color 0.3s; }
   .th-footer-legal a:hover { color: ${accentColor}; }
   .th-chat-btn { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: ${accentColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 20px ${accentColor}66; z-index: 999; transition: transform 0.3s; }
   .th-chat-btn:hover { transform: scale(1.1); }
-  .th-chat-btn svg { width: 24px; height: 24px; fill: #ffffff; }
+  .th-chat-btn svg { width: 24px; height: 24px; fill: ${textColor}; }
   @media (max-width: 1200px) {
     .th-hero-container { grid-template-columns: 1fr; gap: 40px; }
     .th-quote-form { max-width: 450px; }
