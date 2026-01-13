@@ -585,6 +585,15 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   return (
     <div className={`contractor-builder ${isDarkMode ? 'dark' : ''}`}>
+      <style>{`
+        .template-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr) !important;
+          grid-template-rows: repeat(2, 1fr);
+          gap: 1rem;
+          max-width: 500px;
+        }
+      `}</style>
       {/* Form Panel */}
       <div className={`form-panel ${isDarkMode ? 'dark' : ''}`}>
         <h1 className="form-title">Website Builder</h1>

@@ -269,7 +269,8 @@ button, a {
 /* Template Grid */
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 8px;
 }
 
@@ -975,4 +976,80 @@ button, a {
 .form-panel.dark .export-to-repliq-btn:hover {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
   box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}
+
+/* Template Selector Styles - 2x2 Grid Layout */
+
+.template-selector {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.template-title {
+  color: #8b9dc3;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+/* 2x2 Grid Layout */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1rem;
+  max-width: 500px;
+}
+
+.template-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 2px solid rgba(51, 65, 85, 0.6);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 120px;
+}
+
+.template-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.template-card:active {
+  transform: translateY(0);
+}
+
+.template-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.template-name {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 640px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    max-width: 100%;
+  }
+  
+  .template-card {
+    min-height: 100px;
+  }
 }
