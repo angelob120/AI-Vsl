@@ -398,12 +398,62 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     URL.revokeObjectURL(url);
   };
 
-  // Generate standalone HTML file
+  // Generate standalone HTML file - matches the TemplateGeneral look
   const generateStandaloneHTML = (formData, images, templateId) => {
-    const primaryColor = formData?.primaryColor || '#1a3a5c';
-    const accentColor = formData?.accentColor || '#c9a227';
+    const primaryColor = formData?.primaryColor || '#0a0a0a';
+    const accentColor = formData?.accentColor || '#ff4d00';
     const textColor = formData?.textColor || '#ffffff';
     const accentTextColor = formData?.accentTextColor || '#cccccc';
+    
+    // Service image mapping for realistic images
+    const getServiceImage = (service, index) => {
+      const serviceImageMap = {
+        'kitchen': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
+        'bathroom': 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600',
+        'remodel': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+        'renovation': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+        'addition': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+        'deck': 'https://images.unsplash.com/photo-1591825729269-caeb344f6df2?w=600',
+        'roof': 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600',
+        'paint': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600',
+        'floor': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+        'electric': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600',
+        'plumb': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600',
+        'hvac': 'https://images.unsplash.com/photo-1631545806609-c8bff4a1a0f5?w=600',
+        'landscap': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+        'window': 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?w=600',
+        'door': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+        'concrete': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+        'fence': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600',
+        'siding': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+        'drywall': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+        'home': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+        'building': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600'
+      };
+      
+      const defaultImages = [
+        'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600',
+        'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600',
+        'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600'
+      ];
+      
+      const serviceLower = service.toLowerCase();
+      for (const [keyword, url] of Object.entries(serviceImageMap)) {
+        if (serviceLower.includes(keyword)) return url;
+      }
+      return defaultImages[index % defaultImages.length];
+    };
+
+    // Get services or defaults
+    const services = formData?.services && formData.services.length > 0 
+      ? formData.services 
+      : ['Service 1', 'Service 2', 'Service 3', 'Service 4'];
+    
+    // Get gallery images or use hero/about as fallback
+    const galleryImages = images?.gallery && images.gallery.length > 0 
+      ? images.gallery 
+      : [images?.hero, images?.about].filter(Boolean);
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -411,135 +461,621 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${formData?.companyName || 'Business Website'}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: ${primaryColor}; color: ${textColor}; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      background: ${primaryColor}; 
+      color: ${textColor}; 
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
     
-    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px 20px; position: relative; overflow: hidden; }
-    .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -20)} 100%); }
-    .hero-bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; }
-    .hero-content { position: relative; z-index: 1; max-width: 900px; }
-    .logo { width: 120px; height: 120px; border-radius: 20px; object-fit: contain; margin-bottom: 30px; background: rgba(255,255,255,0.1); padding: 10px; }
-    .company-name { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; margin-bottom: 16px; line-height: 1.1; }
-    .tagline { font-size: clamp(1.1rem, 2.5vw, 1.4rem); color: ${accentTextColor}; margin-bottom: 30px; max-width: 600px; }
-    .cta-btn { display: inline-block; padding: 16px 40px; background: ${accentColor}; color: ${getContrastColor(accentColor)}; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s; }
-    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(10px);
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo img {
+      height: 45px;
+      width: auto;
+      object-fit: contain;
+    }
+    .logo-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: ${textColor};
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 30px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: ${accentTextColor};
+      transition: color 0.3s;
+    }
+    .nav-links a:hover {
+      color: ${accentColor};
+    }
+    .cta-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: ${accentColor};
+      color: ${textColor};
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px ${accentColor}66;
+    }
+    .phone-btn {
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: ${textColor};
+    }
+    .phone-btn:hover {
+      border-color: ${accentColor};
+      color: ${accentColor};
+    }
     
-    .section { padding: 80px 20px; }
-    .section-title { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 50px; }
-    .section-title span { color: ${accentColor}; }
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 40px 80px;
+      position: relative;
+      background: linear-gradient(135deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 50%, rgba(10,10,10,0.4) 100%), 
+                  ${images?.hero ? `url(${images.hero})` : `url(https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920)`} center/cover;
+    }
+    .hero-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 60px;
+      align-items: center;
+    }
+    .hero-content h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .hero-content p {
+      font-size: 18px;
+      color: ${accentTextColor};
+      margin-bottom: 30px;
+      max-width: 500px;
+    }
     
-    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
-    .service-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s, border-color 0.2s; }
-    .service-card:hover { transform: translateY(-4px); border-color: ${accentColor}; }
-    .service-icon { font-size: 2.5rem; margin-bottom: 16px; }
-    .service-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
-    .service-desc { color: ${accentTextColor}; font-size: 0.95rem; line-height: 1.6; }
+    /* Quote Form */
+    .quote-form {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+    .form-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .form-header img {
+      height: 50px;
+      margin-bottom: 15px;
+    }
+    .form-header h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: ${accentTextColor};
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: ${textColor};
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: ${accentColor};
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .form-submit {
+      width: 100%;
+      padding: 14px;
+      background: ${accentColor};
+      color: ${textColor};
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .form-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px ${accentColor}66;
+    }
     
-    .about { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; max-width: 1200px; margin: 0 auto; align-items: center; }
-    .about-image { border-radius: 20px; overflow: hidden; aspect-ratio: 4/3; }
-    .about-image img { width: 100%; height: 100%; object-fit: cover; }
-    .about-content h2 { font-size: 2.5rem; margin-bottom: 20px; }
-    .about-content p { color: ${accentTextColor}; line-height: 1.8; margin-bottom: 16px; }
-    .stat-row { display: flex; gap: 40px; margin-top: 30px; }
-    .stat-item .stat-value { font-size: 2.5rem; font-weight: 800; color: ${accentColor}; }
-    .stat-item .stat-label { color: ${accentTextColor}; font-size: 0.9rem; }
+    /* Trust Badges */
+    .trust-badges {
+      background: ${primaryColor};
+      padding: 30px 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .badges-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: ${accentTextColor};
+    }
+    .badge-icon {
+      font-size: 18px;
+    }
     
-    .contact { background: rgba(255,255,255,0.03); }
-    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 900px; margin: 0 auto; text-align: center; }
-    .contact-item { padding: 30px; }
-    .contact-icon { font-size: 2rem; margin-bottom: 12px; color: ${accentColor}; }
-    .contact-label { font-size: 0.85rem; color: ${accentTextColor}; margin-bottom: 4px; }
-    .contact-value { font-size: 1.1rem; font-weight: 600; }
-    .contact-value a { color: ${textColor}; text-decoration: none; }
-    .contact-value a:hover { color: ${accentColor}; }
+    /* Section Styles */
+    .section {
+      padding: 80px 40px;
+      background: ${primaryColor};
+    }
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: ${accentTextColor};
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+    }
+    .section-title span {
+      color: ${accentColor};
+    }
     
-    .footer { text-align: center; padding: 40px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .footer p { color: ${accentTextColor}; font-size: 0.9rem; }
+    /* Services Grid */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .service-card {
+      position: relative;
+      aspect-ratio: 4/3;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .service-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .service-card:hover img {
+      transform: scale(1.1);
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+      z-index: 1;
+    }
+    .service-card-label {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .service-card-label h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .service-arrow {
+      width: 20px;
+      height: 20px;
+      background: ${accentColor};
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
     
+    /* About Section */
+    .about-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .about-image {
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+    .about-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .about-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, ${accentColor}33, ${primaryColor});
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+    }
+    .about-content h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .about-content h2 span {
+      color: ${accentColor};
+    }
+    .about-content p {
+      color: ${accentTextColor};
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+    .stats-row {
+      display: flex;
+      gap: 40px;
+      margin-top: 30px;
+    }
+    .stat-item .stat-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: ${accentColor};
+      line-height: 1;
+    }
+    .stat-item .stat-label {
+      font-size: 13px;
+      color: ${accentTextColor};
+      margin-top: 5px;
+    }
+    
+    /* Gallery/Work Section */
+    .work-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    .work-item {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .work-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .work-item:hover img {
+      transform: scale(1.1);
+    }
+    
+    /* Contact Section */
+    .contact-section {
+      background: rgba(255,255,255,0.03);
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .contact-item {
+      padding: 30px;
+    }
+    .contact-icon {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: ${accentColor};
+    }
+    .contact-label {
+      font-size: 12px;
+      color: ${accentTextColor};
+      margin-bottom: 5px;
+    }
+    .contact-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .contact-value a {
+      color: ${textColor};
+      transition: color 0.3s;
+    }
+    .contact-value a:hover {
+      color: ${accentColor};
+    }
+    
+    /* Footer */
+    .footer {
+      background: ${primaryColor};
+      padding: 40px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    .footer p {
+      font-size: 14px;
+      color: ${accentTextColor};
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .quote-form {
+        max-width: 450px;
+      }
+      .about-container {
+        grid-template-columns: 1fr;
+      }
+      .work-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
     @media (max-width: 768px) {
-      .about { grid-template-columns: 1fr; }
-      .stat-row { flex-wrap: wrap; gap: 20px; }
+      .header {
+        padding: 15px 20px;
+      }
+      .nav-links {
+        display: none;
+      }
+      .hero {
+        padding: 100px 20px 60px;
+      }
+      .section {
+        padding: 60px 20px;
+      }
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .work-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .stats-row {
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      ${images?.logo ? `<img src="${images.logo}" alt="${formData?.companyName || 'Logo'}">` : ''}
+      <span class="logo-text">${formData?.companyName || 'Company Name'}</span>
+    </div>
+    <div class="header-right">
+      <nav class="nav-links">
+        <a href="#services">Services</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a href="tel:${formData?.phone || ''}" class="cta-btn phone-btn">📞 ${formData?.phone || 'Call Us'}</a>
+    </div>
+  </header>
+
   <!-- Hero Section -->
   <section class="hero">
-    <div class="hero-bg">
-      ${images?.hero ? `<img src="${images.hero}" alt="Hero Background">` : ''}
+    <div class="hero-container">
+      <div class="hero-content">
+        <h1>${formData?.companyName || 'Your Business'}</h1>
+        <p>${formData?.tagline || 'Professional services you can trust. Quality work, honest prices, and exceptional results.'}</p>
+        <a href="tel:${formData?.phone || ''}" class="cta-btn">📞 Call Now</a>
+      </div>
+      <div class="quote-form">
+        <div class="form-header">
+          ${images?.logo ? `<img src="${images.logo}" alt="Logo">` : ''}
+          <h3>Get A Free Quote</h3>
+        </div>
+        <form>
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" placeholder="John Smith">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" placeholder="(555) 555-1234">
+          </div>
+          <div class="form-group">
+            <label>Message *</label>
+            <textarea placeholder="Tell us about your project..."></textarea>
+          </div>
+          <button type="submit" class="form-submit">Send Request</button>
+        </form>
+      </div>
     </div>
-    <div class="hero-content">
-      ${images?.logo ? `<img src="${images.logo}" alt="Logo" class="logo">` : ''}
-      <h1 class="company-name">${formData?.companyName || 'Your Business'}</h1>
-      <p class="tagline">${formData?.tagline || 'Your tagline goes here'}</p>
-      <a href="tel:${formData?.phone || ''}" class="cta-btn">📞 Call Now</a>
+  </section>
+
+  <!-- Trust Badges -->
+  <section class="trust-badges">
+    <div class="badges-container">
+      <div class="badge"><span class="badge-icon">📍</span> 100% Local</div>
+      <div class="badge"><span class="badge-icon">🕐</span> ${formData?.yearsExperience || '10'}+ Years Experience</div>
+      <div class="badge"><span class="badge-icon">🏆</span> High Quality</div>
+      <div class="badge"><span class="badge-icon">✓</span> Licensed & Insured</div>
+      <div class="badge"><span class="badge-icon">⭐</span> 5-Star Rated</div>
     </div>
   </section>
 
   <!-- Services Section -->
-  ${(formData?.services && formData.services.length > 0) ? `
-  <section class="section">
-    <h2 class="section-title">Our <span>Services</span></h2>
-    <div class="services-grid">
-      ${formData.services.map((service, i) => `
-        <div class="service-card">
-          <div class="service-icon">${['🔧', '⚡', '🏠', '🛠️', '✨', '💼'][i % 6]}</div>
-          <h3 class="service-name">${service}</h3>
-          <p class="service-desc">Professional ${service.toLowerCase()} services tailored to your needs.</p>
+  <section class="section" id="services">
+    <div class="section-container">
+      <p class="section-label">What We Do Best</p>
+      <h2 class="section-title">Our <span>Services</span></h2>
+      <div class="services-grid">
+        ${services.map((service, i) => `
+          <div class="service-card">
+            <img src="${getServiceImage(service, i)}" alt="${service}">
+            <div class="service-card-label">
+              <h3>${service}</h3>
+              <span class="service-arrow">→</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="section" id="about">
+    <div class="section-container">
+      <div class="about-container">
+        <div class="about-image">
+          ${images?.about 
+            ? `<img src="${images.about}" alt="About Us">` 
+            : images?.hero 
+              ? `<img src="${images.hero}" alt="About Us">`
+              : `<div class="about-placeholder">🏢</div>`
+          }
         </div>
-      `).join('')}
+        <div class="about-content">
+          <h2>About <span>${formData?.companyName || 'Us'}</span></h2>
+          <p>Led by ${formData?.ownerName || 'our experienced team'}, we bring ${formData?.yearsExperience || 'years of'} experience to every project. Our commitment to quality and customer satisfaction has made us a trusted name in the industry.</p>
+          <p>We take pride in delivering exceptional results that exceed expectations. Contact us today to discuss your project!</p>
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-value">${formData?.yearsExperience || '10'}+</div>
+              <div class="stat-label">Years Experience</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">500+</div>
+              <div class="stat-label">Projects Completed</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">100%</div>
+              <div class="stat-label">Satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  ${galleryImages.length > 0 ? `
+  <!-- Work/Gallery Section -->
+  <section class="section">
+    <div class="section-container">
+      <p class="section-label">Our Portfolio</p>
+      <h2 class="section-title">Recent <span>Work</span></h2>
+      <div class="work-grid">
+        ${galleryImages.slice(0, 8).map((img, i) => `
+          <div class="work-item">
+            <img src="${img}" alt="Project ${i + 1}">
+          </div>
+        `).join('')}
+      </div>
     </div>
   </section>
   ` : ''}
 
-  <!-- About Section -->
-  <section class="section">
-    <div class="about">
-      <div class="about-image">
-        ${images?.about ? `<img src="${images.about}" alt="About Us">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${accentColor}33,${primaryColor});display:flex;align-items:center;justify-content:center;font-size:4rem;">🏢</div>`}
-      </div>
-      <div class="about-content">
-        <h2>About <span style="color:${accentColor}">${formData?.companyName || 'Us'}</span></h2>
-        <p>Led by ${formData?.ownerName || 'our team'}, we bring ${formData?.yearsExperience || 'years of'} experience to every project. Our commitment to quality and customer satisfaction has made us a trusted name in the industry.</p>
-        <p>We take pride in delivering exceptional results that exceed expectations. Contact us today to discuss your project!</p>
-        <div class="stat-row">
-          <div class="stat-item">
-            <div class="stat-value">${formData?.yearsExperience || '10'}+</div>
-            <div class="stat-label">Years Experience</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">500+</div>
-            <div class="stat-label">Projects Completed</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">100%</div>
-            <div class="stat-label">Satisfaction</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Contact Section -->
-  <section class="section contact">
-    <h2 class="section-title">Get In <span>Touch</span></h2>
-    <div class="contact-grid">
-      <div class="contact-item">
-        <div class="contact-icon">📞</div>
-        <div class="contact-label">Phone</div>
-        <div class="contact-value"><a href="tel:${formData?.phone || ''}">${formData?.phone || 'N/A'}</a></div>
-      </div>
-      <div class="contact-item">
-        <div class="contact-icon">📧</div>
-        <div class="contact-label">Email</div>
-        <div class="contact-value"><a href="mailto:${formData?.email || ''}">${formData?.email || 'N/A'}</a></div>
-      </div>
-      <div class="contact-item">
-        <div class="contact-icon">📍</div>
-        <div class="contact-label">Address</div>
-        <div class="contact-value">${formData?.address || 'N/A'}</div>
+  <section class="section contact-section" id="contact">
+    <div class="section-container">
+      <h2 class="section-title" style="text-align: center;">Get In <span>Touch</span></h2>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="contact-icon">📞</div>
+          <div class="contact-label">Phone</div>
+          <div class="contact-value"><a href="tel:${formData?.phone || ''}">${formData?.phone || 'N/A'}</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📧</div>
+          <div class="contact-label">Email</div>
+          <div class="contact-value"><a href="mailto:${formData?.email || ''}">${formData?.email || 'N/A'}</a></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div class="contact-label">Address</div>
+          <div class="contact-value">${formData?.address || 'N/A'}</div>
+        </div>
       </div>
     </div>
   </section>
