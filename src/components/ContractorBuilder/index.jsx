@@ -430,33 +430,50 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
 
   // Download PNG screenshot of the current website preview
   const handleDownloadPNG = async () => {
-    const previewElement = document.querySelector('.preview-panel');
-    if (!previewElement) {
-      alert('No preview available to capture.');
-      return;
-    }
-
     setIsCapturing(true);
     
     try {
-      // Find the actual template content inside the preview panel
-      const templateContent = previewElement.querySelector('[class*="template-"], .tg-container, .th-container, .tb-container, .tp-container');
-      const elementToCapture = templateContent || previewElement;
+      // Create a temporary container to render the template (same approach as ArchiveHistory)
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '1400px';
+      tempContainer.style.background = '#ffffff';
+      tempContainer.style.zIndex = '-1';
+      document.body.appendChild(tempContainer);
+
+      // Get the currently selected template component
+      const template = getTemplateById(selectedTemplate);
+      const TemplateComponent = template.component;
+
+      // Render the template to the temp container
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(tempContainer);
       
-      // Capture the preview panel with full scroll height
-      const canvas = await html2canvas(elementToCapture, {
-        scale: 1.5, // Good balance between quality and file size
+      await new Promise((resolve) => {
+        root.render(
+          <div className="png-export-container" style={{ background: '#ffffff' }}>
+            <TemplateComponent formData={formData} images={images} />
+          </div>
+        );
+        setTimeout(resolve, 500); // Wait for render
+      });
+
+      // Capture the screenshot
+      const canvas = await html2canvas(tempContainer, {
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        width: elementToCapture.scrollWidth,
-        height: elementToCapture.scrollHeight,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        windowWidth: elementToCapture.scrollWidth,
-        windowHeight: elementToCapture.scrollHeight
+        width: tempContainer.scrollWidth,
+        height: tempContainer.scrollHeight
       });
+
+      // Cleanup
+      root.unmount();
+      document.body.removeChild(tempContainer);
 
       // Convert to blob and check size
       const maxSize = 1.5 * 1024 * 1024; // 1.5MB
