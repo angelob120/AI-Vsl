@@ -978,6 +978,32 @@ button, a {
   box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
 }
 
+/* Screenshot Button Styles */
+.screenshot-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+}
+
+.screenshot-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%) !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3) !important;
+}
+
+.screenshot-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* Download Buttons Row */
+.download-buttons-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.download-buttons-row .export-to-repliq-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
 /* Template Selector Styles - 2x2 Grid Layout */
 
 .template-selector {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { templates, getTemplateById } from './templates';
 import { Button } from '../shared';
 import { exportWebsitesCSV, downloadCSV } from '../../utils/csv';
@@ -61,6 +62,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [isLoadingLeads, setIsLoadingLeads] = useState(false);
   const [showDeleteAllWarning, setShowDeleteAllWarning] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     loadSavedWebsites();
@@ -404,12 +406,14 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
       const result = await archiveAndExport(savedWebsites);
       
       if (result.success) {
-        // Create CSV with Website Link, First Name, Company Name
-        const headers = ['Website Link', 'First Name', 'Company Name'];
+        // Create CSV with Website Link, First Name, Company Name, Email, Phone
+        const headers = ['Website Link', 'First Name', 'Company Name', 'Email', 'Phone'];
         const rows = savedWebsites.map(site => [
           site.link,
           site.formData?.ownerName || site.formData?.companyName || '',
-          site.formData?.companyName || ''
+          site.formData?.companyName || '',
+          site.formData?.email || '',
+          site.formData?.phone || ''
         ]);
 
         const filename = `contractor-leads-${new Date().toISOString().split('T')[0]}.csv`;
@@ -421,6 +425,80 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     } catch (error) {
       console.error('Download/archive error:', error);
       alert('Failed to archive and download. Please try again.');
+    }
+  };
+
+  // Download PNG screenshot of the current website preview
+  const handleDownloadPNG = async () => {
+    const previewElement = document.querySelector('.preview-panel');
+    if (!previewElement) {
+      alert('No preview available to capture.');
+      return;
+    }
+
+    setIsCapturing(true);
+    
+    try {
+      // Find the actual template content inside the preview panel
+      const templateContent = previewElement.querySelector('[class*="template-"], .tg-container, .th-container, .tb-container, .tp-container');
+      const elementToCapture = templateContent || previewElement;
+      
+      // Capture the preview panel with full scroll height
+      const canvas = await html2canvas(elementToCapture, {
+        scale: 1.5, // Good balance between quality and file size
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: elementToCapture.scrollWidth,
+        height: elementToCapture.scrollHeight,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: elementToCapture.scrollWidth,
+        windowHeight: elementToCapture.scrollHeight
+      });
+
+      // Convert to blob and check size
+      const maxSize = 1.5 * 1024 * 1024; // 1.5MB
+      
+      // Start with PNG
+      let blob = await new Promise((resolve) => {
+        canvas.toBlob((b) => resolve(b), 'image/png');
+      });
+
+      // If PNG is too large, use JPEG with compression
+      if (blob && blob.size > maxSize) {
+        let quality = 0.85;
+        while (blob.size > maxSize && quality > 0.3) {
+          blob = await new Promise((resolve) => {
+            canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+          });
+          quality -= 0.1;
+        }
+      }
+
+      if (!blob) {
+        throw new Error('Failed to generate image');
+      }
+
+      // Download the image
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const extension = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+      const companyName = formData.companyName?.replace(/[^a-z0-9]/gi, '-') || 'website';
+      link.href = url;
+      link.download = `${companyName}-website.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log(`✅ Screenshot saved: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+    } catch (error) {
+      console.error('Screenshot error:', error);
+      alert('Failed to capture screenshot. Please try again.');
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -1160,12 +1238,36 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
           
           {/* Download CSV Button */}
           {savedWebsites.length > 0 && (
+            <div className="download-buttons-row" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+              <button 
+                type="button"
+                className="export-to-repliq-btn"
+                onClick={handleDownloadLeadsCSV}
+              >
+                📥 Download CSV
+              </button>
+              <button 
+                type="button"
+                className="export-to-repliq-btn screenshot-btn"
+                onClick={handleDownloadPNG}
+                disabled={isCapturing}
+                style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed)', opacity: isCapturing ? 0.7 : 1 }}
+              >
+                {isCapturing ? '⏳ Capturing...' : '📸 Download PNG'}
+              </button>
+            </div>
+          )}
+          
+          {/* PNG Screenshot Button - Always visible for current preview */}
+          {savedWebsites.length === 0 && (
             <button 
               type="button"
-              className="export-to-repliq-btn"
-              onClick={handleDownloadLeadsCSV}
+              className="export-to-repliq-btn screenshot-btn"
+              onClick={handleDownloadPNG}
+              disabled={isCapturing}
+              style={{ background: 'linear-gradient(135deg, #2563eb, #7c3aed)', marginTop: '15px', opacity: isCapturing ? 0.7 : 1 }}
             >
-              📥 Download CSV
+              {isCapturing ? '⏳ Capturing...' : '📸 Download PNG Screenshot'}
             </button>
           )}
         </div>
