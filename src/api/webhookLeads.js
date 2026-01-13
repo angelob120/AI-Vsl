@@ -117,17 +117,16 @@ const formatPhoneNumber = (phone) => {
 
 /**
  * Map a webhook lead to form data format for the builder
+ * NOTE: GHL stores company names in firstName + lastName fields
  */
 export const mapLeadToFormData = (lead) => {
-  // Build owner name from firstName + lastName, but ONLY if they exist
-  // Don't use companyName as a fallback for ownerName
-  const ownerName = lead.ownerName || 
-    (lead.firstName || lead.lastName 
-      ? `${lead.firstName || ''} ${lead.lastName || ''}`.trim() 
-      : '');
+  // Company name: Use companyName if available, otherwise combine firstName + lastName
+  // (GHL often stores business names in the name fields)
+  const companyName = lead.companyName || 
+    `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || '';
   
-  // Company name should only come from companyName field
-  const companyName = lead.companyName || '';
+  // Owner name: Only use if explicitly provided in ownerName field
+  const ownerName = lead.ownerName || '';
   
   return {
     companyName: companyName,
