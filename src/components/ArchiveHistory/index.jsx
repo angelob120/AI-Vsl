@@ -31,8 +31,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const [isLoadingExports, setIsLoadingExports] = useState(true);
   const [downloadingExportId, setDownloadingExportId] = useState(null);
 
-  // View/Edit modal state
-  const [viewingSite, setViewingSite] = useState(null);
+  // Edit modal state
   const [editingSite, setEditingSite] = useState(null);
   const [editFormData, setEditFormData] = useState(null);
   const [editImages, setEditImages] = useState(null);
@@ -40,6 +39,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isCapturingPng, setIsCapturingPng] = useState(null);
   const [newService, setNewService] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
   const previewRef = useRef(null);
 
   // Load data on mount
@@ -107,10 +107,12 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     setDownloadingExportId(null);
   };
 
-  // Copy link to clipboard
-  const copyLink = async (link) => {
+  // Copy link to clipboard with feedback
+  const copyLink = async (link, siteId) => {
     try {
       await navigator.clipboard.writeText(link);
+      setCopiedId(siteId);
+      setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
       console.error('Copy failed:', error);
     }
@@ -126,15 +128,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  // ============ VIEW MODE ============
-  const handleView = (site) => {
-    setViewingSite(site);
-  };
-
-  const closeView = () => {
-    setViewingSite(null);
   };
 
   // ============ EDIT MODE ============
@@ -630,16 +623,13 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                       <div className="website-card-header">
                         <div className="website-name-row">
                           <h3 className="website-name">{site.formData?.companyName || 'Unnamed'}</h3>
-                          <a 
-                            href={site.link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="website-link-icon"
-                            title="Open website in new tab"
-                            onClick={(e) => e.stopPropagation()}
+                          <button 
+                            className={`website-link-icon ${copiedId === site.id ? 'copied' : ''}`}
+                            onClick={() => copyLink(site.link, site.id)}
+                            title={copiedId === site.id ? 'Copied!' : 'Copy link to clipboard'}
                           >
-                            🔗
-                          </a>
+                            {copiedId === site.id ? '✓' : '🔗'}
+                          </button>
                         </div>
                         <span className="website-template">{template.icon} {template.name}</span>
                       </div>
@@ -652,13 +642,15 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         <span className="batch-id">{site.batchId?.slice(-8)}</span>
                       </div>
                       <div className="website-card-actions">
-                        <button 
+                        <a 
+                          href={site.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="card-action-btn view-btn"
-                          onClick={() => handleView(site)}
-                          title="View Website"
+                          title="Open website in new tab"
                         >
                           👁️ View
-                        </button>
+                        </a>
                         <button 
                           className="card-action-btn edit-btn"
                           onClick={() => handleEdit(site)}
@@ -767,20 +759,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
           )}
         </div>
       </div>
-
-      {/* VIEW MODAL - Clean website preview */}
-      {viewingSite && (
-        <div className="view-modal-overlay" onClick={closeView}>
-          <div className="view-modal-container" onClick={e => e.stopPropagation()}>
-            <button className="view-modal-close" onClick={closeView}>
-              ✕ Close
-            </button>
-            <div className="view-modal-content">
-              {renderTemplate(viewingSite.formData, viewingSite.images, viewingSite.template)}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* EDIT MODAL - Builder with left panel */}
       {editingSite && editFormData && (
