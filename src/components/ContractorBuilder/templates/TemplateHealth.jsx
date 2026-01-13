@@ -1,213 +1,19 @@
 import React from 'react';
+import {
+  healthServiceImageMap,
+  healthDefaultServiceImages,
+  getServiceImage as getServiceImageHelper
+} from './serviceImages';
 
 /**
- * TemplateHealth - Universal Health & Medical Business Template
- * Features a dark, professional design that adapts to any health/medical niche
- * Works for: Dentists, Chiropractors, Med Spas, Physical Therapy, Dermatology, etc.
+ * TemplateHealth - Health & Medical Services Website Template
+ * Features a clean, professional design for healthcare providers
  * UPDATED: Now supports textColor and accentTextColor from formData
  */
 
-// Smart image matching system - maps keywords to relevant health/medical images
-const serviceImageMap = {
-  // Dental
-  'dental': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'dentist': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'teeth': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'tooth': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'cleaning': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'whitening': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'braces': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'orthodon': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'implant': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'crown': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'filling': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'root canal': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'veneer': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  'oral': 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600',
-  
-  // Chiropractic / Physical Therapy
-  'chiropract': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'spine': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'spinal': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'adjust': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'back pain': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'neck pain': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
-  'physical therapy': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'physiotherapy': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'rehab': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'mobility': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'sports medicine': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'injury': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  
-  // Med Spa / Aesthetics
-  'med spa': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'medspa': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'botox': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'filler': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'injection': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'laser': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'facial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'skin': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'anti-aging': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'rejuven': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'microneedling': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'chemical peel': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'hydrafacial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'coolsculpt': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'body contour': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  
-  // Dermatology
-  'dermatolog': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'acne': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'eczema': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'psoriasis': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'mole': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'rash': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  
-  // Eye Care
-  'eye': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'vision': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'optical': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'optometr': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'glasses': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'contact': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'lasik': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'cataract': 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  
-  // Massage / Wellness
-  'massage': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'wellness': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'relaxation': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'therapeutic': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'deep tissue': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'swedish': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'hot stone': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'aromatherapy': 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  
-  // Mental Health
-  'therapy': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'counseling': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'mental health': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'anxiety': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'depression': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'psychiatr': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  'psycholog': 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600',
-  
-  // Primary Care / General
-  'primary care': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'family medicine': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'checkup': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'check-up': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'physical': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'annual': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'preventive': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'vaccination': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'vaccine': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'immunization': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  
-  // Pediatrics
-  'pediatric': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
-  'child': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
-  'kids': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
-  'infant': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
-  'baby': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
-  
-  // Women's Health
-  'obgyn': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'ob-gyn': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'gynecolog': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'obstetric': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'pregnan': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'prenatal': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'women': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  'fertility': 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600',
-  
-  // Cardiology
-  'cardio': 'https://images.unsplash.com/photo-1628348070889-cb656235b4eb?w=600',
-  'heart': 'https://images.unsplash.com/photo-1628348070889-cb656235b4eb?w=600',
-  'blood pressure': 'https://images.unsplash.com/photo-1628348070889-cb656235b4eb?w=600',
-  'ekg': 'https://images.unsplash.com/photo-1628348070889-cb656235b4eb?w=600',
-  'ecg': 'https://images.unsplash.com/photo-1628348070889-cb656235b4eb?w=600',
-  
-  // Orthopedics
-  'orthopedic': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'joint': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'knee': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'hip': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'shoulder': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'bone': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  'fracture': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600',
-  
-  // Urgent Care
-  'urgent care': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600',
-  'walk-in': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600',
-  'emergency': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600',
-  'x-ray': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600',
-  'xray': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600',
-  
-  // Nutrition / Weight Loss
-  'nutrition': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600',
-  'diet': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600',
-  'weight loss': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600',
-  'weight management': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600',
-  'dietitian': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600',
-  
-  // Acupuncture / Alternative
-  'acupuncture': 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600',
-  'holistic': 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600',
-  'alternative': 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600',
-  'natural': 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600',
-  'integrative': 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600',
-  
-  // Lab / Testing
-  'lab': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-  'blood test': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-  'diagnostic': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-  'screening': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-  'test': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-  
-  // Hair Restoration
-  'hair': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
-  'hair loss': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
-  'hair restoration': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
-  'prp': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
-  
-  // General/Misc
-  'consultation': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'exam': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'treatment': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'procedure': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'care': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'health': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'medical': 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-};
-
-// Default fallback images for when no keyword matches
-const defaultServiceImages = [
-  'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=600',
-  'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=600',
-  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600',
-  'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
-  'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=600',
-  'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=600',
-  'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600',
-];
-
-// Function to find the best matching image for a service
-const getServiceImage = (serviceName, index) => {
-  const lowerName = serviceName.toLowerCase();
-  
-  // Check each keyword in our map
-  for (const [keyword, imageUrl] of Object.entries(serviceImageMap)) {
-    if (lowerName.includes(keyword)) {
-      return imageUrl;
-    }
-  }
-  
-  // Fallback to default images if no match
-  return defaultServiceImages[index % defaultServiceImages.length];
-};
+// Local wrapper for the shared getServiceImage helper
+const getServiceImage = (serviceName, index) => 
+  getServiceImageHelper(serviceName, index, healthServiceImageMap, healthDefaultServiceImages);
 
 function TemplateHealth({ formData, images }) {
   const data = formData;
@@ -855,5 +661,3 @@ const templateHealthStyles = (accentColor, primaryColor, textColor, accentTextCo
     .th-badges-container { justify-content: center; }
   }
 `;
-
-export default TemplateHealth;
