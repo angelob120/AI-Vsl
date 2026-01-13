@@ -326,6 +326,200 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     setIsCapturingPng(null);
   };
 
+  // ============ DOWNLOAD CODE ============
+  const handleDownloadCode = (site) => {
+    const companyName = site.formData?.companyName?.replace(/[^a-z0-9]/gi, '-') || 'website';
+    const templateId = site.template || 'general';
+    
+    // Generate standalone HTML with embedded styles and data
+    const htmlContent = generateStandaloneHTML(site.formData, site.images, templateId);
+    
+    // Create and download file
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${companyName}-website.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Generate standalone HTML file
+  const generateStandaloneHTML = (formData, images, templateId) => {
+    const primaryColor = formData?.primaryColor || '#1a3a5c';
+    const accentColor = formData?.accentColor || '#c9a227';
+    const textColor = formData?.textColor || '#ffffff';
+    const accentTextColor = formData?.accentTextColor || '#cccccc';
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${formData?.companyName || 'Business Website'}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: ${primaryColor}; color: ${textColor}; }
+    
+    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px 20px; position: relative; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -20)} 100%); }
+    .hero-bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; }
+    .hero-content { position: relative; z-index: 1; max-width: 900px; }
+    .logo { width: 120px; height: 120px; border-radius: 20px; object-fit: contain; margin-bottom: 30px; background: rgba(255,255,255,0.1); padding: 10px; }
+    .company-name { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; margin-bottom: 16px; line-height: 1.1; }
+    .tagline { font-size: clamp(1.1rem, 2.5vw, 1.4rem); color: ${accentTextColor}; margin-bottom: 30px; max-width: 600px; }
+    .cta-btn { display: inline-block; padding: 16px 40px; background: ${accentColor}; color: ${getContrastColor(accentColor)}; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; transition: transform 0.2s, box-shadow 0.2s; }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    
+    .section { padding: 80px 20px; }
+    .section-title { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 50px; }
+    .section-title span { color: ${accentColor}; }
+    
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
+    .service-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s, border-color 0.2s; }
+    .service-card:hover { transform: translateY(-4px); border-color: ${accentColor}; }
+    .service-icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .service-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+    .service-desc { color: ${accentTextColor}; font-size: 0.95rem; line-height: 1.6; }
+    
+    .about { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; max-width: 1200px; margin: 0 auto; align-items: center; }
+    .about-image { border-radius: 20px; overflow: hidden; aspect-ratio: 4/3; }
+    .about-image img { width: 100%; height: 100%; object-fit: cover; }
+    .about-content h2 { font-size: 2.5rem; margin-bottom: 20px; }
+    .about-content p { color: ${accentTextColor}; line-height: 1.8; margin-bottom: 16px; }
+    .stat-row { display: flex; gap: 40px; margin-top: 30px; }
+    .stat-item .stat-value { font-size: 2.5rem; font-weight: 800; color: ${accentColor}; }
+    .stat-item .stat-label { color: ${accentTextColor}; font-size: 0.9rem; }
+    
+    .contact { background: rgba(255,255,255,0.03); }
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 900px; margin: 0 auto; text-align: center; }
+    .contact-item { padding: 30px; }
+    .contact-icon { font-size: 2rem; margin-bottom: 12px; color: ${accentColor}; }
+    .contact-label { font-size: 0.85rem; color: ${accentTextColor}; margin-bottom: 4px; }
+    .contact-value { font-size: 1.1rem; font-weight: 600; }
+    .contact-value a { color: ${textColor}; text-decoration: none; }
+    .contact-value a:hover { color: ${accentColor}; }
+    
+    .footer { text-align: center; padding: 40px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .footer p { color: ${accentTextColor}; font-size: 0.9rem; }
+    
+    @media (max-width: 768px) {
+      .about { grid-template-columns: 1fr; }
+      .stat-row { flex-wrap: wrap; gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg">
+      ${images?.hero ? `<img src="${images.hero}" alt="Hero Background">` : ''}
+    </div>
+    <div class="hero-content">
+      ${images?.logo ? `<img src="${images.logo}" alt="Logo" class="logo">` : ''}
+      <h1 class="company-name">${formData?.companyName || 'Your Business'}</h1>
+      <p class="tagline">${formData?.tagline || 'Your tagline goes here'}</p>
+      <a href="tel:${formData?.phone || ''}" class="cta-btn">📞 Call Now</a>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  ${(formData?.services && formData.services.length > 0) ? `
+  <section class="section">
+    <h2 class="section-title">Our <span>Services</span></h2>
+    <div class="services-grid">
+      ${formData.services.map((service, i) => `
+        <div class="service-card">
+          <div class="service-icon">${['🔧', '⚡', '🏠', '🛠️', '✨', '💼'][i % 6]}</div>
+          <h3 class="service-name">${service}</h3>
+          <p class="service-desc">Professional ${service.toLowerCase()} services tailored to your needs.</p>
+        </div>
+      `).join('')}
+    </div>
+  </section>
+  ` : ''}
+
+  <!-- About Section -->
+  <section class="section">
+    <div class="about">
+      <div class="about-image">
+        ${images?.about ? `<img src="${images.about}" alt="About Us">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${accentColor}33,${primaryColor});display:flex;align-items:center;justify-content:center;font-size:4rem;">🏢</div>`}
+      </div>
+      <div class="about-content">
+        <h2>About <span style="color:${accentColor}">${formData?.companyName || 'Us'}</span></h2>
+        <p>Led by ${formData?.ownerName || 'our team'}, we bring ${formData?.yearsExperience || 'years of'} experience to every project. Our commitment to quality and customer satisfaction has made us a trusted name in the industry.</p>
+        <p>We take pride in delivering exceptional results that exceed expectations. Contact us today to discuss your project!</p>
+        <div class="stat-row">
+          <div class="stat-item">
+            <div class="stat-value">${formData?.yearsExperience || '10'}+</div>
+            <div class="stat-label">Years Experience</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">500+</div>
+            <div class="stat-label">Projects Completed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Satisfaction</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="section contact">
+    <h2 class="section-title">Get In <span>Touch</span></h2>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <div class="contact-icon">📞</div>
+        <div class="contact-label">Phone</div>
+        <div class="contact-value"><a href="tel:${formData?.phone || ''}">${formData?.phone || 'N/A'}</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📧</div>
+        <div class="contact-label">Email</div>
+        <div class="contact-value"><a href="mailto:${formData?.email || ''}">${formData?.email || 'N/A'}</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📍</div>
+        <div class="contact-label">Address</div>
+        <div class="contact-value">${formData?.address || 'N/A'}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>© ${new Date().getFullYear()} ${formData?.companyName || 'Business Name'}. All rights reserved.</p>
+  </footer>
+</body>
+</html>`;
+  };
+
+  // Helper function to adjust color brightness
+  const adjustColor = (hex, percent) => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+  };
+
+  // Helper function to get contrast color for text
+  const getContrastColor = (hex) => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? '#000000' : '#ffffff';
+  };
+
   // Render template for view/edit
   const renderTemplate = (formData, images, templateId) => {
     const template = getTemplateById(templateId || 'general');
@@ -434,7 +628,19 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                     />
                     <div className="website-card-content">
                       <div className="website-card-header">
-                        <h3 className="website-name">{site.formData?.companyName || 'Unnamed'}</h3>
+                        <div className="website-name-row">
+                          <h3 className="website-name">{site.formData?.companyName || 'Unnamed'}</h3>
+                          <a 
+                            href={site.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="website-link-icon"
+                            title="Open website in new tab"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            🔗
+                          </a>
+                        </div>
                         <span className="website-template">{template.icon} {template.name}</span>
                       </div>
                       <div className="website-meta">
@@ -467,6 +673,13 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                           title="Export as PNG"
                         >
                           {isCapturingPng === site.id ? '⏳' : '📸'} PNG
+                        </button>
+                        <button 
+                          className="card-action-btn code-btn"
+                          onClick={() => handleDownloadCode(site)}
+                          title="Download Code"
+                        >
+                          📦 Code
                         </button>
                       </div>
                     </div>
