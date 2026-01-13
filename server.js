@@ -487,6 +487,42 @@ app.get('/api/archive/stats', async (req, res) => {
   }
 });
 
+// Update an archived website (for edit functionality)
+app.put('/api/archive/websites/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { formData, images, template } = req.body;
+    
+    if (!formData || !images) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const result = await pool.query(`
+      UPDATE archived_websites 
+      SET form_data = $1, images = $2, template = $3
+      WHERE id = $4
+      RETURNING *
+    `, [JSON.stringify(formData), JSON.stringify(images), template || 'general', id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Archived website not found' });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      website: {
+        id: row.id, formData: row.form_data, images: row.images,
+        template: row.template || 'general', createdAt: row.created_at,
+        link: row.link, batchId: row.batch_id, archivedAt: row.archived_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Update archived website error:', error);
+    res.status(500).json({ error: 'Failed to update website', details: error.message });
+  }
+});
+
 // ==================== STATIC FILE SERVING ====================
 
 app.use(express.static(path.join(__dirname, 'build')));

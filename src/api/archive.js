@@ -112,3 +112,25 @@ export const getArchiveStats = async () => {
     };
   }
 };
+
+/**
+ * Update an archived website (for edit functionality)
+ */
+export const updateArchivedWebsite = async (id, updates) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/archive/websites/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating archived website:', error);
+    throw error;
+  }
+};
