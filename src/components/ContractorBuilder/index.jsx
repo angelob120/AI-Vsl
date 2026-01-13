@@ -851,18 +851,6 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
             />
           </div>
           
-          <div className="form-group">
-            <label className="form-label">Tagline</label>
-            <input
-              type="text"
-              name="tagline"
-              value={formData.tagline}
-              onChange={handleChange}
-              className={`form-input ${isDarkMode ? 'dark' : ''}`}
-              placeholder="Your company tagline"
-            />
-          </div>
-          
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Phone</label>
