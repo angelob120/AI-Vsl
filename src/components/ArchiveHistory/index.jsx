@@ -134,7 +134,11 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const handleEdit = (site) => {
     setEditingSite(site);
     setEditFormData({ ...site.formData });
-    setEditImages({ ...site.images });
+    // Ensure gallery array is initialized even if site.images.gallery is undefined
+    setEditImages({ 
+      ...site.images,
+      gallery: site.images?.gallery || []
+    });
     setEditTemplate(site.template || 'general');
   };
 
@@ -1050,6 +1054,36 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         </label>
                       )}
                     </div>
+                  </div>
+                  
+                  {/* Gallery Images */}
+                  <div className="edit-gallery-section">
+                    <label className="gallery-label">Gallery Images</label>
+                    <div className="edit-gallery-grid">
+                      {/* Existing gallery images */}
+                      {(editImages?.gallery || []).map((img, index) => (
+                        <div key={index} className="gallery-image-item">
+                          <img src={img} alt={`Gallery ${index + 1}`} />
+                          <button 
+                            type="button" 
+                            className="gallery-remove-btn"
+                            onClick={() => removeEditGalleryImage(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      {/* Add new gallery image button */}
+                      <label className="gallery-upload-btn">
+                        <span>+ Add Image</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleEditImageUpload('gallery', e)} 
+                        />
+                      </label>
+                    </div>
+                    <p className="gallery-hint">Add images to showcase your work in the gallery section</p>
                   </div>
                 </div>
               </div>
