@@ -33,7 +33,7 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
     // NEW: Text color customization
     textColor: '#ffffff',
     accentTextColor: '#cccccc',
-    services: ['Kitchen Remodels', 'Bathroom Renovations', 'Home Additions', 'Deck Building'],
+    services: [], // CHANGED: Empty array - user must add their own services
     yearsExperience: '25',
     address: '123 Main Street'
   });
@@ -463,11 +463,12 @@ export default function ContractorBuilder({ onNavigateToRepliq, isStandaloneSite
       }
     }
     
-    // Reset form with default values including new text colors
+    // Reset form with default values including new text colors and EMPTY services array
     setFormData({
       ...defaultContractorFormData,
       textColor: '#ffffff',
-      accentTextColor: '#cccccc'
+      accentTextColor: '#cccccc',
+      services: [] // CHANGED: Empty services array
     });
     setImages(defaultContractorImages);
     setSelectedTemplate('general');
