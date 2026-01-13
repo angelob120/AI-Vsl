@@ -7,7 +7,7 @@
   justify-content: space-between;
   margin-bottom: 14px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .form-panel.dark .section-header-row {
@@ -22,29 +22,34 @@
 
 /* Refresh Button */
 .refresh-leads-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #f3f4f6;
+  background: #ffffff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  color: #6b7280;
 }
 
 .refresh-leads-btn:hover {
-  background: #e5e7eb;
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 .refresh-leads-btn.dark {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .refresh-leads-btn.dark:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .refresh-leads-btn:disabled {
@@ -55,17 +60,19 @@
 /* No Leads Text */
 .no-leads-text {
   font-size: 13px;
-  color: #9ca3af;
+  color: #6b7280;
   text-align: center;
-  padding: 16px;
+  padding: 20px 16px;
   background: #f9fafb;
   border-radius: 10px;
   line-height: 1.6;
+  border: 1px solid #e5e7eb;
 }
 
 .no-leads-text.dark {
   color: rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .webhook-url {
@@ -85,78 +92,65 @@
   color: #04CFAF;
 }
 
-/* Leads List */
-.leads-list {
-  max-height: 200px;
+/* Webhook Leads List - FIXED class name */
+.webhook-leads-list {
+  max-height: 220px;
   overflow-y: auto;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  background: #fafafa;
+  background: #ffffff;
 }
 
-.leads-list.dark {
+.form-panel.dark .webhook-leads-list {
   border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-/* Lead Item */
-.lead-item {
+/* Webhook Lead Item - FIXED class name */
+.webhook-lead-item {
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 12px 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   border-bottom: 1px solid #f3f4f6;
+  gap: 10px;
 }
 
-.lead-item:last-child {
+.webhook-lead-item:last-child {
   border-bottom: none;
 }
 
-.lead-item:hover {
-  background: #f3f4f6;
+.webhook-lead-item:hover {
+  background: #f9fafb;
 }
 
-.lead-item.selected {
+.webhook-lead-item.selected {
   background: #eff6ff;
   border-left: 3px solid #3b82f6;
 }
 
-.lead-item.dark {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+/* Dark mode for webhook lead items */
+.webhook-lead-item.dark {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
-.lead-item.dark:hover {
-  background: rgba(255, 255, 255, 0.05);
+.webhook-lead-item.dark:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.lead-item.dark.selected {
-  background: rgba(4, 207, 175, 0.1);
+.webhook-lead-item.dark.selected {
+  background: rgba(4, 207, 175, 0.12);
   border-left-color: #04CFAF;
-}
-
-/* Lead Icon */
-.lead-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.lead-item.dark .lead-icon {
-  background: linear-gradient(135deg, #04CFAF, #60f5dc);
 }
 
 /* Lead Info */
 .lead-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .lead-name {
@@ -168,40 +162,42 @@
   text-overflow: ellipsis;
 }
 
-.lead-item.dark .lead-name {
+.webhook-lead-item.dark .lead-name {
   color: #ffffff;
 }
 
-.lead-date {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-top: 2px;
+.lead-detail {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.lead-item.dark .lead-date {
-  color: rgba(255, 255, 255, 0.4);
+.webhook-lead-item.dark .lead-detail {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Lead Delete Button */
 .lead-delete-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: #9ca3af;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   opacity: 0;
-  margin-left: 8px;
+  flex-shrink: 0;
 }
 
-.lead-item:hover .lead-delete-btn {
+.webhook-lead-item:hover .lead-delete-btn {
   opacity: 1;
 }
 
@@ -210,8 +206,13 @@
   color: #ef4444;
 }
 
-.lead-delete-btn.dark:hover {
+.webhook-lead-item.dark .lead-delete-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.webhook-lead-item.dark .lead-delete-btn:hover {
   background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
 }
 
 /* Leads Actions */
@@ -240,12 +241,13 @@
 
 .delete-all-leads-btn.dark {
   background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.25);
   color: #f87171;
 }
 
 .delete-all-leads-btn.dark:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Delete All Warning */
@@ -259,7 +261,7 @@
 
 .delete-all-warning.dark {
   background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.25);
 }
 
 .delete-all-warning p {
@@ -297,7 +299,7 @@
 
 .warning-cancel-btn {
   padding: 8px 16px;
-  background: transparent;
+  background: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   color: #6b7280;
@@ -309,15 +311,18 @@
 
 .warning-cancel-btn:hover {
   background: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 .delete-all-warning.dark .warning-cancel-btn {
+  background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.7);
 }
 
 .delete-all-warning.dark .warning-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Section Actions */
@@ -329,9 +334,9 @@
 .section-action-btn {
   width: 28px;
   height: 28px;
-  border: none;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  background: #f3f4f6;
+  background: #ffffff;
   cursor: pointer;
   font-size: 12px;
   display: flex;
@@ -341,47 +346,52 @@
 }
 
 .section-action-btn:hover {
-  background: #e5e7eb;
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 .section-action-btn.danger:hover {
   background: #fee2e2;
+  border-color: #fca5a5;
 }
 
 .section-action-btn.dark {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .section-action-btn.dark:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .section-action-btn.dark.danger:hover {
   background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-/* Scrollbar Styling for Leads List */
-.leads-list::-webkit-scrollbar {
+/* Scrollbar Styling for Webhook Leads List */
+.webhook-leads-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.leads-list::-webkit-scrollbar-track {
+.webhook-leads-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.leads-list::-webkit-scrollbar-thumb {
+.webhook-leads-list::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 3px;
 }
 
-.leads-list::-webkit-scrollbar-thumb:hover {
+.webhook-leads-list::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
 
-.leads-list.dark::-webkit-scrollbar-thumb {
+.form-panel.dark .webhook-leads-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.leads-list.dark::-webkit-scrollbar-thumb:hover {
+.form-panel.dark .webhook-leads-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
