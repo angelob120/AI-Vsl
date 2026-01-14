@@ -532,43 +532,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     setIsCapturingPng(null);
   };
 
-    // Remove VSL mapping for a single website
-  const removeVslForSite = async (site) => {
-    const originUrl = site?.link;
-    if (!originUrl) return;
-
-    if (!confirm('Remove VSL link for this website?')) return;
-
-    try {
-      const response = await fetch('/api/vsl/mappings', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originUrl })
-      });
-
-      // If backend supports it, great. If not, still remove locally.
-      if (!response.ok) {
-        console.warn('Backend did not delete single mapping (still removing locally).');
-      }
-
-      setVslMappings(prev => {
-        const next = { ...prev };
-        delete next[originUrl];
-        return next;
-      });
-    } catch (error) {
-      console.error('Error removing single VSL mapping:', error);
-
-      // Still remove locally so the UI updates
-      setVslMappings(prev => {
-        const next = { ...prev };
-        delete next[originUrl];
-        return next;
-      });
-    }
-  };
-
-
   // Render template for view/edit
   const renderTemplate = (formData, images, templateId) => {
     const template = getTemplateById(templateId || 'general');
@@ -723,26 +686,15 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                           {isCapturingPng === site.id ? '⏳' : '📸'} PNG
                         </button>
                         {getVslLink(site) && (
-                          <>
-                            <a
-                              href={getVslLink(site)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="card-action-btn vsl-btn"
-                              title="Open VSL Video"
-                            >
-                              🎬 VSL
-                            </a>
-
-                            <button
-                              type="button"
-                              className="card-action-btn vsl-remove-btn"
-                              onClick={() => removeVslForSite(site)}
-                              title="Remove VSL Link"
-                            >
-                              🗑️ Remove
-                            </button>
-                          </>
+                          <a
+                            href={getVslLink(site)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="card-action-btn vsl-btn"
+                            title="Open VSL Video"
+                          >
+                            🎬 VSL
+                          </a>
                         )}
                       </div>
                     </div>

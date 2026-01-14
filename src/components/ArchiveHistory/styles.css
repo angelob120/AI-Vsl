@@ -1449,27 +1449,3 @@
 }
 
 
-/* Remove VSL Button on Card */
-.card-action-btn.vsl-remove-btn {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.card-action-btn.vsl-remove-btn:hover {
-  background: rgba(239, 68, 68, 0.22);
-  border-color: rgba(239, 68, 68, 0.55);
-  transform: translateY(-1px);
-}
-
-.archived-website-card.dark .card-action-btn.vsl-remove-btn {
-  background: rgba(239, 68, 68, 0.14);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #f87171;
-}
-
-.archived-website-card.dark .card-action-btn.vsl-remove-btn:hover {
-  background: rgba(239, 68, 68, 0.24);
-  border-color: rgba(239, 68, 68, 0.6);
-}
