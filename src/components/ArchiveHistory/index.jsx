@@ -129,6 +129,8 @@ export default function ArchiveHistory({ isDarkMode = false }) {
       const videoLinkIdx = headers.findIndex(h => h.toLowerCase().includes('videolink'));
       const firstNameIdx = headers.findIndex(h => h.toLowerCase().includes('firstname'));
       const lastNameIdx = headers.findIndex(h => h.toLowerCase().includes('lastname'));
+      const videoPreviewIdx = headers.findIndex(h => h.toLowerCase().includes('videopreview'));
+      const backgroundImageLinkIdx = headers.findIndex(h => h.toLowerCase().includes('backgroundimagelink'));
 
       if (originUrlIdx === -1 || videoLinkIdx === -1) {
         alert('CSV must contain "OriginUrls" and "VideoLink" columns');
@@ -146,12 +148,16 @@ export default function ArchiveHistory({ isDarkMode = false }) {
         const videoLink = values[videoLinkIdx]?.trim();
         const firstName = firstNameIdx !== -1 ? values[firstNameIdx]?.trim() : '';
         const lastName = lastNameIdx !== -1 ? values[lastNameIdx]?.trim() : '';
+        const videoPreview = videoPreviewIdx !== -1 ? values[videoPreviewIdx]?.trim() : '';
+        const backgroundImageLink = backgroundImageLinkIdx !== -1 ? values[backgroundImageLinkIdx]?.trim() : '';
         
         if (originUrl && videoLink) {
           mappings[originUrl] = {
             videoLink,
             firstName,
             lastName,
+            videoPreview,
+            backgroundImageLink,
             uploadedAt: new Date().toISOString()
           };
           matchedCount++;
@@ -246,6 +252,27 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const getVslLink = (site) => {
     const mapping = vslMappings[site.link];
     return mapping?.videoLink || null;
+  };
+
+  // Get full VSL data for a website
+  const getVslData = (site) => {
+    return vslMappings[site.link] || null;
+  };
+
+  // Copy link and open in new tab
+  const copyAndOpen = async (link, type, siteId) => {
+    if (!link) return;
+    
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedId(`${siteId}-${type}`);
+      setTimeout(() => setCopiedId(null), 2000);
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Copy failed:', error);
+      // Still open even if copy fails
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Load VSL imports history
@@ -774,15 +801,31 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         </button>
                         {getVslLink(site) && (
                           <>
-                            <a
-                              href={getVslLink(site)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="card-action-btn vsl-btn"
-                              title="Open VSL Video"
+                            <button
+                              className={`card-action-btn vsl-btn ${copiedId === `${site.id}-videoLink` ? 'copied' : ''}`}
+                              onClick={() => copyAndOpen(getVslData(site)?.videoLink, 'videoLink', site.id)}
+                              title={copiedId === `${site.id}-videoLink` ? 'Copied & Opened!' : 'Copy & Open Video Link'}
                             >
-                              🎬 VSL
-                            </a>
+                              {copiedId === `${site.id}-videoLink` ? '✅' : '🎬'} VSL
+                            </button>
+                            {getVslData(site)?.videoPreview && (
+                              <button
+                                className={`card-action-btn vsl-preview-btn ${copiedId === `${site.id}-videoPreview` ? 'copied' : ''}`}
+                                onClick={() => copyAndOpen(getVslData(site)?.videoPreview, 'videoPreview', site.id)}
+                                title={copiedId === `${site.id}-videoPreview` ? 'Copied & Opened!' : 'Copy & Open Video Preview'}
+                              >
+                                {copiedId === `${site.id}-videoPreview` ? '✅' : '👁️'} Preview
+                              </button>
+                            )}
+                            {getVslData(site)?.backgroundImageLink && (
+                              <button
+                                className={`card-action-btn vsl-bg-btn ${copiedId === `${site.id}-backgroundImage` ? 'copied' : ''}`}
+                                onClick={() => copyAndOpen(getVslData(site)?.backgroundImageLink, 'backgroundImage', site.id)}
+                                title={copiedId === `${site.id}-backgroundImage` ? 'Copied & Opened!' : 'Copy & Open Background Image'}
+                              >
+                                {copiedId === `${site.id}-backgroundImage` ? '✅' : '🖼️'} BG
+                              </button>
+                            )}
                             <button
                               className={`card-action-btn remove-vsl-btn ${removingVslForSite === site.id ? 'loading' : ''}`}
                               onClick={() => removeVslFromSite(site)}

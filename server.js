@@ -102,7 +102,9 @@ const initDatabase = async () => {
         first_name VARCHAR(255),
         last_name VARCHAR(255),
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        import_id VARCHAR(255)
+        import_id VARCHAR(255),
+        video_preview TEXT,
+        background_image_link TEXT
       )
     `);
 
@@ -115,6 +117,32 @@ const initDatabase = async () => {
           WHERE table_name = 'vsl_mappings' AND column_name = 'import_id'
         ) THEN 
           ALTER TABLE vsl_mappings ADD COLUMN import_id VARCHAR(255);
+        END IF;
+      END $$;
+    `);
+
+    // Migration: Add video_preview column if it doesn't exist
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'vsl_mappings' AND column_name = 'video_preview'
+        ) THEN 
+          ALTER TABLE vsl_mappings ADD COLUMN video_preview TEXT;
+        END IF;
+      END $$;
+    `);
+
+    // Migration: Add background_image_link column if it doesn't exist
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'vsl_mappings' AND column_name = 'background_image_link'
+        ) THEN 
+          ALTER TABLE vsl_mappings ADD COLUMN background_image_link TEXT;
         END IF;
       END $$;
     `);
@@ -606,7 +634,9 @@ app.get('/api/vsl/mappings', async (req, res) => {
         videoLink: row.video_link,
         firstName: row.first_name,
         lastName: row.last_name,
-        uploadedAt: row.uploaded_at
+        uploadedAt: row.uploaded_at,
+        videoPreview: row.video_preview,
+        backgroundImageLink: row.background_image_link
       };
       totalUploaded++;
       if (!lastUpload || new Date(row.uploaded_at) > new Date(lastUpload)) {
@@ -655,15 +685,17 @@ app.post('/api/vsl/mappings', async (req, res) => {
       let insertedCount = 0;
       for (const [originUrl, data] of Object.entries(mappings)) {
         await client.query(`
-          INSERT INTO vsl_mappings (origin_url, video_link, first_name, last_name, uploaded_at, import_id)
-          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5)
+          INSERT INTO vsl_mappings (origin_url, video_link, first_name, last_name, uploaded_at, import_id, video_preview, background_image_link)
+          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7)
           ON CONFLICT (origin_url) DO UPDATE SET
             video_link = $2,
             first_name = $3,
             last_name = $4,
             uploaded_at = CURRENT_TIMESTAMP,
-            import_id = $5
-        `, [originUrl, data.videoLink, data.firstName || null, data.lastName || null, importId]);
+            import_id = $5,
+            video_preview = $6,
+            background_image_link = $7
+        `, [originUrl, data.videoLink, data.firstName || null, data.lastName || null, importId, data.videoPreview || null, data.backgroundImageLink || null]);
         insertedCount++;
       }
 
