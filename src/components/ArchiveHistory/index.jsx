@@ -46,6 +46,10 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const [vslMappings, setVslMappings] = useState({});
   const [isUploadingVsl, setIsUploadingVsl] = useState(false);
   const [vslUploadStats, setVslUploadStats] = useState(null);
+  const [vslImports, setVslImports] = useState([]);
+  const [isLoadingVslImports, setIsLoadingVslImports] = useState(true);
+  const [downloadingVslImportId, setDownloadingVslImportId] = useState(null);
+  const [removingVslForSite, setRemovingVslForSite] = useState(null);
   const vslFileInputRef = useRef(null);
 
   // Load data on mount
@@ -54,6 +58,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     loadArchivedWebsites();
     loadExportHistory();
     loadVslMappings();
+    loadVslImports();
   }, []);
 
   // Reload archived websites when search or filter changes
@@ -107,49 +112,40 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     setIsUploadingVsl(true);
     
     try {
-      // Dynamically import PapaParse for robust CSV parsing
-      const Papa = await import('papaparse');
       const text = await file.text();
+      // Normalize line endings (handle CRLF, CR, and LF)
+      const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const lines = normalizedText.split('\n').filter(line => line.trim());
       
-      // Parse CSV with PapaParse - handles quoted fields, commas in values, etc.
-      const parseResult = Papa.default.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header) => header.trim()
-      });
-
-      if (parseResult.errors.length > 0) {
-        console.warn('CSV parse warnings:', parseResult.errors);
-      }
-
-      if (!parseResult.data || parseResult.data.length === 0) {
+      if (lines.length < 2) {
         alert('CSV file appears to be empty or has no data rows');
         setIsUploadingVsl(false);
         return;
       }
 
-      // Find the correct column names (case-insensitive)
-      const headers = parseResult.meta.fields || [];
-      const originUrlCol = headers.find(h => h.toLowerCase().includes('originurl'));
-      const videoLinkCol = headers.find(h => h.toLowerCase().includes('videolink'));
-      const firstNameCol = headers.find(h => h.toLowerCase().includes('firstname'));
-      const lastNameCol = headers.find(h => h.toLowerCase().includes('lastname'));
+      // Parse header row
+      const headers = parseCSVLine(lines[0]);
+      const originUrlIdx = headers.findIndex(h => h.toLowerCase().includes('originurl'));
+      const videoLinkIdx = headers.findIndex(h => h.toLowerCase().includes('videolink'));
+      const firstNameIdx = headers.findIndex(h => h.toLowerCase().includes('firstname'));
+      const lastNameIdx = headers.findIndex(h => h.toLowerCase().includes('lastname'));
 
-      if (!originUrlCol || !videoLinkCol) {
-        alert(`CSV must contain "OriginUrls" and "VideoLink" columns.\n\nFound columns: ${headers.join(', ')}`);
+      if (originUrlIdx === -1 || videoLinkIdx === -1) {
+        alert('CSV must contain "OriginUrls" and "VideoLink" columns');
         setIsUploadingVsl(false);
         return;
       }
 
-      // Create mappings from parsed data
+      // Parse data rows and create mappings
       const mappings = {};
       let matchedCount = 0;
       
-      for (const row of parseResult.data) {
-        const originUrl = row[originUrlCol]?.trim();
-        const videoLink = row[videoLinkCol]?.trim();
-        const firstName = firstNameCol ? row[firstNameCol]?.trim() : '';
-        const lastName = lastNameCol ? row[lastNameCol]?.trim() : '';
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const originUrl = values[originUrlIdx]?.trim();
+        const videoLink = values[videoLinkIdx]?.trim();
+        const firstName = firstNameIdx !== -1 ? values[firstNameIdx]?.trim() : '';
+        const lastName = lastNameIdx !== -1 ? values[lastNameIdx]?.trim() : '';
         
         if (originUrl && videoLink) {
           mappings[originUrl] = {
@@ -162,17 +158,15 @@ export default function ArchiveHistory({ isDarkMode = false }) {
         }
       }
 
-      if (matchedCount === 0) {
-        alert('No valid VSL mappings found in CSV. Make sure OriginUrls and VideoLink columns have data.');
-        setIsUploadingVsl(false);
-        return;
-      }
-
-      // Save to backend
+      // Save to backend with CSV data for history
       const response = await fetch('/api/vsl/mappings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mappings })
+        body: JSON.stringify({ 
+          mappings,
+          filename: file.name,
+          csvData: text
+        })
       });
 
       if (response.ok) {
@@ -182,13 +176,15 @@ export default function ArchiveHistory({ isDarkMode = false }) {
           lastUpload: new Date().toISOString(),
           filename: file.name
         });
+        // Reload imports history
+        loadVslImports();
         alert(`Successfully uploaded ${matchedCount} VSL mappings!`);
       } else {
         throw new Error('Failed to save VSL mappings');
       }
     } catch (error) {
       console.error('VSL upload error:', error);
-      alert('Failed to upload VSL CSV. Please check the file format.\n\nError: ' + error.message);
+      alert('Failed to upload VSL CSV. Please check the file format.');
     }
     
     setIsUploadingVsl(false);
@@ -198,30 +194,127 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     }
   };
 
+  // Helper to parse CSV line handling quoted values and escaped quotes ("")
+  const parseCSVLine = (line) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    let i = 0;
+    
+    while (i < line.length) {
+      const char = line[i];
+      
+      if (inQuotes) {
+        if (char === '"') {
+          // Check if this is an escaped quote ("") or end of quoted field
+          if (i + 1 < line.length && line[i + 1] === '"') {
+            // Escaped quote - add single quote and skip next char
+            current += '"';
+            i += 2;
+            continue;
+          } else {
+            // End of quoted field
+            inQuotes = false;
+            i++;
+            continue;
+          }
+        } else {
+          current += char;
+        }
+      } else {
+        if (char === '"') {
+          // Start of quoted field
+          inQuotes = true;
+        } else if (char === ',') {
+          // End of field
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      i++;
+    }
+    
+    // Don't forget the last field
+    result.push(current);
+    
+    return result;
+  };
+
   // Get VSL link for a website
   const getVslLink = (site) => {
     const mapping = vslMappings[site.link];
     return mapping?.videoLink || null;
   };
 
-  // Clear all VSL mappings
-  const clearVslMappings = async () => {
-    if (!confirm('Are you sure you want to clear all VSL mappings?')) return;
-    
+  // Load VSL imports history
+  const loadVslImports = async () => {
+    setIsLoadingVslImports(true);
     try {
-      const response = await fetch('/api/vsl/mappings', {
+      const response = await fetch('/api/vsl/imports');
+      if (response.ok) {
+        const data = await response.json();
+        setVslImports(data.imports || []);
+      }
+    } catch (error) {
+      console.error('Error loading VSL imports:', error);
+    }
+    setIsLoadingVslImports(false);
+  };
+
+  // Re-download a past VSL import
+  const handleVslImportDownload = async (importRecord) => {
+    setDownloadingVslImportId(importRecord.id);
+    try {
+      const response = await fetch(`/api/vsl/imports/${importRecord.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.import?.csvData) {
+          // Create blob and download
+          const blob = new Blob([data.import.csvData], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = data.import.filename || `vsl-import-${importRecord.id}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
+      }
+    } catch (error) {
+      console.error('VSL import download error:', error);
+      alert('Failed to download VSL import. Please try again.');
+    }
+    setDownloadingVslImportId(null);
+  };
+
+  // Remove VSL link from a specific site
+  const removeVslFromSite = async (site) => {
+    if (!confirm(`Remove VSL link from "${site.formData?.companyName || 'this website'}"?`)) return;
+    
+    setRemovingVslForSite(site.id);
+    try {
+      const response = await fetch(`/api/vsl/mappings/${encodeURIComponent(site.link)}`, {
         method: 'DELETE'
       });
       
       if (response.ok) {
-        setVslMappings({});
-        setVslUploadStats(null);
-        alert('VSL mappings cleared successfully');
+        // Update local state to remove the mapping
+        setVslMappings(prev => {
+          const updated = { ...prev };
+          delete updated[site.link];
+          return updated;
+        });
+      } else {
+        throw new Error('Failed to remove VSL mapping');
       }
     } catch (error) {
-      console.error('Error clearing VSL mappings:', error);
-      alert('Failed to clear VSL mappings');
+      console.error('Error removing VSL mapping:', error);
+      alert('Failed to remove VSL link. Please try again.');
     }
+    setRemovingVslForSite(null);
   };
 
   // Re-download a past CSV export (produces identical CSV from original batch)
@@ -680,15 +773,25 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                           {isCapturingPng === site.id ? '⏳' : '📸'} PNG
                         </button>
                         {getVslLink(site) && (
-                          <a
-                            href={getVslLink(site)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="card-action-btn vsl-btn"
-                            title="Open VSL Video"
-                          >
-                            🎬 VSL
-                          </a>
+                          <>
+                            <a
+                              href={getVslLink(site)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="card-action-btn vsl-btn"
+                              title="Open VSL Video"
+                            >
+                              🎬 VSL
+                            </a>
+                            <button
+                              className={`card-action-btn remove-vsl-btn ${removingVslForSite === site.id ? 'loading' : ''}`}
+                              onClick={() => removeVslFromSite(site)}
+                              disabled={removingVslForSite === site.id}
+                              title="Remove VSL Link"
+                            >
+                              {removingVslForSite === site.id ? '⏳' : '❌'}
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -760,12 +863,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                     {vslUploadStats.filename && <span>File: {vslUploadStats.filename}</span>}
                   </div>
                 )}
-                <button 
-                  className="vsl-clear-btn"
-                  onClick={clearVslMappings}
-                >
-                  🗑️ Clear All VSL Data
-                </button>
               </div>
             ) : (
               <div className="vsl-empty-state">
@@ -774,6 +871,56 @@ export default function ArchiveHistory({ isDarkMode = false }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Past VSL Imports History */}
+        <div className="vsl-imports-section">
+          <h3 className="vsl-imports-title">📋 Past VSL Imports</h3>
+          {isLoadingVslImports ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <span>Loading import history...</span>
+            </div>
+          ) : vslImports.length === 0 ? (
+            <div className="vsl-imports-empty">
+              <span>No VSL imports yet. Upload a CSV to get started.</span>
+            </div>
+          ) : (
+            <table className={`vsl-imports-table ${isDarkMode ? 'dark' : ''}`}>
+              <thead>
+                <tr>
+                  <th>Upload Date</th>
+                  <th>Filename</th>
+                  <th>Mappings</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vslImports.map(imp => (
+                  <tr key={imp.id}>
+                    <td className="import-date">{formatDate(imp.uploadedAt)}</td>
+                    <td className="import-filename">{imp.filename}</td>
+                    <td className="import-count">
+                      <span className="count-badge">{imp.mappingsCount}</span>
+                    </td>
+                    <td className="import-actions">
+                      <button
+                        className={`redownload-btn ${downloadingVslImportId === imp.id ? 'loading' : ''}`}
+                        onClick={() => handleVslImportDownload(imp)}
+                        disabled={downloadingVslImportId === imp.id}
+                      >
+                        {downloadingVslImportId === imp.id ? (
+                          <>⏳ Downloading...</>
+                        ) : (
+                          <>📥 Download CSV</>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

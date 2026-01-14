@@ -1447,3 +1447,172 @@
   background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
   border-color: transparent;
 }
+
+/* Remove VSL Button */
+.card-action-btn.remove-vsl-btn {
+  flex: 0 0 auto;
+  width: 36px;
+  min-width: 36px;
+  padding: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.card-action-btn.remove-vsl-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.card-action-btn.remove-vsl-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.archived-website-card.dark .card-action-btn.remove-vsl-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.archived-website-card.dark .card-action-btn.remove-vsl-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* ==================== VSL Imports History Section ==================== */
+
+.vsl-imports-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vsl-imports-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 16px 0;
+}
+
+.vsl-imports-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}
+
+.vsl-imports-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.vsl-imports-table th,
+.vsl-imports-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vsl-imports-table th {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.vsl-imports-table td {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.vsl-imports-table tr:last-child td {
+  border-bottom: none;
+}
+
+.vsl-imports-table tr:hover td {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.vsl-imports-table .import-date {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vsl-imports-table .import-filename {
+  font-family: monospace;
+  font-size: 13px;
+  color: #a78bfa;
+}
+
+.vsl-imports-table .import-count .count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.vsl-imports-table .import-actions {
+  text-align: right;
+}
+
+.vsl-imports-table .redownload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  color: #a78bfa;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vsl-imports-table .redownload-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+}
+
+.vsl-imports-table .redownload-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (max-width: 768px) {
+  .vsl-imports-table th,
+  .vsl-imports-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .vsl-imports-table .import-filename {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .vsl-imports-table .redownload-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

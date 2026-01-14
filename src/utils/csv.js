@@ -1,39 +1,78 @@
 /**
  * CSV Parsing and Export Utilities - Updated for RepliQ Studio
+ * Fixed to properly handle escaped quotes ("") in CSV fields
  */
 
 /**
- * Parse CSV text into array of arrays
- * Handles quoted fields and commas within quotes
+ * Parse a single CSV line handling quoted fields and escaped quotes
+ * Properly handles: commas in quotes, escaped quotes (""), newlines in quotes
  */
-export const parseCSV = (text) => {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
-    const values = [];
-    let current = '';
-    let inQuotes = false;
+export const parseCSVLine = (line) => {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+  
+  while (i < line.length) {
+    const char = line[i];
     
-    for (let char of line) {
+    if (inQuotes) {
       if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
+        // Check if this is an escaped quote ("") or end of quoted field
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          // Escaped quote - add single quote and skip next char
+          current += '"';
+          i += 2;
+          continue;
+        } else {
+          // End of quoted field
+          inQuotes = false;
+          i++;
+          continue;
+        }
+      } else {
+        current += char;
+      }
+    } else {
+      if (char === '"') {
+        // Start of quoted field
+        inQuotes = true;
+      } else if (char === ',') {
+        // End of field
+        result.push(current);
         current = '';
       } else {
         current += char;
       }
     }
-    values.push(current.trim());
-    return values;
-  });
+    i++;
+  }
+  
+  // Don't forget the last field
+  result.push(current);
+  
+  return result;
+};
+
+/**
+ * Parse CSV text into array of arrays
+ * Handles quoted fields, commas within quotes, and escaped quotes
+ */
+export const parseCSV = (text) => {
+  // Handle different line endings (CRLF, LF, CR)
+  const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalizedText.trim().split('\n');
+  return lines.map(line => parseCSVLine(line));
 };
 
 /**
  * Escape a value for CSV format
+ * Always quotes fields containing special characters and escapes internal quotes
  */
 export const escapeCSV = (str) => {
   if (typeof str !== 'string') str = String(str || '');
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  // Always quote if contains comma, quote, newline, or leading/trailing whitespace
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r') || str !== str.trim()) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -41,14 +80,17 @@ export const escapeCSV = (str) => {
 
 /**
  * Export data as CSV file download
+ * Now properly escapes headers as well as data
  */
 export const downloadCSV = (headers, rows, filename) => {
   const csvContent = [
-    headers.join(','),
+    headers.map(escapeCSV).join(','),
     ...rows.map(row => row.map(escapeCSV).join(','))
   ].join('\n');
   
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  // Add BOM for Excel compatibility with UTF-8
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

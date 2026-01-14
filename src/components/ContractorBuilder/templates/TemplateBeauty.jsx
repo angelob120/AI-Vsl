@@ -260,7 +260,7 @@ function TemplateBeauty({ formData, images }) {
               {data.headline || `${data.companyName || 'Where Beauty'} Meets Excellence`}
             </h1>
             <p className="tb-hero-text">
-              {data.tagline || `${data.companyName || 'Our Studio'} provides exceptional beauty services in a relaxing atmosphere. Let our talented team help you look and feel your absolute best.`}
+              Delivering high-quality services for every style. Focused on expert care, lasting results, and a refreshed look that boosts your confidence.
             </p>
           </div>
           <div className="tb-quote-form">
@@ -510,6 +510,24 @@ function TemplateBeauty({ formData, images }) {
                   Yes! We offer complimentary consultations for new clients and for any major services. This helps us understand your goals and recommend the best options for you.
                 </div>
               </div>
+              <div className="tb-faq-item">
+                <div className="tb-faq-question">
+                  <span className="tb-faq-icon">▼</span>
+                  What should I bring to my appointment?
+                </div>
+                <div className="tb-faq-answer">
+                  What should I bring to my appointment?
+                </div>
+              </div>
+              <div className="tb-faq-item">
+                <div className="tb-faq-question">
+                  <span className="tb-faq-icon">▼</span>
+                  What if I need to cancel or reschedule?
+                </div>
+                <div className="tb-faq-answer">
+                  What if I need to cancel or reschedule?
+                </div>
+              </div>
             </div>
           </div>
           <div className="tb-faq-image">
@@ -688,7 +706,7 @@ const templateBeautyStyles = (accentColor, primaryColor, textColor, accentTextCo
   .tb-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
   .tb-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .tb-phone-btn { font-size: 12px; padding: 8px 15px; }
-  .tb-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
+  .tb-hero { min-height: 60vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .tb-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .tb-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
   .tb-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
@@ -770,7 +788,7 @@ const templateBeautyStyles = (accentColor, primaryColor, textColor, accentTextCo
   .tb-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .tb-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tb-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .tb-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
+  .tb-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .tb-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
   .tb-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .tb-faq-question:hover { color: ${accentColor}; }
