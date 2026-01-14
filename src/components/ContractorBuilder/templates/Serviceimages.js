@@ -95,7 +95,7 @@ import {
   TRAINING_MAIN,
   WRITING_MAIN,
   PROFESSIONAL_GENERAL_MAIN,
-} from './serviceImageUrls.JS';
+} from './serviceImageUrls';
 
 
 // =============================================================================
