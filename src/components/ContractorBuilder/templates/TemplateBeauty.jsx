@@ -1,19 +1,190 @@
 import React from 'react';
-import {
-  beautyServiceImageMap,
-  beautyDefaultServiceImages,
-  getServiceImage as getServiceImageHelper
-} from 'serviceImages.js';
 
 /**
- * TemplateBeauty - Beauty & Salon Website Template
- * Features a modern, elegant design perfect for beauty services
+ * TemplateBeauty - Universal Beauty & Personal Care Business Template
+ * Features a dark, professional design that adapts to any beauty/wellness niche
+ * Works for: Hair Salons, Barber Shops, Nail Salons, Spas, Lash Studios, etc.
  * UPDATED: Now supports textColor and accentTextColor from formData
  */
 
-// Local wrapper for the shared getServiceImage helper
-const getServiceImage = (serviceName, index) => 
-  getServiceImageHelper(serviceName, index, beautyServiceImageMap, beautyDefaultServiceImages);
+// Smart image matching system - maps keywords to relevant beauty images
+const serviceImageMap = {
+  // Hair - General
+  'hair': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'haircut': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'cut': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'trim': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'style': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'styling': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'blowout': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'blow dry': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'updo': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  
+  // Hair Color
+  'color': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'colour': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'highlight': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'balayage': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'ombre': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'dye': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'tint': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'root': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'gloss': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'blonde': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'brunette': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  
+  // Hair Treatments
+  'keratin': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'treatment': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'deep condition': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'repair': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'straighten': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'perm': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  'relaxer': 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600',
+  
+  // Barber
+  'barber': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'fade': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'taper': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'beard': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'shave': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'line up': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'lineup': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'edge': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  'men': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+  
+  // Nails
+  'nail': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'manicure': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'pedicure': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'gel': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'acrylic': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'dip powder': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'shellac': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'nail art': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'polish': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  
+  // Lashes & Brows
+  'lash': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'eyelash': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'extension': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'lash lift': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'brow': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'eyebrow': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'microblad': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'lamination': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'wax': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'thread': 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  
+  // Makeup
+  'makeup': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'make up': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'cosmetic': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'bridal': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'wedding': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'special event': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'glam': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'contour': 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  
+  // Facial & Skincare
+  'facial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'skin': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'skincare': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'microderm': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'chemical peel': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'hydrafacial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'dermaplaning': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'exfoliat': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'acne': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'anti-aging': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  
+  // Spa & Massage
+  'spa': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'massage': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'relax': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'aromatherapy': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'hot stone': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'deep tissue': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'swedish': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'body wrap': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'scrub': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  
+  // Waxing & Hair Removal
+  'waxing': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  'hair removal': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  'laser': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  'sugaring': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  'brazilian': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  'bikini': 'https://images.unsplash.com/photo-1598524374912-6b0b0bdb6c85?w=600',
+  
+  // Tanning
+  'tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+  'tanning': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+  'spray tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+  'bronze': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+  'sunless': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+  
+  // Body Treatments
+  'body': 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600',
+  'cellulite': 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600',
+  'slimming': 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600',
+  'detox': 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=600',
+  
+  // Permanent Makeup
+  'permanent': 'https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=600',
+  'tattoo': 'https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=600',
+  'lip blush': 'https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=600',
+  'cosmetic tattoo': 'https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=600',
+  
+  // Extensions
+  'hair extension': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'weave': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'wig': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'install': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'sew in': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'tape in': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  'fusion': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600',
+  
+  // Kids
+  'kid': 'https://images.unsplash.com/photo-1596178060671-7a80dc0ed6b9?w=600',
+  'child': 'https://images.unsplash.com/photo-1596178060671-7a80dc0ed6b9?w=600',
+  'children': 'https://images.unsplash.com/photo-1596178060671-7a80dc0ed6b9?w=600',
+  
+  // General/Misc
+  'consult': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'appointment': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'service': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'beauty': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'studio': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+};
+
+// Default fallback images for when no keyword matches
+const defaultServiceImages = [
+  'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600',
+  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
+  'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',
+  'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600',
+  'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600',
+  'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600',
+  'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=600',
+  'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600',
+];
+
+// Function to find the best matching image for a service
+const getServiceImage = (serviceName, index) => {
+  const lowerName = serviceName.toLowerCase();
+  
+  // Check each keyword in our map
+  for (const [keyword, imageUrl] of Object.entries(serviceImageMap)) {
+    if (lowerName.includes(keyword)) {
+      return imageUrl;
+    }
+  }
+  
+  // Fallback to default images if no match
+  return defaultServiceImages[index % defaultServiceImages.length];
+};
 
 function TemplateBeauty({ formData, images }) {
   const data = formData;
@@ -660,3 +831,5 @@ const templateBeautyStyles = (accentColor, primaryColor, textColor, accentTextCo
     .tb-badges-container { justify-content: center; }
   }
 `;
+
+export default TemplateBeauty;

@@ -1,19 +1,200 @@
 import React from 'react';
-import {
-  professionalServiceImageMap,
-  professionalDefaultServiceImages,
-  getServiceImage as getServiceImageHelper
-} from 'serviceImages.js';
 
 /**
- * TemplateProfessional - Professional Services Website Template
- * Features a corporate, business-focused design
+ * TemplateProfessional - Universal Professional Services Business Template
+ * Features a dark, professional design that adapts to any professional service niche
+ * Works for: Accountants, Financial Advisors, Consultants, Real Estate, Insurance, IT Services, etc.
+ * (Excludes legal services)
  * UPDATED: Now supports textColor and accentTextColor from formData
  */
 
-// Local wrapper for the shared getServiceImage helper
-const getServiceImage = (serviceName, index) => 
-  getServiceImageHelper(serviceName, index, professionalServiceImageMap, professionalDefaultServiceImages);
+// Smart image matching system - maps keywords to relevant professional services images
+const serviceImageMap = {
+  // Accounting & Tax
+  'account': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'accounting': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'bookkeep': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'cpa': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'tax': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'audit': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'payroll': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'financial statement': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'quickbooks': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  
+  // Financial Planning & Advisory
+  'financial': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'wealth': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'investment': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'retire': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'portfolio': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'estate plan': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'fiduciary': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'advisor': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  '401k': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'ira': 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  
+  // Insurance
+  'insurance': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'life insurance': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'health insurance': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'auto insurance': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'home insurance': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'coverage': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'policy': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'claim': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  
+  // Real Estate
+  'real estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'realtor': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'property': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'home': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'house': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'buying': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'selling': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'listing': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'mortgage': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'refinance': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  'loan': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+  
+  // Business Consulting
+  'consult': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'strategy': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'business': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'management': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'operations': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'growth': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'planning': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'coaching': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'mentor': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  
+  // Marketing & Advertising
+  'marketing': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'advertising': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'digital': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'social media': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'seo': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'ppc': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'branding': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'content': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'campaign': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  
+  // IT & Technology
+  'it ': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'tech': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'computer': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'software': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'network': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'cyber': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'security': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'cloud': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'data': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'support': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'helpdesk': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  'managed service': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
+  
+  // Web & Design
+  'web': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'website': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'design': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'graphic': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'logo': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'creative': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'ui': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  'ux': 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=600',
+  
+  // Photography & Video
+  'photo': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'portrait': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'headshot': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'event': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'wedding': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'video': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  'production': 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600',
+  
+  // HR & Recruiting
+  'hr': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'human resource': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'recruit': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'staffing': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'hiring': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'talent': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'employee': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'workforce': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  
+  // Architecture & Engineering
+  'architect': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'engineer': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'blueprint': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'draft': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'cad': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  'structural': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+  
+  // Training & Education
+  'train': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'workshop': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'seminar': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'course': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'education': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'tutor': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  'learning': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600',
+  
+  // Notary & Admin
+  'notary': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'document': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'admin': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'virtual assistant': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'office': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  
+  // Translation & Writing
+  'translat': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  'interpret': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  'writing': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  'copywriting': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  'editor': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  'proofread': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600',
+  
+  // Project Management
+  'project': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'agile': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'scrum': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  
+  // General/Misc
+  'consult': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'meeting': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'analysis': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'report': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'review': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'assessment': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'service': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'professional': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+};
+
+// Default fallback images for when no keyword matches
+const defaultServiceImages = [
+  'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
+  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600',
+  'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=600',
+  'https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=600',
+  'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600',
+  'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600',
+];
+
+// Function to find the best matching image for a service
+const getServiceImage = (serviceName, index) => {
+  const lowerName = serviceName.toLowerCase();
+  
+  // Check each keyword in our map
+  for (const [keyword, imageUrl] of Object.entries(serviceImageMap)) {
+    if (lowerName.includes(keyword)) {
+      return imageUrl;
+    }
+  }
+  
+  // Fallback to default images if no match
+  return defaultServiceImages[index % defaultServiceImages.length];
+};
 
 function TemplateProfessional({ formData, images }) {
   const data = formData;
@@ -660,3 +841,5 @@ const templateProfessionalStyles = (accentColor, primaryColor, textColor, accent
     .tp-badges-container { justify-content: center; }
   }
 `;
+
+export default TemplateProfessional;
