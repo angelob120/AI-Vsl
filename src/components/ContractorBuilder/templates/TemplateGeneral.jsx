@@ -836,7 +836,7 @@ const templateGeneralStyles = (accentColor, primaryColor, textColor, accentTextC
   }
   @media (max-width: 768px) {
     .tg-nav { display: none; }
-    .tg-hero-title { font-size: 36px; }
+    .tg-hero-title { font-size: 50px; }
     .tg-services-grid, .tg-work-grid { grid-template-columns: repeat(2, 1fr); }
     .tg-reviews-grid { grid-template-columns: 1fr; }
     .tg-process-steps { flex-direction: column; gap: 30px; align-items: center; }
