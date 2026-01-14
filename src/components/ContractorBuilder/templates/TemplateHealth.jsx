@@ -3,7 +3,7 @@ import {
   healthServiceImageMap,
   healthDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from 'contractor-builder/src/components/ContractorBuilder/templates/serviceImages.js';
+} from 'serviceImages.js';
 
 /**
  * TemplateHealth - Health & Medical Services Website Template

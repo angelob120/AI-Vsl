@@ -3,7 +3,7 @@ import {
   professionalServiceImageMap,
   professionalDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from 'contractor-builder/src/components/ContractorBuilder/templates/serviceImages.js';
+} from 'serviceImages.js';
 
 /**
  * TemplateProfessional - Professional Services Website Template

@@ -3,7 +3,7 @@ import {
   generalServiceImageMap,
   generalDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from 'contractor-builder/src/components/ContractorBuilder/templates/serviceImages.js';
+} from 'serviceImages.js';
 
 /**
  * TemplateGeneral - Universal Contractor Website Template

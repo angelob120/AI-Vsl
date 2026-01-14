@@ -3,7 +3,7 @@ import {
   beautyServiceImageMap,
   beautyDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from 'contractor-builder/src/components/ContractorBuilder/templates/serviceImages.js';
+} from 'serviceImages.js';
 
 /**
  * TemplateBeauty - Beauty & Salon Website Template
