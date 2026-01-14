@@ -814,7 +814,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                                 onClick={() => copyAndOpen(getVslData(site)?.videoPreview, 'videoPreview', site.id)}
                                 title={copiedId === `${site.id}-videoPreview` ? 'Copied & Opened!' : 'Copy & Open Video Preview'}
                               >
-                                {copiedId === `${site.id}-videoPreview` ? '✅' : '👁️'} Preview
+                                {copiedId === `${site.id}-videoPreview` ? '✅' : '🎥'}
                               </button>
                             )}
                             {getVslData(site)?.backgroundImageLink && (
@@ -823,7 +823,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                                 onClick={() => copyAndOpen(getVslData(site)?.backgroundImageLink, 'backgroundImage', site.id)}
                                 title={copiedId === `${site.id}-backgroundImage` ? 'Copied & Opened!' : 'Copy & Open Background Image'}
                               >
-                                {copiedId === `${site.id}-backgroundImage` ? '✅' : '🖼️'} BG
+                                {copiedId === `${site.id}-backgroundImage` ? '✅' : '🏞️'}
                               </button>
                             )}
                             <button
