@@ -746,6 +746,17 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                 const template = getTemplateById(site.template || 'general');
                 return (
                   <div key={site.id} className={`archived-website-card ${isDarkMode ? 'dark' : ''}`}>
+                    {/* Remove VSL Button - Top Left Corner */}
+                    {getVslLink(site) && (
+                      <button
+                        className={`remove-vsl-corner-btn ${removingVslForSite === site.id ? 'loading' : ''}`}
+                        onClick={() => removeVslFromSite(site)}
+                        disabled={removingVslForSite === site.id}
+                        title="Remove VSL Link"
+                      >
+                        {removingVslForSite === site.id ? '⏳' : '✕'}
+                      </button>
+                    )}
                     <div 
                       className="website-color-bar"
                       style={{ 
@@ -826,14 +837,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                                 {copiedId === `${site.id}-backgroundImage` ? '✅' : '🏞️'}
                               </button>
                             )}
-                            <button
-                              className={`card-action-btn remove-vsl-btn ${removingVslForSite === site.id ? 'loading' : ''}`}
-                              onClick={() => removeVslFromSite(site)}
-                              disabled={removingVslForSite === site.id}
-                              title="Remove VSL Link"
-                            >
-                              {removingVslForSite === site.id ? '⏳' : '❌'}
-                            </button>
                           </>
                         )}
                       </div>
