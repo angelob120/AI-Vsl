@@ -46,6 +46,10 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const [vslMappings, setVslMappings] = useState({});
   const [isUploadingVsl, setIsUploadingVsl] = useState(false);
   const [vslUploadStats, setVslUploadStats] = useState(null);
+  const [vslImports, setVslImports] = useState([]);
+  const [isLoadingVslImports, setIsLoadingVslImports] = useState(true);
+  const [downloadingVslImportId, setDownloadingVslImportId] = useState(null);
+  const [removingVslForSite, setRemovingVslForSite] = useState(null);
   const vslFileInputRef = useRef(null);
 
   // Load data on mount
@@ -54,6 +58,7 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     loadArchivedWebsites();
     loadExportHistory();
     loadVslMappings();
+    loadVslImports();
   }, []);
 
   // Reload archived websites when search or filter changes
@@ -151,11 +156,15 @@ export default function ArchiveHistory({ isDarkMode = false }) {
         }
       }
 
-      // Save to backend
+      // Save to backend with CSV data for history
       const response = await fetch('/api/vsl/mappings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mappings })
+        body: JSON.stringify({ 
+          mappings,
+          filename: file.name,
+          csvData: text
+        })
       });
 
       if (response.ok) {
@@ -165,6 +174,8 @@ export default function ArchiveHistory({ isDarkMode = false }) {
           lastUpload: new Date().toISOString(),
           filename: file.name
         });
+        // Reload imports history
+        loadVslImports();
         alert(`Successfully uploaded ${matchedCount} VSL mappings!`);
       } else {
         throw new Error('Failed to save VSL mappings');
@@ -210,24 +221,73 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     return mapping?.videoLink || null;
   };
 
-  // Clear all VSL mappings
-  const clearVslMappings = async () => {
-    if (!confirm('Are you sure you want to clear all VSL mappings?')) return;
-    
+  // Load VSL imports history
+  const loadVslImports = async () => {
+    setIsLoadingVslImports(true);
     try {
-      const response = await fetch('/api/vsl/mappings', {
+      const response = await fetch('/api/vsl/imports');
+      if (response.ok) {
+        const data = await response.json();
+        setVslImports(data.imports || []);
+      }
+    } catch (error) {
+      console.error('Error loading VSL imports:', error);
+    }
+    setIsLoadingVslImports(false);
+  };
+
+  // Re-download a past VSL import
+  const handleVslImportDownload = async (importRecord) => {
+    setDownloadingVslImportId(importRecord.id);
+    try {
+      const response = await fetch(`/api/vsl/imports/${importRecord.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.import?.csvData) {
+          // Create blob and download
+          const blob = new Blob([data.import.csvData], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = data.import.filename || `vsl-import-${importRecord.id}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
+      }
+    } catch (error) {
+      console.error('VSL import download error:', error);
+      alert('Failed to download VSL import. Please try again.');
+    }
+    setDownloadingVslImportId(null);
+  };
+
+  // Remove VSL link from a specific site
+  const removeVslFromSite = async (site) => {
+    if (!confirm(`Remove VSL link from "${site.formData?.companyName || 'this website'}"?`)) return;
+    
+    setRemovingVslForSite(site.id);
+    try {
+      const response = await fetch(`/api/vsl/mappings/${encodeURIComponent(site.link)}`, {
         method: 'DELETE'
       });
       
       if (response.ok) {
-        setVslMappings({});
-        setVslUploadStats(null);
-        alert('VSL mappings cleared successfully');
+        // Update local state to remove the mapping
+        setVslMappings(prev => {
+          const updated = { ...prev };
+          delete updated[site.link];
+          return updated;
+        });
+      } else {
+        throw new Error('Failed to remove VSL mapping');
       }
     } catch (error) {
-      console.error('Error clearing VSL mappings:', error);
-      alert('Failed to clear VSL mappings');
+      console.error('Error removing VSL mapping:', error);
+      alert('Failed to remove VSL link. Please try again.');
     }
+    setRemovingVslForSite(null);
   };
 
   // Re-download a past CSV export (produces identical CSV from original batch)
@@ -686,15 +746,25 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                           {isCapturingPng === site.id ? '⏳' : '📸'} PNG
                         </button>
                         {getVslLink(site) && (
-                          <a
-                            href={getVslLink(site)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="card-action-btn vsl-btn"
-                            title="Open VSL Video"
-                          >
-                            🎬 VSL
-                          </a>
+                          <>
+                            <a
+                              href={getVslLink(site)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="card-action-btn vsl-btn"
+                              title="Open VSL Video"
+                            >
+                              🎬 VSL
+                            </a>
+                            <button
+                              className={`card-action-btn remove-vsl-btn ${removingVslForSite === site.id ? 'loading' : ''}`}
+                              onClick={() => removeVslFromSite(site)}
+                              disabled={removingVslForSite === site.id}
+                              title="Remove VSL Link"
+                            >
+                              {removingVslForSite === site.id ? '⏳' : '❌'}
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -766,12 +836,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                     {vslUploadStats.filename && <span>File: {vslUploadStats.filename}</span>}
                   </div>
                 )}
-                <button 
-                  className="vsl-clear-btn"
-                  onClick={clearVslMappings}
-                >
-                  🗑️ Clear All VSL Data
-                </button>
               </div>
             ) : (
               <div className="vsl-empty-state">
@@ -780,6 +844,56 @@ export default function ArchiveHistory({ isDarkMode = false }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Past VSL Imports History */}
+        <div className="vsl-imports-section">
+          <h3 className="vsl-imports-title">📋 Past VSL Imports</h3>
+          {isLoadingVslImports ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <span>Loading import history...</span>
+            </div>
+          ) : vslImports.length === 0 ? (
+            <div className="vsl-imports-empty">
+              <span>No VSL imports yet. Upload a CSV to get started.</span>
+            </div>
+          ) : (
+            <table className={`vsl-imports-table ${isDarkMode ? 'dark' : ''}`}>
+              <thead>
+                <tr>
+                  <th>Upload Date</th>
+                  <th>Filename</th>
+                  <th>Mappings</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vslImports.map(imp => (
+                  <tr key={imp.id}>
+                    <td className="import-date">{formatDate(imp.uploadedAt)}</td>
+                    <td className="import-filename">{imp.filename}</td>
+                    <td className="import-count">
+                      <span className="count-badge">{imp.mappingsCount}</span>
+                    </td>
+                    <td className="import-actions">
+                      <button
+                        className={`redownload-btn ${downloadingVslImportId === imp.id ? 'loading' : ''}`}
+                        onClick={() => handleVslImportDownload(imp)}
+                        disabled={downloadingVslImportId === imp.id}
+                      >
+                        {downloadingVslImportId === imp.id ? (
+                          <>⏳ Downloading...</>
+                        ) : (
+                          <>📥 Download CSV</>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

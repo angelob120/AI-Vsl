@@ -101,6 +101,18 @@ const initDatabase = async () => {
         video_link TEXT NOT NULL,
         first_name VARCHAR(255),
         last_name VARCHAR(255),
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        import_id VARCHAR(255)
+      )
+    `);
+
+    // VSL IMPORTS HISTORY TABLE - Stores history of all VSL CSV uploads
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS vsl_imports (
+        id VARCHAR(255) PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL,
+        mappings_count INTEGER NOT NULL,
+        csv_data TEXT NOT NULL,
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -603,10 +615,10 @@ app.get('/api/vsl/mappings', async (req, res) => {
   }
 });
 
-// Upload/Save VSL mappings (upsert)
+// Upload/Save VSL mappings (upsert) and save import history
 app.post('/api/vsl/mappings', async (req, res) => {
   try {
-    const { mappings } = req.body;
+    const { mappings, filename, csvData } = req.body;
     
     if (!mappings || typeof mappings !== 'object') {
       return res.status(400).json({ error: 'Invalid mappings data' });
@@ -616,26 +628,39 @@ app.post('/api/vsl/mappings', async (req, res) => {
     try {
       await client.query('BEGIN');
       
+      // Generate import ID
+      const importId = `vsl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Save import history if CSV data provided
+      if (csvData && filename) {
+        await client.query(`
+          INSERT INTO vsl_imports (id, filename, mappings_count, csv_data, uploaded_at)
+          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        `, [importId, filename, Object.keys(mappings).length, csvData]);
+      }
+      
       let insertedCount = 0;
       for (const [originUrl, data] of Object.entries(mappings)) {
         await client.query(`
-          INSERT INTO vsl_mappings (origin_url, video_link, first_name, last_name, uploaded_at)
-          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+          INSERT INTO vsl_mappings (origin_url, video_link, first_name, last_name, uploaded_at, import_id)
+          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5)
           ON CONFLICT (origin_url) DO UPDATE SET
             video_link = $2,
             first_name = $3,
             last_name = $4,
-            uploaded_at = CURRENT_TIMESTAMP
-        `, [originUrl, data.videoLink, data.firstName || null, data.lastName || null]);
+            uploaded_at = CURRENT_TIMESTAMP,
+            import_id = $5
+        `, [originUrl, data.videoLink, data.firstName || null, data.lastName || null, importId]);
         insertedCount++;
       }
 
       await client.query('COMMIT');
-      console.log(`✅ Uploaded ${insertedCount} VSL mappings`);
+      console.log(`✅ Uploaded ${insertedCount} VSL mappings (Import ID: ${importId})`);
 
       res.json({
         success: true,
         insertedCount,
+        importId,
         message: `Successfully saved ${insertedCount} VSL mappings`
       });
     } catch (error) {
@@ -650,19 +675,82 @@ app.post('/api/vsl/mappings', async (req, res) => {
   }
 });
 
-// Clear all VSL mappings
-app.delete('/api/vsl/mappings', async (req, res) => {
+// Get VSL import history
+app.get('/api/vsl/imports', async (req, res) => {
   try {
-    await pool.query('DELETE FROM vsl_mappings');
-    console.log('✅ Cleared all VSL mappings');
+    const result = await pool.query(`
+      SELECT id, filename, mappings_count, uploaded_at 
+      FROM vsl_imports 
+      ORDER BY uploaded_at DESC
+    `);
     
     res.json({
       success: true,
-      message: 'All VSL mappings cleared'
+      imports: result.rows.map(row => ({
+        id: row.id,
+        filename: row.filename,
+        mappingsCount: row.mappings_count,
+        uploadedAt: row.uploaded_at
+      }))
     });
   } catch (error) {
-    console.error('❌ Clear VSL mappings error:', error);
-    res.status(500).json({ error: 'Failed to clear VSL mappings', details: error.message });
+    console.error('❌ Get VSL imports error:', error);
+    res.status(500).json({ error: 'Failed to fetch VSL imports', details: error.message });
+  }
+});
+
+// Get a specific VSL import for re-download
+app.get('/api/vsl/imports/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM vsl_imports WHERE id = $1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Import not found' });
+    }
+    
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      import: {
+        id: row.id,
+        filename: row.filename,
+        mappingsCount: row.mappings_count,
+        csvData: row.csv_data,
+        uploadedAt: row.uploaded_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get VSL import by ID error:', error);
+    res.status(500).json({ error: 'Failed to fetch VSL import', details: error.message });
+  }
+});
+
+// Remove a single VSL mapping (unlink from website)
+app.delete('/api/vsl/mappings/:originUrl', async (req, res) => {
+  try {
+    const originUrl = decodeURIComponent(req.params.originUrl);
+    
+    const result = await pool.query(
+      'DELETE FROM vsl_mappings WHERE origin_url = $1 RETURNING *',
+      [originUrl]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'VSL mapping not found' });
+    }
+    
+    console.log(`✅ Removed VSL mapping for: ${originUrl}`);
+    res.json({
+      success: true,
+      message: 'VSL mapping removed successfully'
+    });
+  } catch (error) {
+    console.error('❌ Remove VSL mapping error:', error);
+    res.status(500).json({ error: 'Failed to remove VSL mapping', details: error.message });
   }
 });
 
