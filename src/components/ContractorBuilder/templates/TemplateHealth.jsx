@@ -283,7 +283,7 @@ function TemplateHealth({ formData, images }) {
               {data.headline || `${data.companyName || 'Quality Healthcare'} You Can Trust`}
             </h1>
             <p className="th-hero-text">
-              Delivering trusted health services for individuals and families. Focused on quality care, comfort, and personalized support to improve your well-being and peace of mind.
+              {data.tagline || `${data.companyName || 'Our Practice'} provides compassionate, personalized care to patients of all ages. Your health and wellness are our top priority.`}
             </p>
           </div>
           <div className="th-quote-form">
@@ -533,24 +533,6 @@ function TemplateHealth({ formData, images }) {
                   Yes! We are always welcoming new patients. Please arrive 15 minutes early for your first appointment to complete the necessary paperwork, or fill out our forms online beforehand.
                 </div>
               </div>
-              <div className="th-faq-item">
-                <div className="th-faq-question">
-                  <span className="th-faq-icon">▼</span>
-                  What should I bring to my appointment?
-                </div>
-                <div className="th-faq-answer">
-                  Yes! We are always welcoming new patients. Please arrive 15 minutes early for your first appointment to complete the necessary paperwork, or fill out our forms online beforehand.
-                </div>
-              </div>
-              <div className="th-faq-item">
-                <div className="th-faq-question">
-                  <span className="th-faq-icon">▼</span>
-                  What if I need to cancel or reschedule?
-                </div>
-                <div className="th-faq-answer">
-                  Yes! We are always welcoming new patients. Please arrive 15 minutes early for your first appointment to complete the necessary paperwork, or fill out our forms online beforehand.
-                </div>
-              </div>
             </div>
           </div>
           <div className="th-faq-image">
@@ -730,7 +712,7 @@ const templateHealthStyles = (accentColor, primaryColor, textColor, accentTextCo
   .th-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
   .th-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .th-phone-btn { font-size: 12px; padding: 8px 15px; }
-  .th-hero { min-height: 60vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
+  .th-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .th-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .th-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
   .th-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
@@ -812,7 +794,7 @@ const templateHealthStyles = (accentColor, primaryColor, textColor, accentTextCo
   .th-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .th-faq { padding: 80px 40px; background: ${primaryColor}; }
   .th-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .th-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
+  .th-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .th-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
   .th-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .th-faq-question:hover { color: ${accentColor}; }

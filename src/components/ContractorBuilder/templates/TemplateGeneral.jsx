@@ -274,7 +274,7 @@ function TemplateGeneral({ formData, images }) {
               {data.headline || `${data.companyName || 'Professional'} Services You Can Rely On`}
             </h1>
             <p className="tg-hero-text">
-              Delivering top-tier contracting solutions for homeowners. Specializing in durable, high-quality craftsmanship to enhance your property’s value, function, and curb appeal.
+              {data.tagline || `${data.companyName || 'Our Company'} provides high-quality, reliable services to homeowners and businesses across the area.`}
             </p>
           </div>
           <div className="tg-quote-form">
@@ -524,25 +524,6 @@ function TemplateGeneral({ formData, images }) {
                   No, we offer complimentary estimates to all prospective clients.
                 </div>
               </div>
-              <div className="tg-faq-item">
-                <div className="tg-faq-question">
-                  <span className="tg-faq-icon">▼</span>
-                  How soon can you start my project?
-                </div>
-                <div className="tg-faq-answer">
-                  No, we offer complimentary estimates to all prospective clients.
-                </div>
-              </div>
-              <div className="tg-faq-item">
-                <div className="tg-faq-question">
-                  <span className="tg-faq-icon">▼</span>
-                  Are you licensed and insured?
-                </div>
-                <div className="tg-faq-answer">
-                  No, we offer complimentary estimates to all prospective clients.
-                </div>
-              </div>
-
             </div>
           </div>
           <div className="tg-faq-image">
@@ -721,10 +702,10 @@ const templateGeneralStyles = (accentColor, primaryColor, textColor, accentTextC
   .tg-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
   .tg-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .tg-phone-btn { font-size: 12px; padding: 8px 15px; }
-  .tg-hero { min-height: 60vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
+  .tg-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .tg-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .tg-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
-  .tg-hero-title { font-family: 'Oswald', sans-serif; font-size: 55px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
+  .tg-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
   .tg-hero-text { font-size: 15px; color: ${accentTextColor}; max-width: 400px; line-height: 1.7; }
   .tg-quote-form { background: #ffffff; border-radius: 8px; padding: 30px; color: #333; }
   .tg-form-header { text-align: center; margin-bottom: 25px; }
@@ -803,7 +784,7 @@ const templateGeneralStyles = (accentColor, primaryColor, textColor, accentTextC
   .tg-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .tg-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tg-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .tg-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
+  .tg-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .tg-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
   .tg-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .tg-faq-question:hover { color: ${accentColor}; }

@@ -267,10 +267,10 @@ function TemplateProfessional({ formData, images }) {
         <div className="tp-hero-container">
           <div className="tp-hero-content">
             <h1 className="tp-hero-title">
-              {data.headline || `${data.companyName || 'Expert Solutions'}  For Your Success`}
+              {data.headline || `${data.companyName || 'Expert Solutions'} For Your Success`}
             </h1>
             <p className="tp-hero-text">
-              Delivering reliable professional services for individuals and businesses. Focused on expert guidance, clear communication, and results that help you move forward with confidence.
+              {data.tagline || `${data.companyName || 'Our Firm'} delivers personalized professional services with expertise you can trust. Let us help you achieve your goals and grow your success.`}
             </p>
           </div>
           <div className="tp-quote-form">
@@ -520,24 +520,6 @@ function TemplateProfessional({ formData, images }) {
                   Yes! We offer a complimentary initial consultation to discuss your needs, understand your goals, and determine how we can best help you. There's no obligation, and it's a great opportunity to see if we're the right fit.
                 </div>
               </div>
-              <div className="tp-faq-item">
-                <div className="tp-faq-question">
-                  <span className="tp-faq-icon">▼</span>
-                  How long does a service last?
-                </div>
-                <div className="tp-faq-answer">
-                  Yes! We offer a complimentary initial consultation to discuss your needs, understand your goals, and determine how we can best help you. There's no obligation, and it's a great opportunity to see if we're the right fit.
-                </div>
-              </div>
-              <div className="tp-faq-item">
-                <div className="tp-faq-question">
-                  <span className="tp-faq-icon">▼</span>
-                  What do you need from me to get started?
-                </div>
-                <div className="tp-faq-answer">
-                  Yes! We offer a complimentary initial consultation to discuss your needs, understand your goals, and determine how we can best help you. There's no obligation, and it's a great opportunity to see if we're the right fit.
-                </div>
-              </div>
             </div>
           </div>
           <div className="tp-faq-image">
@@ -716,7 +698,7 @@ const templateProfessionalStyles = (accentColor, primaryColor, textColor, accent
   .tp-btn-outline { background: transparent; color: ${accentColor}; border-color: ${accentColor}; }
   .tp-btn-outline:hover { background: ${accentColor}; color: ${textColor}; }
   .tp-phone-btn { font-size: 12px; padding: 8px 15px; }
-  .tp-hero { min-height: 60vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
+  .tp-hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 40px 60px; position: relative; }
   .tp-hero-overlay { position: absolute; top: 0; right: 0; bottom: 0; width: 60%; background: linear-gradient(135deg, transparent 0%, ${accentColor}30 50%, ${accentColor}50 100%); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%); }
   .tp-hero-container { max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 400px; gap: 80px; align-items: center; position: relative; z-index: 1; }
   .tp-hero-title { font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; color: ${textColor}; }
@@ -798,7 +780,7 @@ const templateProfessionalStyles = (accentColor, primaryColor, textColor, accent
   .tp-review-cta-stars { color: ${accentColor}; font-size: 26px; margin-bottom: 25px; }
   .tp-faq { padding: 80px 40px; background: ${primaryColor}; }
   .tp-faq-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-  .tp-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
+  .tp-faq-title { font-family: 'Playfair Display', serif; font-size: 34px; font-style: italic; font-weight: 400; margin-bottom: 30px; color: ${textColor}; }
   .tp-faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 18px 0; }
   .tp-faq-question { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 500; transition: color 0.3s; color: ${textColor}; }
   .tp-faq-question:hover { color: ${accentColor}; }
