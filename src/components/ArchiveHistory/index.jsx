@@ -113,7 +113,9 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     
     try {
       const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
+      // Normalize line endings (handle CRLF, CR, and LF)
+      const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const lines = normalizedText.split('\n').filter(line => line.trim());
       
       if (lines.length < 2) {
         alert('CSV file appears to be empty or has no data rows');
@@ -192,24 +194,49 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     }
   };
 
-  // Helper to parse CSV line handling quoted values
+  // Helper to parse CSV line handling quoted values and escaped quotes ("")
   const parseCSVLine = (line) => {
     const result = [];
     let current = '';
     let inQuotes = false;
+    let i = 0;
     
-    for (let i = 0; i < line.length; i++) {
+    while (i < line.length) {
       const char = line[i];
       
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
+      if (inQuotes) {
+        if (char === '"') {
+          // Check if this is an escaped quote ("") or end of quoted field
+          if (i + 1 < line.length && line[i + 1] === '"') {
+            // Escaped quote - add single quote and skip next char
+            current += '"';
+            i += 2;
+            continue;
+          } else {
+            // End of quoted field
+            inQuotes = false;
+            i++;
+            continue;
+          }
+        } else {
+          current += char;
+        }
       } else {
-        current += char;
+        if (char === '"') {
+          // Start of quoted field
+          inQuotes = true;
+        } else if (char === ',') {
+          // End of field
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
       }
+      i++;
     }
+    
+    // Don't forget the last field
     result.push(current);
     
     return result;
