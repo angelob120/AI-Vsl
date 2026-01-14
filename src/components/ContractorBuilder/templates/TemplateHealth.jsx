@@ -3,7 +3,7 @@ import {
   healthServiceImageMap,
   healthDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from './serviceImages';
+} from '/serviceImages.js';
 
 /**
  * TemplateHealth - Health & Medical Services Website Template

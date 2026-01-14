@@ -3,7 +3,7 @@ import {
   professionalServiceImageMap,
   professionalDefaultServiceImages,
   getServiceImage as getServiceImageHelper
-} from './serviceImages';
+} from '/serviceImages.js';
 
 /**
  * TemplateProfessional - Professional Services Website Template
