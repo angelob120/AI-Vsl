@@ -767,13 +767,24 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                       <div className="website-card-header">
                         <div className="website-name-row">
                           <h3 className="website-name">{site.formData?.companyName || 'Unnamed'}</h3>
-                          <button 
-                            className={`website-link-icon ${copiedId === site.id ? 'copied' : ''}`}
-                            onClick={() => copyLink(site.link, site.id)}
-                            title={copiedId === site.id ? 'Copied!' : 'Copy link to clipboard'}
-                          >
-                            {copiedId === site.id ? '✓' : '🔗'}
-                          </button>
+                          <div className="website-header-icons">
+                            <button 
+                              className={`website-link-icon ${copiedId === site.id ? 'copied' : ''}`}
+                              onClick={() => copyLink(site.link, site.id)}
+                              title={copiedId === site.id ? 'Copied!' : 'Copy link to clipboard'}
+                            >
+                              {copiedId === site.id ? '✓' : '🔗'}
+                            </button>
+                            {getVslLink(site) && (
+                              <button
+                                className={`website-link-icon vsl-icon ${copiedId === `${site.id}-videoLink` ? 'copied' : ''}`}
+                                onClick={() => copyAndOpen(getVslData(site)?.videoLink, 'videoLink', site.id)}
+                                title={copiedId === `${site.id}-videoLink` ? 'Copied & Opened!' : 'Copy & Open Video Link'}
+                              >
+                                {copiedId === `${site.id}-videoLink` ? '✅' : '🎬'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <span className="website-template">{template.icon} {template.name}</span>
                       </div>
@@ -812,13 +823,6 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         </button>
                         {getVslLink(site) && (
                           <>
-                            <button
-                              className={`card-action-btn vsl-btn ${copiedId === `${site.id}-videoLink` ? 'copied' : ''}`}
-                              onClick={() => copyAndOpen(getVslData(site)?.videoLink, 'videoLink', site.id)}
-                              title={copiedId === `${site.id}-videoLink` ? 'Copied & Opened!' : 'Copy & Open Video Link'}
-                            >
-                              {copiedId === `${site.id}-videoLink` ? '✅' : '🎬'} VSL
-                            </button>
                             {getVslData(site)?.videoPreview && (
                               <button
                                 className={`card-action-btn vsl-preview-btn ${copiedId === `${site.id}-videoPreview` ? 'copied' : ''}`}
