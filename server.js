@@ -93,6 +93,17 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // VSL MAPPINGS TABLE - Stores video links mapped to website URLs
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS vsl_mappings (
+        origin_url TEXT PRIMARY KEY,
+        video_link TEXT NOT NULL,
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
     console.log('✅ Database initialized with archive tables');
   } catch (error) {
@@ -553,6 +564,108 @@ app.put('/api/archive/websites/:id', async (req, res) => {
   }
 });
 
+// ==================== VSL MAPPINGS ROUTES ====================
+
+// Get all VSL mappings
+app.get('/api/vsl/mappings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM vsl_mappings ORDER BY uploaded_at DESC');
+    
+    // Convert to object format for easy lookup on frontend
+    const mappings = {};
+    let totalUploaded = 0;
+    let lastUpload = null;
+    
+    result.rows.forEach(row => {
+      mappings[row.origin_url] = {
+        videoLink: row.video_link,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        uploadedAt: row.uploaded_at
+      };
+      totalUploaded++;
+      if (!lastUpload || new Date(row.uploaded_at) > new Date(lastUpload)) {
+        lastUpload = row.uploaded_at;
+      }
+    });
+
+    res.json({
+      success: true,
+      mappings,
+      stats: {
+        totalUploaded,
+        lastUpload
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get VSL mappings error:', error);
+    res.status(500).json({ error: 'Failed to fetch VSL mappings', details: error.message });
+  }
+});
+
+// Upload/Save VSL mappings (upsert)
+app.post('/api/vsl/mappings', async (req, res) => {
+  try {
+    const { mappings } = req.body;
+    
+    if (!mappings || typeof mappings !== 'object') {
+      return res.status(400).json({ error: 'Invalid mappings data' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      let insertedCount = 0;
+      for (const [originUrl, data] of Object.entries(mappings)) {
+        await client.query(`
+          INSERT INTO vsl_mappings (origin_url, video_link, first_name, last_name, uploaded_at)
+          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+          ON CONFLICT (origin_url) DO UPDATE SET
+            video_link = $2,
+            first_name = $3,
+            last_name = $4,
+            uploaded_at = CURRENT_TIMESTAMP
+        `, [originUrl, data.videoLink, data.firstName || null, data.lastName || null]);
+        insertedCount++;
+      }
+
+      await client.query('COMMIT');
+      console.log(`✅ Uploaded ${insertedCount} VSL mappings`);
+
+      res.json({
+        success: true,
+        insertedCount,
+        message: `Successfully saved ${insertedCount} VSL mappings`
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('❌ Save VSL mappings error:', error);
+    res.status(500).json({ error: 'Failed to save VSL mappings', details: error.message });
+  }
+});
+
+// Clear all VSL mappings
+app.delete('/api/vsl/mappings', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM vsl_mappings');
+    console.log('✅ Cleared all VSL mappings');
+    
+    res.json({
+      success: true,
+      message: 'All VSL mappings cleared'
+    });
+  } catch (error) {
+    console.error('❌ Clear VSL mappings error:', error);
+    res.status(500).json({ error: 'Failed to clear VSL mappings', details: error.message });
+  }
+});
+
 // ==================== STATIC FILE SERVING ====================
 
 app.use(express.static(path.join(__dirname, 'build')));
@@ -566,5 +679,6 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📦 Archive API: /api/archive/*`);
+  console.log(`🎬 VSL API: /api/vsl/*`);
   console.log(`🔗 Webhook endpoint: POST /api/webhook/ghl`);
 });

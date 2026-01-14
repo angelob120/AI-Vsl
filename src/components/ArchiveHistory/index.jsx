@@ -42,11 +42,18 @@ export default function ArchiveHistory({ isDarkMode = false }) {
   const [copiedId, setCopiedId] = useState(null);
   const previewRef = useRef(null);
 
+  // VSL Upload state
+  const [vslMappings, setVslMappings] = useState({});
+  const [isUploadingVsl, setIsUploadingVsl] = useState(false);
+  const [vslUploadStats, setVslUploadStats] = useState(null);
+  const vslFileInputRef = useRef(null);
+
   // Load data on mount
   useEffect(() => {
     loadStats();
     loadArchivedWebsites();
     loadExportHistory();
+    loadVslMappings();
   }, []);
 
   // Reload archived websites when search or filter changes
@@ -74,6 +81,153 @@ export default function ArchiveHistory({ isDarkMode = false }) {
     const exportsData = await getExportHistory();
     setExports(exportsData);
     setIsLoadingExports(false);
+  };
+
+  // Load VSL mappings from backend
+  const loadVslMappings = async () => {
+    try {
+      const response = await fetch('/api/vsl/mappings');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.mappings) {
+          setVslMappings(data.mappings);
+          setVslUploadStats(data.stats || null);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading VSL mappings:', error);
+    }
+  };
+
+  // Handle VSL CSV file upload
+  const handleVslUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploadingVsl(true);
+    
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('CSV file appears to be empty or has no data rows');
+        setIsUploadingVsl(false);
+        return;
+      }
+
+      // Parse header row
+      const headers = parseCSVLine(lines[0]);
+      const originUrlIdx = headers.findIndex(h => h.toLowerCase().includes('originurl'));
+      const videoLinkIdx = headers.findIndex(h => h.toLowerCase().includes('videolink'));
+      const firstNameIdx = headers.findIndex(h => h.toLowerCase().includes('firstname'));
+      const lastNameIdx = headers.findIndex(h => h.toLowerCase().includes('lastname'));
+
+      if (originUrlIdx === -1 || videoLinkIdx === -1) {
+        alert('CSV must contain "OriginUrls" and "VideoLink" columns');
+        setIsUploadingVsl(false);
+        return;
+      }
+
+      // Parse data rows and create mappings
+      const mappings = {};
+      let matchedCount = 0;
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const originUrl = values[originUrlIdx]?.trim();
+        const videoLink = values[videoLinkIdx]?.trim();
+        const firstName = firstNameIdx !== -1 ? values[firstNameIdx]?.trim() : '';
+        const lastName = lastNameIdx !== -1 ? values[lastNameIdx]?.trim() : '';
+        
+        if (originUrl && videoLink) {
+          mappings[originUrl] = {
+            videoLink,
+            firstName,
+            lastName,
+            uploadedAt: new Date().toISOString()
+          };
+          matchedCount++;
+        }
+      }
+
+      // Save to backend
+      const response = await fetch('/api/vsl/mappings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mappings })
+      });
+
+      if (response.ok) {
+        setVslMappings(prev => ({ ...prev, ...mappings }));
+        setVslUploadStats({
+          totalUploaded: matchedCount,
+          lastUpload: new Date().toISOString(),
+          filename: file.name
+        });
+        alert(`Successfully uploaded ${matchedCount} VSL mappings!`);
+      } else {
+        throw new Error('Failed to save VSL mappings');
+      }
+    } catch (error) {
+      console.error('VSL upload error:', error);
+      alert('Failed to upload VSL CSV. Please check the file format.');
+    }
+    
+    setIsUploadingVsl(false);
+    // Reset file input
+    if (vslFileInputRef.current) {
+      vslFileInputRef.current.value = '';
+    }
+  };
+
+  // Helper to parse CSV line handling quoted values
+  const parseCSVLine = (line) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current);
+    
+    return result;
+  };
+
+  // Get VSL link for a website
+  const getVslLink = (site) => {
+    const mapping = vslMappings[site.link];
+    return mapping?.videoLink || null;
+  };
+
+  // Clear all VSL mappings
+  const clearVslMappings = async () => {
+    if (!confirm('Are you sure you want to clear all VSL mappings?')) return;
+    
+    try {
+      const response = await fetch('/api/vsl/mappings', {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setVslMappings({});
+        setVslUploadStats(null);
+        alert('VSL mappings cleared successfully');
+      }
+    } catch (error) {
+      console.error('Error clearing VSL mappings:', error);
+      alert('Failed to clear VSL mappings');
+    }
   };
 
   // Re-download a past CSV export (produces identical CSV from original batch)
@@ -531,7 +685,17 @@ export default function ArchiveHistory({ isDarkMode = false }) {
                         >
                           {isCapturingPng === site.id ? '⏳' : '📸'} PNG
                         </button>
-
+                        {getVslLink(site) && (
+                          <a
+                            href={getVslLink(site)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="card-action-btn vsl-btn"
+                            title="Open VSL Video"
+                          >
+                            🎬 VSL
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -546,6 +710,77 @@ export default function ArchiveHistory({ isDarkMode = false }) {
             Showing {archivedWebsites.length} website{archivedWebsites.length !== 1 ? 's' : ''}
           </div>
         )}
+      </div>
+
+      {/* VSL Upload Panel */}
+      <div className="archive-panel vsl-panel">
+        <div className="panel-header">
+          <h2 className="panel-title">
+            <span className="panel-icon">🎬</span>
+            VSL Video Links
+          </h2>
+          <p className="panel-subtitle">
+            Upload a CSV with VSL video links to add quick-access buttons to your website cards.
+          </p>
+        </div>
+
+        <div className="vsl-upload-area">
+          <div className="vsl-upload-box">
+            <div className="vsl-upload-content">
+              <span className="vsl-upload-icon">📤</span>
+              <div className="vsl-upload-text">
+                <h3>Upload VSL CSV</h3>
+                <p>CSV must contain "OriginUrls" and "VideoLink" columns</p>
+              </div>
+              <label className={`vsl-upload-btn ${isUploadingVsl ? 'loading' : ''}`}>
+                {isUploadingVsl ? '⏳ Uploading...' : '📁 Select CSV File'}
+                <input
+                  ref={vslFileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleVslUpload}
+                  disabled={isUploadingVsl}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="vsl-stats-box">
+            <h3>VSL Status</h3>
+            {Object.keys(vslMappings).length > 0 ? (
+              <div className="vsl-stats-content">
+                <div className="vsl-stat">
+                  <span className="vsl-stat-value">{Object.keys(vslMappings).length}</span>
+                  <span className="vsl-stat-label">VSL Links Loaded</span>
+                </div>
+                <div className="vsl-stat">
+                  <span className="vsl-stat-value">
+                    {archivedWebsites.filter(site => getVslLink(site)).length}
+                  </span>
+                  <span className="vsl-stat-label">Matched to Archive</span>
+                </div>
+                {vslUploadStats?.lastUpload && (
+                  <div className="vsl-last-upload">
+                    <span>Last upload: {formatDate(vslUploadStats.lastUpload)}</span>
+                    {vslUploadStats.filename && <span>File: {vslUploadStats.filename}</span>}
+                  </div>
+                )}
+                <button 
+                  className="vsl-clear-btn"
+                  onClick={clearVslMappings}
+                >
+                  🗑️ Clear All VSL Data
+                </button>
+              </div>
+            ) : (
+              <div className="vsl-empty-state">
+                <span>No VSL data uploaded yet</span>
+                <span className="vsl-hint">Upload a CSV to link videos to your websites</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Bottom Panel: CSV Export History */}
