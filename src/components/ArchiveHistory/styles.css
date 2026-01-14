@@ -2054,7 +2054,7 @@
   display: flex;
   gap: 8px;
   margin-top: 12px;
-  margin-bottom: 2%;
+  margin-bottom: 0;
 }
 
 .card-action-btn {
