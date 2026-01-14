@@ -106,6 +106,19 @@ const initDatabase = async () => {
       )
     `);
 
+    // Migration: Add import_id column if it doesn't exist (for existing databases)
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'vsl_mappings' AND column_name = 'import_id'
+        ) THEN 
+          ALTER TABLE vsl_mappings ADD COLUMN import_id VARCHAR(255);
+        END IF;
+      END $$;
+    `);
+
     // VSL IMPORTS HISTORY TABLE - Stores history of all VSL CSV uploads
     await pool.query(`
       CREATE TABLE IF NOT EXISTS vsl_imports (
